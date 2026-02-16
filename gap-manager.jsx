@@ -1,0 +1,1091 @@
+import { useState, useMemo, useCallback } from "react";
+
+// ═══════════════════════════════════════════════════════════════
+// GAP MEMBER CLUBS — 334 clubs from gapgolf.org/play/club-directory/
+// ═══════════════════════════════════════════════════════════════
+const GAP_CLUBS = [
+"The 1912 Club","Allentown Municipal Golf Course","American Classic Golf Club","American Golf Society","American Legion Country Club","American Singles Golf Association-Philadelphia","Applebrook Golf Club","Applecross Country Club","Armitage Golf Club","Aronimink Golf Club","Atlantic City Country Club","Avalon Golf Club",
+"Back Creek Golf Club","Bala Golf Club","Ballamor Golf Club","Bayside Resort Golf Club","Baywood Greens","Bear Trap Dunes Golf Club","Bella Vista Golf Club","Belles Springs Golf Course","Bellewood Country Club","Bensalem Township Country Club","Bent Creek Country Club","Berkleigh Golf Club","Berkshire Country Club","Berwick Golf Club","Bethlehem Golf Club","Bidermann Golf Club","Blue Bell Country Club","Blue Heron Pines Golf Club","Blue Ridge Trail Golf Club","Bluestone Country Club","Bon Air Country Club","Briarwood Golf Club","Bridges Golf Club","Bridgewater Golf Club","Broad Run Golfer's Club","Brookside CC of Allentown","Brookside Country Club","Buck Hill Golf Club","Bucknell Golf Club","The Bucks Club","Burlington Country Club",
+"Carlisle Barracks Golf Course","Carlisle Country Club","Carroll Valley Golf at Liberty Mountain","Caves Valley Golf Club","Cedarbrook Country Club","Chambersburg Country Club","Chapel Hill Golf Course","Cherry Valley Country Club","Chesapeake Bay Golf Club","Chester Valley Golf Club","Clinton Country Club","The Club at Shannondell","The Club at Twin Lakes","The Club at Underbrook Farm","Club at the Highlands","Coatesville Country Club","Cobblestone Creek Country Club","Colonial Golf & Tennis Club","Commonwealth National Golf Club","Concord Country Club","Conestoga Country Club","Cool Creek Golf Club","Corey Creek Golf Club","Country Club of Harrisburg","Country Club of Scranton","Country Club of York","Cripple Creek Golf & Country Club","Crossgates Golf Club",
+"Dauphin Highlands Golf Course","Deer Valley Golf Course","Deerfield Golf Club","Deerwood Country Club","Del-Penn Golf Tour","Delcastle Golf Club","Downingtown Country Club","Doylestown Country Club","DuPont Country Club",
+"Eagle Creek Golf Club","Eagle Rock Resort","Eagles Mere Country Club","Ed Oliver Golf Club","Elkview Country Club","Elmhurst Country Club","Emanon Country Club",
+"Fairview Golf Course","Fieldstone Golf Club","Five Ponds Golf Club","Flourtown Country Club","Flying Hills Golf Club","Four Seasons Golf Club","Fox Hill Country Club","Foxchase Golf Club","French Creek Golf Club","Frog Hollow Golf Club","Frosty Valley",
+"Galen Hall Golf Club","Galloway National Golf Club","Garrisons Lake Golf Club","Glen Brook Golf Club","Glen Oak Country Club","Glenhardie Country Club","Glenmaura National Golf Club","Golden Oaks Golf Club","Golden Pheasant Golf Club","Golf Course at Glen Mills","The Golf Course at Paupack Hills","Golf Tour of Greater Philadelphia","Great Bear Golf Club","Greate Bay Country Club","Green Pond Country Club","Green Valley Country Club","Greenbriar Oceanaire Golf & CC","Gulph Mills Golf Club",
+"Hanover Country Club","Hartefeld National","Hawk Pointe Golf Club","Heidelberg Country Club","Heritage Hills Golf Resort","Heritage Shores","Hershey Country Club","Hershey's Mill Golf Club","Hickory Valley Golf Club","Hidden Creek Golf Club","Hidden Valley Golf Course","Honesdale Golf Club","Honey Run Golf Club","Honeybrook Golf Club","Hooper's Landing Golf Course","Huntingdon Valley Country Club","Huntsville Golf Club",
+"Indian Hills Golf Club","Indian Valley Country Club","Ingleside Golf Club","Inniscrone Golf Club","Irem Country Club",
+"Jack Frost National Golf Club","Jeffersonville Golf Club","Jericho National Golf Club","John F. Byrne Golf Club","Jonathan's Landing Golf Club",
+"Kennett Square Golf & Country Club","Kimberton Golf Club","Kings Creek Country Club",
+"Lancaster Country Club","Laurel Creek Country Club","Lebanon Country Club","Lederach Golf Club","LedgeRock Golf Club","The Legacy Club","Lehigh Country Club","Lehman Golf Club","Lewistown Country Club","Liberty Forge Golf Course","Linfield National Golf Club","The Links At Gettysburg","Links Golf Club","Linwood Country Club","Little Mill Country Club","Llanerch Country Club","Lookaway Golf Club","Lords Valley Country Club","Lost Creek Golf Course","LuLu Country Club","Lykens Valley Golf Resort",
+"Macoby Run Golf Course","Mainland Golf Course","Makefield Highlands Golf Club","Manada Golf Club","Manasquan River Golf Club","Manor Golf Club","Manufacturers' Golf & Country Club","Maple Dale Country Club","Mayapple Golf Club","McCall Golf Club","Meadia Heights Golf Club","Medford Lakes Country Club","Medford Village Country Club","Mercer Oaks Golf Course","Merchantville Country Club","Merion Golf Club","Metedeconk National Golf Club","Middletown Country Club","The Montrose Club","Moorestown Field Club","Moselem Springs Golf Club","Mountain Laurel Golf Club","Mountain View Country Club","Mulligan's Pointe",
+"Neshaminy Valley Golf Club","Newark Country Club","Nittany Country Club","Nomads Golf Association","North Hills Country Club","Northampton Country Club","Northampton Valley Country Club",
+"Ocean City Golf Club","Odessa National Golf Club","Old York Road Country Club","Olde Homestead Golf Club","Out Door Country Club","Overbrook Golf Club","Overlook Golf Course",
+"Paxon Hollow Country Club","The Peninsula Golf & Country Club","Penn National Golf Club","Penn Oaks Golf Club","Pennsauken Country Club","Philadelphia Country Club","Philadelphia Cricket Club","Philadelphia Publinks GA","Philmont Country Club","Phoenixville Country Club","Pickering Valley Golf Club","Pilgrim's Oak Golf Course","Pine Valley Golf Club","PineCrest Country Club","Pinecrest Lake Golf Club","Pineville Golf Club","Pitman Golf Course","Plantation Lakes Golf & Country Club","Pocono Farms Country Club","Pocono Manor",
+"Quail Valley Golf Club",
+"Radley Run Country Club","Radnor Valley Country Club","Ramblewood Country Club","Rancocas Golf Club","Range End Golf Club","Raven's Claw Golf Club","Reading Country Club","Regents' Glen Country Club","Rehoboth Beach Country Club","Rich Valley Golf","The Ridge at Back Brook","RiverCrest Golf Club & Preserve","RiverWinds Golf & Tennis Club","Riverton Country Club","Riverview Country Club","Riverview Golf Course (New Cumberland)","Rock Manor Golf Club","Rolling Green Golf Club","Rolling Pines Golf Course","The Rookery Golf Club","Royal Manchester Golf Links","Royal Oaks Golf Club","Running Deer Golf Club",
+"Safari Club of Delaware","Sakima Country Club","Salt Pond Golf Club","Sandy Run Country Club","Saucon Valley Country Club","Schuylkill Country Club","Schuylkill River Golf Club","Scotland Run Golf Club","Scott Greens Golf Club","Scranton Canoe Club","Seaview Hotel & Golf Club","Shade Mountain Golf Course","Shadowbrook Resort","Shawnee Inn and Golf Resort","Shepherd Hills Golf Club","The Shore Club","Skippack Golf Club at Evansburg State Park","The Skramble House of Golf","Skytop Lodge","South Hills Golf Club","Southmoore Golf Course","Spring Ford Country Club","Spring Hollow Golf Club","Spring Mill Country Club","Springdale Golf Club","The Springhaven Club","Squires Golf Club","St. Anne's Golf Links","St. Davids Golf Club","Stanton Ridge Golf & Country Club","Steel Club","Stone Harbor Golf Club","StoneHedge Golf Course","Stonewall","Sunnybrook Golf Club","Susquehanna Valley Country Club",
+"Talamore Country Club","Tanglewood Manor Golf Club","Tavistock Country Club","Three Ponds Golf Course","Timber Trails Golf Course","Towanda Golf Club","Trenton Country Club","Trump National Golf Club - Philadelphia","Twin Woods Golf Course","Tyoga Golf Course",
+"USGA/GAP GC","Union League Golf Club at Torresdale","Union League Liberty Hill","Union League National Golf Club",
+"Valley Country Club","Valley Green Golf Course","Valleybrook Country Club",
+"Walnut Lane Golf Club","Waynesboro Country Club","Waynesborough Country Club","Wedgewood Golf Course","Wedgwood Country Club","Wemberly Hills Golf Club","West Chester Golf & Country Club","West Shore Country Club","Westover Golf Club","Westwood Golf Club","White Birch Golf Course","White Deer Golf Course","White Manor Country Club","White Oaks Country Club","Whitemarsh Valley Country Club","Whitford Country Club","Wild Quail Golf & Country Club","Wilkes-Barre Golf Club","Williamsport Country Club","Willow Brook Golf Course","Willow Hollow Golf Course","Wilmington Country Club","Women Who Golf League","Woodloch Springs","Woodstone Country Club and Lodge","Worcester Golf Club","Wyncote Golf Club","Wynding Brook Golf Club","Wyoming Valley Country Club",
+"YOC Delaware","YOC First Tee of Delaware","Yardley Country Club"
+];
+
+// ═══════════════════════════════════════════════════════════════
+// SAMPLE PLAYER DATA
+// ═══════════════════════════════════════════════════════════════
+const SAMPLE_PLAYERS = [
+  { id: 1, name: "Nattle, Frank", ghin: "980325", courseHdcp: 0, index: 0.7, phone: "610-555-0101", email: "fnattle@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "yes", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
+  { id: 2, name: "Digati, Thomas", ghin: "360689", courseHdcp: 3, index: 3.5, phone: "610-555-0102", email: "tdigati@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "yes", 3: "yes" }, locPref: { 1: "Home", 2: "", 3: "" }, notes: "" },
+  { id: 3, name: "Eanes, Matt", ghin: "3168779", courseHdcp: 3, index: 4.0, phone: "610-555-0103", email: "meanes@email.com", status: "maybe", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "maybe", 2: "no", 3: "maybe" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
+  { id: 4, name: "Fediukov, Luka", ghin: "3076131", courseHdcp: 3, index: 3.5, phone: "610-555-0104", email: "lfediukov@email.com", status: "declined", contactOwner: "Dever", contactDate: "", availability: { 1: "no", 2: "no", 3: "no" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
+  { id: 5, name: "Kovalski, Daniel", ghin: "1181804", courseHdcp: 4, index: 4.5, phone: "610-555-0105", email: "dkovalski@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "no", 3: "yes" }, locPref: { 1: "Home", 2: "", 3: "" }, notes: "" },
+  { id: 6, name: "MacDonough, Matt", ghin: "10871700", courseHdcp: 4, index: 4.9, phone: "610-555-0106", email: "mmacdonough@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "yes", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
+  { id: 7, name: "Sullivan, Patrick M.", ghin: "6904516", courseHdcp: 4, index: 4.2, phone: "610-555-0107", email: "psullivan@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "yes", 3: "yes" }, locPref: { 1: "Away", 2: "", 3: "" }, notes: "" },
+  { id: 8, name: "Bostic, Jeff", ghin: "2172491", courseHdcp: 6, index: 6.6, phone: "610-555-0108", email: "jbostic@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "yes", 3: "no" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
+  { id: 9, name: "Coleman, Kevin", ghin: "7413202", courseHdcp: 6, index: 6.2, phone: "610-555-0109", email: "kcoleman@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "no", 2: "yes", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
+  { id: 10, name: "Loftus, Michael P", ghin: "7987449", courseHdcp: 6, index: 6.2, phone: "610-555-0110", email: "mloftus@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "yes", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
+  { id: 11, name: "Statton, Brandon", ghin: "1794499", courseHdcp: 6, index: 6.3, phone: "610-555-0111", email: "bstatton@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "yes", 3: "no" }, locPref: { 1: "Away", 2: "", 3: "" }, notes: "" },
+  { id: 12, name: "Upadhyay, Manish", ghin: "8521960", courseHdcp: 6, index: 6.1, phone: "610-555-0112", email: "mupadhyay@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "no", 2: "yes", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
+  { id: 13, name: "Miller, Coleman", ghin: "10461311", courseHdcp: 6, index: 6.6, phone: "610-555-0113", email: "cmiller@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "", availability: { 1: "yes", 2: "no", 3: "no" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
+  { id: 14, name: "Hornig, Timothy", ghin: "904247", courseHdcp: 7, index: 6.6, phone: "610-555-0114", email: "thornig@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "yes", 3: "yes" }, locPref: { 1: "Away", 2: "", 3: "" }, notes: "Brett away week 1 if possible" },
+  { id: 15, name: "Rubinstein, Brett", ghin: "10377386", courseHdcp: 7, index: 6.8, phone: "610-555-0115", email: "brubinstein@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "yes", 3: "no" }, locPref: { 1: "Home", 2: "", 3: "" }, notes: "" },
+  { id: 16, name: "Higgins, Tom", ghin: "1147574", courseHdcp: 7, index: 7.0, phone: "610-555-0116", email: "thiggins@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "no", 3: "no" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
+  { id: 17, name: "Howarth, Alex", ghin: "1226027", courseHdcp: 8, index: 8.1, phone: "610-555-0117", email: "ahowarth@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "no", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
+  { id: 18, name: "Jones, Ryan P", ghin: "2827080", courseHdcp: 8, index: 8.0, phone: "610-555-0118", email: "rjones@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "no", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "Mannons requesting location concessions" },
+  { id: 19, name: "Collins, Matthew P", ghin: "3670110", courseHdcp: 8, index: 7.7, phone: "610-555-0119", email: "mcollins@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "no", 2: "yes", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
+  { id: 20, name: "Mannon, Walker", ghin: "2600752", courseHdcp: 8, index: 7.6, phone: "610-555-0120", email: "wmannon@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "no", 2: "yes", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
+  { id: 21, name: "McKeon, Sean D", ghin: "53125", courseHdcp: 8, index: 7.7, phone: "610-555-0121", email: "smckeon@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "no", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
+  { id: 22, name: "Alexander, Tom", ghin: "10691692", courseHdcp: 9, index: 9.2, phone: "610-555-0122", email: "talexander@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "no", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
+  { id: 23, name: "Hess, Mark", ghin: "1959652", courseHdcp: 9, index: 8.7, phone: "610-555-0123", email: "mhess@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "no", 2: "yes", 3: "no" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
+  { id: 24, name: "Miller, Rich", ghin: "2155729", courseHdcp: 9, index: 9.2, phone: "610-555-0124", email: "rmiller@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "yes", 3: "no" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
+  { id: 25, name: "Bayzick, Joshua", ghin: "10943526", courseHdcp: 10, index: 9.6, phone: "610-555-0125", email: "jbayzick@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "", availability: { 1: "yes", 2: "yes", 3: "yes" }, locPref: { 1: "Away", 2: "", 3: "" }, notes: "" },
+  { id: 26, name: "Mannon, Michael", ghin: "327820", courseHdcp: 10, index: 9.6, phone: "610-555-0126", email: "mmannon@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "no", 2: "no", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
+  { id: 27, name: "Russell, Garrett", ghin: "1567873", courseHdcp: 10, index: 10.0, phone: "610-555-0127", email: "grussell@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "no", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
+  { id: 28, name: "Stackhouse, Matthew", ghin: "12005753", courseHdcp: 10, index: 9.6, phone: "610-555-0128", email: "mstackhouse@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "yes", 3: "no" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
+  { id: 29, name: "Campbell, Tim", ghin: "6634388", courseHdcp: 11, index: 10.2, phone: "610-555-0129", email: "tcampbell@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "yes", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
+  { id: 30, name: "Zegel, Bob", ghin: "7949150", courseHdcp: 11, index: 10.2, phone: "610-555-0130", email: "bzegel@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "no", 3: "no" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
+  { id: 31, name: "Selinsky, Barry", ghin: "2924051", courseHdcp: 11, index: 10.4, phone: "610-555-0131", email: "bselinsky@email.com", status: "maybe", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "maybe", 2: "maybe", 3: "maybe" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
+  { id: 32, name: "Limaye, Kris", ghin: "3516581", courseHdcp: 12, index: 11.4, phone: "610-555-0132", email: "klimaye@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "yes", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
+  { id: 33, name: "Martin, Samuel", ghin: "3162048", courseHdcp: 12, index: 11.0, phone: "610-555-0133", email: "smartin@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "yes", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
+  { id: 34, name: "Silvestri, Robert M", ghin: "2236198", courseHdcp: 12, index: 11.4, phone: "610-555-0134", email: "rsilvestri@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "yes", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
+  { id: 35, name: "Morris, Stephen G.", ghin: "1301780", courseHdcp: 13, index: 12.1, phone: "610-555-0135", email: "smorris@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "yes", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
+  { id: 36, name: "Markley, William Scott", ghin: "2539798", courseHdcp: 14, index: 13.4, phone: "610-555-0136", email: "wmarkley@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "yes", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
+  { id: 37, name: "Mallowe, Christopher", ghin: "2364514", courseHdcp: 16, index: 14.7, phone: "610-555-0137", email: "cmallowe@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "yes", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
+  { id: 38, name: "Montani, Robert M Jr.", ghin: "2394814", courseHdcp: 17, index: 15.5, phone: "610-555-0138", email: "rmontani@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "maybe", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
+  { id: 39, name: "Caruso, Edward", ghin: "196331", courseHdcp: 18, index: 16.2, phone: "610-555-0139", email: "ecaruso@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "yes", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
+  { id: 40, name: "Cushing, Daniel", ghin: "12216061", courseHdcp: 18, index: 16.3, phone: "610-555-0140", email: "dcushing@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "", availability: { 1: "yes", 2: "yes", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
+  { id: 41, name: "Pettine, Benett C", ghin: "10855990", courseHdcp: 22, index: 19.6, phone: "610-555-0141", email: "bpettine@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-01", availability: { 1: "yes", 2: "yes", 3: "no" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
+  { id: 42, name: "Dempsey, Sean", ghin: "11264409", courseHdcp: 25.5, index: 28.0, phone: "610-555-0142", email: "sdempsey@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-06", availability: { 1: "no", 2: "yes", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
+  { id: 43, name: "Anapolsky, Jake", ghin: "11387958", courseHdcp: 10, index: 10.1, phone: "", email: "", status: "not_contacted", contactOwner: "", contactDate: "", availability: { 1: "no", 2: "no", 3: "no" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
+  { id: 44, name: "Anapolsky, Julian", ghin: "11264405", courseHdcp: 10, index: 9.6, phone: "", email: "", status: "not_contacted", contactOwner: "", contactDate: "", availability: { 1: "no", 2: "no", 3: "no" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
+  { id: 45, name: "Connolly, Michael", ghin: "2221455", courseHdcp: 10, index: 10.0, phone: "610-555-0145", email: "mconnolly@email.com", status: "declined", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "no", 2: "no", 3: "no" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
+  { id: 46, name: "Baker, Charlie", ghin: "11428615", courseHdcp: 12, index: 11.4, phone: "610-555-0146", email: "cbaker@email.com", status: "declined", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "no", 2: "no", 3: "no" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
+  { id: 47, name: "Manders, Matthew", ghin: "2781882", courseHdcp: 12, index: 11.1, phone: "610-555-0147", email: "mmanders@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "no", 2: "yes", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
+  { id: 48, name: "Armstrong, Rob", ghin: "3030644", courseHdcp: 13, index: 12.2, phone: "610-555-0148", email: "rarmstrong@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "no", 2: "yes", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
+  { id: 49, name: "Loftus, Jimmy", ghin: "896549", courseHdcp: 12, index: 11.0, phone: "610-555-0149", email: "jloftus@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "no", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
+];
+
+// ═══════════════════════════════════════════════════════════════
+// DEFAULTS & CONFIG
+// ═══════════════════════════════════════════════════════════════
+const DEFAULT_SCHEDULE = {
+  1: { date: "2026-04-19", team1: { opponent: "White Manor Country Club", teamNum: "#1" }, team2: { opponent: "Bellewood Country Club", teamNum: "#2" }, homeTee: "8:00 AM", awayTee: "8:30 AM" },
+  2: { date: "2026-04-26", team1: { opponent: "North Hills Country Club", teamNum: "#1" }, team2: { opponent: "Northampton Valley Country Club", teamNum: "#1" }, homeTee: "8:00 AM", awayTee: "8:00 AM" },
+  3: { date: "2026-05-03", team1: { opponent: "RiverCrest Golf Club & Preserve", teamNum: "#1" }, team2: { opponent: "Philadelphia Cricket Club", teamNum: "#3" }, homeTee: "8:00 AM", awayTee: "8:30 AM" },
+};
+
+const DEFAULT_LOCK_STATE = { 1: { locked: false, lockedAt: null, lockedBy: null, modifiedAfterLock: false, lastSentAt: null }, 2: { locked: false, lockedAt: null, lockedBy: null, modifiedAfterLock: false, lastSentAt: null }, 3: { locked: false, lockedAt: null, lockedBy: null, modifiedAfterLock: false, lastSentAt: null } };
+
+const STATUS_CONFIG = {
+  not_contacted: { label: "Not Contacted", short: "NC", color: "#94a3b8", bg: "#f1f5f9" },
+  contacted: { label: "Contacted", short: "CTD", color: "#f59e0b", bg: "#fef3c7" },
+  confirmed: { label: "Confirmed", short: "Yes", color: "#16a34a", bg: "#dcfce7" },
+  declined: { label: "Declined", short: "No", color: "#dc2626", bg: "#fee2e2" },
+  maybe: { label: "Maybe", short: "?", color: "#8b5cf6", bg: "#ede9fe" },
+};
+
+const AVAIL_COLORS = { yes: "#16a34a", no: "#dc2626", maybe: "#8b5cf6" };
+const fmtH = (h) => Number(h).toFixed(1);
+const fmtDate = (d) => { if (!d) return ""; const [y, m, day] = d.split("-"); const dt = new Date(+y, +m - 1, +day); return dt.toLocaleDateString("en-US", { month: "short", day: "numeric" }); };
+const fmtDateLong = (d) => { if (!d) return ""; const [y, m, day] = d.split("-"); const dt = new Date(+y, +m - 1, +day); return dt.toLocaleDateString("en-US", { weekday: "short", month: "long", day: "numeric", year: "numeric" }); };
+const addMinutes = (timeStr, mins) => {
+  if (!timeStr || !mins) return timeStr;
+  const match = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
+  if (!match) return timeStr;
+  let [, h, m, ampm] = match;
+  let hours = parseInt(h); let minutes = parseInt(m);
+  if (ampm.toUpperCase() === "PM" && hours !== 12) hours += 12;
+  if (ampm.toUpperCase() === "AM" && hours === 12) hours = 0;
+  const total = hours * 60 + minutes + mins;
+  const nh = Math.floor(total / 60) % 24; const nm = total % 60;
+  const newAmpm = nh >= 12 ? "PM" : "AM";
+  const displayH = nh > 12 ? nh - 12 : nh === 0 ? 12 : nh;
+  return `${displayH}:${nm.toString().padStart(2, "0")} ${newAmpm}`;
+};
+const ACCENT = "#7dd3fc";
+
+// ═══════════════════════════════════════════════════════════════
+// SVG ICONS
+// ═══════════════════════════════════════════════════════════════
+const IconDashboard = () => (<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>);
+const IconBuilder = () => (<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>);
+const IconRoster = () => (<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>);
+const IconSetup = () => (<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>);
+const IconLock = () => (<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>);
+const IconUnlock = () => (<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>);
+
+// ═══════════════════════════════════════════════════════════════
+// HELPER FUNCTIONS
+// ═══════════════════════════════════════════════════════════════
+function computeTeamSplit(players, week) {
+  const confirmed = players.filter(p => p.availability[week] === "yes").sort((a, b) => a.courseHdcp - b.courseHdcp);
+  const maybe = players.filter(p => p.availability[week] === "maybe").sort((a, b) => a.courseHdcp - b.courseHdcp);
+  if (confirmed.length === 0) return { t1: [], t2: [], maybe1: [], maybe2: [], threshold: null, t1Range: null, t2Range: null };
+  const t1 = confirmed.slice(0, 12);
+  const t2 = confirmed.slice(12);
+  const threshold = t1.length > 0 ? Math.max(...t1.map(p => p.courseHdcp)) : null;
+  const maybe1 = maybe.filter(p => threshold === null || p.courseHdcp <= threshold);
+  const maybe2 = maybe.filter(p => threshold !== null && p.courseHdcp > threshold);
+  const range = (arr) => arr.length > 0 ? { min: Math.min(...arr.map(p => p.courseHdcp)), max: Math.max(...arr.map(p => p.courseHdcp)) } : null;
+  return { t1, t2, maybe1, maybe2, threshold, t1Range: range(t1), t2Range: range(t2) };
+}
+
+function projectTeam(player, threshold) {
+  if (threshold === null) return "T1";
+  return player.courseHdcp <= threshold ? "T1" : "T2";
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CLUB SEARCH DROPDOWN
+// ═══════════════════════════════════════════════════════════════
+function ClubSearchDropdown({ value, onChange, placeholder }) {
+  const [search, setSearch] = useState("");
+  const [open, setOpen] = useState(false);
+  const filtered = useMemo(() => {
+    if (!search) return GAP_CLUBS.slice(0, 20);
+    const q = search.toLowerCase();
+    return GAP_CLUBS.filter(c => c.toLowerCase().includes(q)).slice(0, 20);
+  }, [search]);
+  return (
+    <div style={{ position: "relative", flex: 1 }}>
+      <input
+        value={open ? search : value || ""}
+        onChange={e => { setSearch(e.target.value); if (!open) setOpen(true); }}
+        onFocus={() => { setOpen(true); setSearch(value || ""); }}
+        onBlur={() => setTimeout(() => setOpen(false), 200)}
+        placeholder={placeholder || "Search 334 GAP clubs..."}
+        style={{ width: "100%", padding: "8px 12px", borderRadius: 8, border: "1px solid #c1cad8", fontSize: 13, background: "#f5f7fb", outline: "none", boxSizing: "border-box" }}
+      />
+      {open && filtered.length > 0 && (
+        <div style={{ position: "absolute", top: "100%", left: 0, right: 0, background: "#fff", border: "1px solid #c1cad8", borderRadius: "0 0 8px 8px", maxHeight: 220, overflowY: "auto", zIndex: 100, boxShadow: "0 4px 16px rgba(0,0,0,0.12)" }}>
+          {filtered.map(club => (
+            <div key={club} onMouseDown={() => { onChange(club); setSearch(""); setOpen(false); }}
+              style={{ padding: "8px 12px", cursor: "pointer", fontSize: 13, borderBottom: "1px solid #f1f5f9", background: club === value ? "#eff6ff" : "#fff" }}
+              onMouseEnter={e => e.target.style.background = "#f0f9ff"}
+              onMouseLeave={e => e.target.style.background = club === value ? "#eff6ff" : "#fff"}>
+              {club}
+            </div>
+          ))}
+          {filtered.length === 20 && <div style={{ padding: "6px 12px", fontSize: 11, color: "#94a3b8", textAlign: "center" }}>Type to narrow results...</div>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SEASON SETUP (Admin-only editing, Vice-Captains can view)
+// ═══════════════════════════════════════════════════════════════
+function SeasonSetup({ schedule, setSchedule, lockState, userRole }) {
+  const isAdmin = userRole === "admin";
+  const updateWeek = (week, field, value) => {
+    if (!isAdmin) return;
+    setSchedule(prev => ({ ...prev, [week]: { ...prev[week], [field]: value } }));
+  };
+  const updateTeam = (week, team, field, value) => {
+    if (!isAdmin) return;
+    setSchedule(prev => ({ ...prev, [week]: { ...prev[week], [team]: { ...prev[week][team], [field]: value } } }));
+  };
+  return (
+    <div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+        <div>
+          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: "#0f172a" }}>Season Setup</h2>
+          <p style={{ margin: "4px 0 0", fontSize: 13, color: "#64748b" }}>Configure opponents for each week. Each matchup splits 3 pairs home at PCC, 3 pairs away. Searchable across all 334 GAP member clubs.</p>
+        </div>
+        {!isAdmin && <span style={{ fontSize: 11, padding: "4px 12px", borderRadius: 6, background: "#fef3c7", color: "#92400e", fontWeight: 600 }}>View Only — Admin access required to edit</span>}
+      </div>
+
+      {[1, 2, 3].map(week => {
+        const ws = schedule[week];
+        const ls = lockState[week];
+        const locked = ls?.locked;
+        return (
+          <div key={week} style={{ background: "#fff", borderRadius: 12, border: "1px solid #d1d9e6", overflow: "hidden", marginBottom: 16, opacity: locked ? 0.85 : 1 }}>
+            <div style={{ background: "linear-gradient(135deg, #0f172a 0%, #162d50 100%)", padding: "12px 16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <span style={{ color: ACCENT, fontSize: 17, fontWeight: 700 }}>Week {week}</span>
+                {locked && <span style={{ fontSize: 10, padding: "3px 8px", borderRadius: 4, background: "#dc262622", color: "#fca5a5", fontWeight: 700, display: "flex", alignItems: "center", gap: 4 }}><IconLock /> LOCKED</span>}
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                {ws.date && <span style={{ color: "#cbd5e1", fontSize: 13, fontWeight: 600 }}>{fmtDateLong(ws.date)}</span>}
+                <input type="date" value={ws.date} onChange={e => updateWeek(week, "date", e.target.value)} disabled={!isAdmin || locked}
+                  style={{ padding: "6px 12px", borderRadius: 6, border: "1px solid #334155", background: "#1e293b", color: "#cbd5e1", fontSize: 13, fontWeight: 600 }} />
+              </div>
+            </div>
+            <div style={{ padding: 16 }}>
+              <div style={{ display: "flex", gap: 16, marginBottom: 12, alignItems: "center", flexWrap: "wrap" }}>
+                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                  <span style={{ fontSize: 11, fontWeight: 600, color: "#64748b" }}>Home Tee</span>
+                  <input value={ws.homeTee} onChange={e => updateWeek(week, "homeTee", e.target.value)} disabled={!isAdmin || locked} placeholder="8:00 AM"
+                    style={{ padding: "6px 12px", borderRadius: 6, border: "1px solid #c1cad8", fontSize: 13, width: 100, background: isAdmin && !locked ? "#fff" : "#f1f5f9" }} />
+                </div>
+                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                  <span style={{ fontSize: 11, fontWeight: 600, color: "#64748b" }}>Away Tee</span>
+                  <input value={ws.awayTee} onChange={e => updateWeek(week, "awayTee", e.target.value)} disabled={!isAdmin || locked} placeholder="8:30 AM"
+                    style={{ padding: "6px 12px", borderRadius: 6, border: "1px solid #c1cad8", fontSize: 13, width: 100, background: isAdmin && !locked ? "#fff" : "#f1f5f9" }} />
+                </div>
+                <span style={{ fontSize: 10, color: "#94a3b8", fontStyle: "italic" }}>First tee time listed — remaining pairs at 10-min intervals</span>
+              </div>
+              {["team1", "team2"].map(team => (
+                <div key={team} style={{ background: "#f5f7fb", borderRadius: 10, padding: 14, marginBottom: team === "team1" ? 12 : 0, border: "1px solid #e2e8f0" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                    <span style={{ fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 4, background: team === "team1" ? "#dcfce7" : "#dbeafe", color: team === "team1" ? "#16a34a" : "#1e40af" }}>{team === "team1" ? "TEAM 1" : "TEAM 2"}</span>
+                    <span style={{ fontSize: 12, color: "#64748b" }}>Opponent</span>
+                  </div>
+                  <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+                    <div style={{ flex: "1 1 250px" }}>
+                      {isAdmin && !locked ? (
+                        <ClubSearchDropdown value={ws[team].opponent} onChange={v => updateTeam(week, team, "opponent", v)} />
+                      ) : (
+                        <div style={{ padding: "8px 12px", borderRadius: 8, border: "1px solid #c1cad8", background: "#f1f5f9", fontSize: 13, color: "#0f172a", fontWeight: 600 }}>{ws[team].opponent || "Not set"}</div>
+                      )}
+                    </div>
+                    <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                      <select value={ws[team].teamNum} onChange={e => updateTeam(week, team, "teamNum", e.target.value)} disabled={!isAdmin || locked}
+                        style={{ padding: "8px 10px", borderRadius: 6, border: "1px solid #c1cad8", fontSize: 13, background: isAdmin && !locked ? "#fff" : "#f1f5f9", cursor: "pointer" }}>
+                        {["#1","#2","#3","#4","#5"].map(n => <option key={n} value={n}>{n}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                  {ws[team].opponent && (
+                    <div style={{ marginTop: 8, fontSize: 11, color: "#64748b" }}>
+                      3 pairs at Phoenixville CC · 3 pairs at {ws[team].opponent}
+                      <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(ws[team].opponent)}`} target="_blank" rel="noopener noreferrer"
+                        style={{ marginLeft: 8, fontSize: 10, color: "#1e40af", textDecoration: "none", background: "#dbeafe", padding: "2px 6px", borderRadius: 4, fontWeight: 600 }}>Map</a>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TOOLTIP & PLAYER CARD
+// ═══════════════════════════════════════════════════════════════
+function Tooltip({ player, position, threshold }) {
+  if (!player) return null;
+  const s = STATUS_CONFIG[player.status];
+  const proj = threshold !== null ? projectTeam(player, threshold) : null;
+  return (
+    <div style={{ position: "fixed", top: position.y - 10, left: position.x + 16, zIndex: 9999, background: "#0f172a", color: "#eef2f7", borderRadius: 10, padding: "14px 18px", boxShadow: "0 8px 32px rgba(0,0,0,0.4)", maxWidth: 340, fontSize: 13, lineHeight: 1.5, pointerEvents: "none", border: "1px solid #1e2d4a" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+        <span style={{ fontSize: 16, fontWeight: 700, color: ACCENT }}>{player.name}</span>
+        {proj && <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 4, background: proj === "T1" ? "#16a34a33" : "#3b82f633", color: proj === "T1" ? "#4ade80" : "#60a5fa" }}>Proj: {proj === "T1" ? "Team 1" : "Team 2"}</span>}
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "3px 16px" }}>
+        <span style={{ color: "#94a3b8" }}>GHIN:</span><span>{player.ghin}</span>
+        <span style={{ color: "#94a3b8" }}>Course HDCP:</span><span style={{ fontWeight: 700 }}>{fmtH(player.courseHdcp)}</span>
+        <span style={{ color: "#94a3b8" }}>Index:</span><span>{player.index}</span>
+        <span style={{ color: "#94a3b8" }}>Status:</span><span style={{ color: s.color }}>{s.label}</span>
+        {player.phone && <><span style={{ color: "#94a3b8" }}>Phone:</span><span>{player.phone}</span></>}
+        {player.email && <><span style={{ color: "#94a3b8" }}>Email:</span><span style={{ fontSize: 11 }}>{player.email}</span></>}
+      </div>
+      {Object.values(player.locPref).some(v => v) && (
+        <div style={{ marginTop: 6, paddingTop: 6, borderTop: "1px solid #1e2d4a" }}>
+          <span style={{ color: "#94a3b8" }}>Preferences: </span>
+          {[1,2,3].map(w => player.locPref[w] ? <span key={w} style={{ marginRight: 8, background: "#1e2d4a", borderRadius: 4, padding: "1px 6px", fontSize: 11 }}>Wk{w}: {player.locPref[w]}</span> : null)}
+        </div>
+      )}
+      {player.notes && <div style={{ marginTop: 6, paddingTop: 6, borderTop: "1px solid #1e2d4a", color: ACCENT, fontStyle: "italic", fontSize: 12 }}>{player.notes}</div>}
+    </div>
+  );
+}
+
+function PlayerCard({ player, onDragStart, compact, week, threshold }) {
+  const [hover, setHover] = useState(false);
+  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
+  const s = STATUS_CONFIG[player.status];
+  const avail = week ? player.availability[week] : null;
+  const pref = week ? player.locPref[week] : null;
+  return (
+    <>
+      <div draggable onDragStart={(e) => { e.dataTransfer.setData("text/plain", player.id.toString()); onDragStart?.(player); }}
+        onMouseEnter={(e) => { setHover(true); setTooltipPos({ x: e.clientX, y: e.clientY }); }}
+        onMouseMove={(e) => setTooltipPos({ x: e.clientX, y: e.clientY })}
+        onMouseLeave={() => setHover(false)}
+        style={{ background: "#fff", border: "1px solid #d1d9e6", borderRadius: 8, padding: compact ? "6px 10px" : "8px 12px", cursor: "grab", display: "flex", alignItems: "center", gap: 8, transition: "all 0.15s", boxShadow: hover ? "0 2px 8px rgba(0,0,0,0.1)" : "none", fontSize: compact ? 12 : 13 }}>
+        <div style={{ width: compact ? 28 : 32, height: compact ? 28 : 32, borderRadius: "50%", background: `linear-gradient(135deg, ${s.color}22, ${s.color}44)`, border: `2px solid ${s.color}`, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: compact ? 11 : 13, color: s.color, flexShrink: 0 }}>{fmtH(player.courseHdcp)}</div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontWeight: 600, color: "#0f172a", fontSize: compact ? 11 : 13 }}>{player.name}</div>
+          {!compact && <div style={{ fontSize: 11, color: "#64748b" }}>Idx: {player.index} · {player.ghin}</div>}
+        </div>
+        <div style={{ display: "flex", gap: 4, alignItems: "center", flexShrink: 0 }}>
+          {pref && <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 5px", borderRadius: 4, background: pref === "Home" ? "#dbeafe" : "#fef3c7", color: pref === "Home" ? "#1e40af" : "#92400e" }}>{pref === "Home" ? "H" : "A"}</span>}
+          {avail && <span style={{ width: 8, height: 8, borderRadius: "50%", background: AVAIL_COLORS[avail] }} />}
+          <span style={{ fontSize: 9, padding: "2px 5px", borderRadius: 4, background: s.bg, color: s.color, fontWeight: 600 }}>{s.short}</span>
+        </div>
+      </div>
+      {hover && <Tooltip player={player} position={tooltipPos} threshold={threshold} />}
+    </>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PAIR SLOT & ARCHETYPES
+// ═══════════════════════════════════════════════════════════════
+const PAIR_ARCHETYPES = {
+  anchor: { label: "Anchor", emoji: "⚓", color: "#0369a1", bg: "#e0f2fe", tip: "Elite floor + upside partner. The low player covers par, partner plays free." },
+  stacked: { label: "Stacked", emoji: "🔥", color: "#b91c1c", bg: "#fee2e2", tip: "Two elite players loaded up. Aggressive — bet on dominating this foursome." },
+  balanced: { label: "Balanced", emoji: "⚖️", color: "#15803d", bg: "#dcfce7", tip: "Similar handicaps, steady and predictable. Win on consistency." },
+  gambit: { label: "Gambit", emoji: "🎲", color: "#7e22ce", bg: "#f3e8ff", tip: "Higher handicaps together. Rolling the dice to stack firepower elsewhere." },
+};
+
+function detectArchetype(p1, p2) {
+  if (!p1 || !p2) return null;
+  const lo = Math.min(p1.courseHdcp, p2.courseHdcp), hi = Math.max(p1.courseHdcp, p2.courseHdcp), spread = hi - lo;
+  if (lo <= 4 && hi >= 12) return "anchor";
+  if (lo <= 5 && hi <= 7 && spread <= 4) return "stacked";
+  if (lo >= 13) return "gambit";
+  if (lo <= 4 && spread >= 5) return "anchor";
+  if (lo <= 5 && hi <= 9) return "stacked";
+  if (spread <= 3) return "balanced";
+  if (spread >= 6) return "anchor";
+  return "balanced";
+}
+
+function PairSlot({ pair, pairNum, onDrop, onRemove, players, side, week, threshold, disabled, teeOffset, baseTee }) {
+  const [dragOver, setDragOver] = useState(false);
+  const [showTip, setShowTip] = useState(false);
+  const p1 = pair[0] ? players.find(p => p.id === pair[0]) : null;
+  const p2 = pair[1] ? players.find(p => p.id === pair[1]) : null;
+  const avg = p1 && p2 ? ((p1.courseHdcp + p2.courseHdcp) / 2).toFixed(1) : p1 ? p1.courseHdcp.toFixed(1) : p2 ? p2.courseHdcp.toFixed(1) : "—";
+  const archetype = detectArchetype(p1, p2);
+  const arch = archetype ? PAIR_ARCHETYPES[archetype] : null;
+  const prefWarnings = [];
+  if (p1 && week && p1.locPref[week] && p1.locPref[week] !== side) prefWarnings.push(p1.name.split(",")[0]);
+  if (p2 && week && p2.locPref[week] && p2.locPref[week] !== side) prefWarnings.push(p2.name.split(",")[0]);
+  const pairTee = baseTee && teeOffset !== undefined ? addMinutes(baseTee, teeOffset) : null;
+  return (
+    <div onDragOver={(e) => { if (!disabled) { e.preventDefault(); setDragOver(true); } }} onDragLeave={() => setDragOver(false)}
+      onDrop={(e) => { if (!disabled) { e.preventDefault(); setDragOver(false); onDrop(parseInt(e.dataTransfer.getData("text/plain"))); } }}
+      style={{ background: dragOver ? "#eff6ff" : "#f5f7fb", border: `2px dashed ${dragOver ? "#16a34a" : disabled ? "#e2e8f0" : "#c1cad8"}`, borderRadius: 10, padding: 12, minHeight: 90, transition: "all 0.2s", opacity: disabled ? 0.7 : 1 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <span style={{ fontSize: 11, fontWeight: 700, color: "#64748b", letterSpacing: 1 }}>PAIR {pairNum}</span>
+          {pairTee && <span style={{ fontSize: 10, fontWeight: 600, color: "#475569", background: "#e2e8f0", padding: "1px 6px", borderRadius: 4 }}>{pairTee}</span>}
+        </div>
+        <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+          {arch && (
+            <div style={{ position: "relative", display: "inline-flex" }}>
+              <span onMouseEnter={() => setShowTip(true)} onMouseLeave={() => setShowTip(false)}
+                style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 5, background: arch.bg, color: arch.color, cursor: "help", display: "flex", alignItems: "center", gap: 3, border: `1px solid ${arch.color}33` }}>
+                {arch.emoji} {arch.label}
+              </span>
+              {showTip && (
+                <div style={{ position: "absolute", bottom: "100%", right: 0, marginBottom: 6, background: "#0f172a", color: "#eef2f7", padding: "8px 12px", borderRadius: 8, fontSize: 11, lineHeight: 1.4, width: 220, boxShadow: "0 4px 16px rgba(0,0,0,0.3)", zIndex: 100, pointerEvents: "none" }}>
+                  <div style={{ fontWeight: 700, color: ACCENT, marginBottom: 3 }}>{arch.emoji} {arch.label} Pairing</div>
+                  {arch.tip}
+                </div>
+              )}
+            </div>
+          )}
+          <span style={{ fontSize: 12, fontWeight: 700, color: "#0f172a", background: "#dce3ed", borderRadius: 6, padding: "2px 8px" }}>Avg: {avg}</span>
+        </div>
+      </div>
+      {prefWarnings.length > 0 && <div style={{ fontSize: 10, color: "#92400e", background: "#fef3c7", borderRadius: 4, padding: "3px 6px", marginBottom: 6 }}>Pref conflict: {prefWarnings.join(", ")} prefers {side === "Home" ? "Away" : "Home"}</div>}
+      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+        {[0, 1].map(slot => {
+          const player = slot === 0 ? p1 : p2;
+          return player ? (
+            <div key={slot} style={{ display: "flex", alignItems: "center", gap: 4 }}>
+              <div style={{ flex: 1 }}><PlayerCard player={player} compact week={week} threshold={threshold} /></div>
+              {!disabled && <button onClick={() => onRemove(player.id)} style={{ width: 22, height: 22, borderRadius: "50%", border: "1px solid #e5d5d5", background: "#fff5f5", color: "#dc2626", cursor: "pointer", fontSize: 12, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>×</button>}
+            </div>
+          ) : (
+            <div key={slot} style={{ height: 38, border: `1px dashed ${disabled ? "#e2e8f0" : "#b8c2d1"}`, borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", color: "#94a3b8", fontSize: 11 }}>{disabled ? "Locked" : "Drop player here"}</div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TEAM BUILDER (with Lock/Unlock flow)
+// ═══════════════════════════════════════════════════════════════
+function TeamBuilder({ players, schedule, lockState, setLockState, userRole }) {
+  const isAdmin = userRole === "admin";
+  const [activeWeek, setActiveWeek] = useState(1);
+  const emptyWeek = () => ({ team1: { home: [[], [], []], away: [[], [], []] }, team2: { home: [[], [], []], away: [[], [], []] } });
+  const [assignments, setAssignments] = useState({ 1: emptyWeek(), 2: emptyWeek(), 3: emptyWeek() });
+  const [validationMsg, setValidationMsg] = useState(null);
+  const [copyFeedback, setCopyFeedback] = useState(null);
+  const weekSched = schedule[activeWeek];
+  const weekLock = lockState[activeWeek];
+  const isLocked = weekLock.locked;
+  const split = useMemo(() => computeTeamSplit(players, activeWeek), [players, activeWeek]);
+  const assignedIds = useMemo(() => {
+    const w = assignments[activeWeek]; const ids = new Set();
+    ["team1", "team2"].forEach(t => ["home", "away"].forEach(s => w[t][s].forEach(pair => pair.forEach(id => ids.add(id)))));
+    return ids;
+  }, [assignments, activeWeek]);
+  const availablePlayers = useMemo(() => players.filter(p => p.availability[activeWeek] === "yes" && !assignedIds.has(p.id)).sort((a, b) => a.courseHdcp - b.courseHdcp), [players, activeWeek, assignedIds]);
+  const maybePlayers = useMemo(() => players.filter(p => p.availability[activeWeek] === "maybe").sort((a, b) => a.courseHdcp - b.courseHdcp), [players, activeWeek]);
+  const validate = useCallback((na) => {
+    const w = na[activeWeek]; const t1P = []; const t2P = [];
+    ["home", "away"].forEach(s => { w.team1[s].forEach(pair => pair.forEach(id => { const p = players.find(pl => pl.id === id); if (p) t1P.push(p); })); w.team2[s].forEach(pair => pair.forEach(id => { const p = players.find(pl => pl.id === id); if (p) t2P.push(p); })); });
+    if (t1P.length > 0 && t2P.length > 0) {
+      const t1Max = Math.max(...t1P.map(p => p.courseHdcp)); const t2Min = Math.min(...t2P.map(p => p.courseHdcp));
+      if (t2Min < t1Max) return `VIOLATION: Team 2 has a player at ${fmtH(t2Min)} hdcp, lower than Team 1's highest (${fmtH(t1Max)}). GAP rules require Team 2 handicaps >= Team 1's highest.`;
+    }
+    return null;
+  }, [activeWeek, players]);
+
+  const handleDrop = (team, side, pairIdx, playerId) => {
+    if (isLocked) return;
+    const player = players.find(p => p.id === playerId);
+    if (!player) return;
+    if (split.threshold !== null) {
+      if (team === "team2" && player.courseHdcp < split.threshold) { setValidationMsg(`BLOCKED: ${player.name} (hdcp ${fmtH(player.courseHdcp)}) below threshold ${fmtH(split.threshold)} — must be Team 1.`); return; }
+      if (team === "team1" && player.courseHdcp > split.threshold) { setValidationMsg(`BLOCKED: ${player.name} (hdcp ${fmtH(player.courseHdcp)}) above threshold ${fmtH(split.threshold)} — must be Team 2.`); return; }
+    }
+    setAssignments(prev => {
+      const next = JSON.parse(JSON.stringify(prev));
+      ["team1", "team2"].forEach(t => ["home", "away"].forEach(s => next[activeWeek][t][s].forEach(pair => { const idx = pair.indexOf(playerId); if (idx > -1) pair.splice(idx, 1); })));
+      if (next[activeWeek][team][side][pairIdx].length < 2) next[activeWeek][team][side][pairIdx].push(playerId);
+      setValidationMsg(validate(next)); return next;
+    });
+    // If was locked and someone modifies, mark as modified
+    if (weekLock.lastSentAt) {
+      setLockState(prev => ({ ...prev, [activeWeek]: { ...prev[activeWeek], modifiedAfterLock: true } }));
+    }
+  };
+
+  const handleRemove = (playerId) => {
+    if (isLocked) return;
+    setAssignments(prev => {
+      const next = JSON.parse(JSON.stringify(prev));
+      ["team1", "team2"].forEach(t => ["home", "away"].forEach(s => next[activeWeek][t][s].forEach(pair => { const idx = pair.indexOf(playerId); if (idx > -1) pair.splice(idx, 1); })));
+      setValidationMsg(validate(next)); return next;
+    });
+    if (weekLock.lastSentAt) {
+      setLockState(prev => ({ ...prev, [activeWeek]: { ...prev[activeWeek], modifiedAfterLock: true } }));
+    }
+  };
+
+  const handleLock = () => {
+    setLockState(prev => ({ ...prev, [activeWeek]: { ...prev[activeWeek], locked: true, lockedAt: new Date().toLocaleString(), lockedBy: "Admin" } }));
+  };
+  const handleUnlock = () => {
+    setLockState(prev => ({ ...prev, [activeWeek]: { ...prev[activeWeek], locked: false } }));
+  };
+
+  const buildSummary = () => {
+    const ws = schedule[activeWeek];
+    const w = assignments[activeWeek];
+    let text = `PHOENIXVILLE CC — BMW GAP TEAM MATCHES\nWeek ${activeWeek} · ${fmtDateLong(ws.date)}\nHome Tee (PCC): ${ws.homeTee} — Away Tee: ${ws.awayTee}\n(First tee listed, remaining pairs at 10-min intervals)\n${"═".repeat(50)}\n`;
+    ["team1", "team2"].forEach(team => {
+      const ts = ws[team];
+      text += `\n${team === "team1" ? "TEAM 1" : "TEAM 2"} vs ${ts.opponent} ${ts.teamNum}\n${"─".repeat(40)}\n`;
+      ["home", "away"].forEach(side => {
+        const loc = side === "home" ? "Phoenixville CC" : ts.opponent;
+        const baseTee = side === "home" ? ws.homeTee : ws.awayTee;
+        w[team][side].forEach((pair, i) => {
+          const names = pair.map(id => { const p = players.find(pl => pl.id === id); return p ? `${p.name} (${fmtH(p.courseHdcp)})` : "TBD"; });
+          const pairTee = addMinutes(baseTee, i * 10);
+          if (names.length > 0) text += `  ${side.toUpperCase()} Pair ${i+1} @ ${pairTee} at ${loc}: ${names.join(" & ")}\n`;
+        });
+      });
+    });
+    return text;
+  };
+
+  const handleCopy = () => {
+    const text = buildSummary();
+    navigator.clipboard?.writeText(text);
+    setLockState(prev => ({ ...prev, [activeWeek]: { ...prev[activeWeek], lastSentAt: new Date().toLocaleString(), modifiedAfterLock: false } }));
+    setCopyFeedback("Copied to clipboard!");
+    setTimeout(() => setCopyFeedback(null), 3000);
+  };
+
+  const handleMail = () => {
+    const text = buildSummary();
+    setLockState(prev => ({ ...prev, [activeWeek]: { ...prev[activeWeek], lastSentAt: new Date().toLocaleString(), modifiedAfterLock: false } }));
+    window.open(`mailto:?subject=${encodeURIComponent(`PCC Week ${activeWeek} Pairings — ${fmtDateLong(schedule[activeWeek].date)}`)}&body=${encodeURIComponent(text)}`);
+  };
+
+  const countAssigned = (team) => { const w = assignments[activeWeek]; let c = 0; ["home", "away"].forEach(s => w[team][s].forEach(pair => c += pair.length)); return c; };
+  const t1Avail = availablePlayers.filter(p => split.threshold === null || p.courseHdcp <= split.threshold);
+  const t2Avail = availablePlayers.filter(p => split.threshold !== null && p.courseHdcp >= split.threshold);
+
+  return (
+    <div>
+      {/* STALE COPY WARNING */}
+      {weekLock.modifiedAfterLock && (
+        <div style={{ background: "linear-gradient(90deg, #7f1d1d, #991b1b)", border: "2px solid #dc2626", borderRadius: 10, padding: "12px 18px", marginBottom: 14, display: "flex", alignItems: "center", gap: 12, color: "#fecaca" }}>
+          <span style={{ fontSize: 20 }}>⚠</span>
+          <div>
+            <div style={{ fontWeight: 700, fontSize: 14, color: "#fff" }}>Pairings modified since last send — re-notify opposing club</div>
+            <div style={{ fontSize: 12, opacity: 0.8 }}>Last sent: {weekLock.lastSentAt}. Changes have been made. The opposing club has a stale copy.</div>
+          </div>
+          {isAdmin && <button onClick={handleCopy} style={{ marginLeft: "auto", padding: "8px 16px", borderRadius: 6, border: "none", background: "#dc2626", color: "#fff", fontWeight: 700, cursor: "pointer", fontSize: 12, whiteSpace: "nowrap" }}>Re-Copy & Send</button>}
+        </div>
+      )}
+
+      {/* Week Selector */}
+      <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+        {[1, 2, 3].map(w => {
+          const ls = lockState[w];
+          return (
+            <button key={w} onClick={() => { setActiveWeek(w); setValidationMsg(null); }} style={{ flex: 1, padding: "10px 14px", borderRadius: 8, border: activeWeek === w ? "2px solid #0f172a" : "1px solid #c1cad8", background: activeWeek === w ? "linear-gradient(135deg, #0f172a 0%, #162d50 100%)" : "#fff", color: activeWeek === w ? ACCENT : "#0f172a", fontWeight: 700, cursor: "pointer", fontSize: 13, transition: "all 0.2s", position: "relative" }}>
+              <div style={{ fontWeight: 700, display: "flex", alignItems: "center", gap: 6, justifyContent: "center" }}>
+                Week {w} — {fmtDate(schedule[w].date)}
+                {ls.locked && <IconLock />}
+                {ls.modifiedAfterLock && <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#dc2626", display: "inline-block" }} />}
+              </div>
+              <div style={{ fontSize: 10, fontWeight: 400, opacity: 0.8, marginTop: 2 }}>Home: {schedule[w].homeTee} · Away: {schedule[w].awayTee}</div>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Threshold Bar */}
+      {split.threshold !== null && (
+        <div style={{ background: "#fff", border: "1px solid #d1d9e6", borderRadius: 8, padding: "10px 16px", marginBottom: 12, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
+          <div style={{ fontSize: 13 }}><span style={{ fontWeight: 700 }}>First Team Threshold: </span><span style={{ fontWeight: 800, fontSize: 18 }}>{fmtH(split.threshold)}</span><span style={{ color: "#475569", marginLeft: 8, fontWeight: 500 }}>— Team 1 hdcp ≤ {fmtH(split.threshold)}, Team 2 hdcp ≥ {fmtH(split.threshold)}</span></div>
+          <div style={{ display: "flex", gap: 12, fontSize: 12 }}>
+            <span style={{ background: "#dcfce7", padding: "3px 10px", borderRadius: 6, fontWeight: 600, color: "#16a34a" }}>T1: {fmtH(split.t1Range?.min)}–{fmtH(split.t1Range?.max)} ({split.t1.length}p)</span>
+            <span style={{ background: "#dbeafe", padding: "3px 10px", borderRadius: 6, fontWeight: 600, color: "#1e40af" }}>T2: {fmtH(split.t2Range?.min)}–{fmtH(split.t2Range?.max)} ({split.t2.length}p)</span>
+          </div>
+        </div>
+      )}
+
+      {/* Lock Controls (Admin only) */}
+      {isAdmin && (
+        <div style={{ display: "flex", gap: 8, marginBottom: 12, alignItems: "center" }}>
+          {!isLocked ? (
+            <button onClick={handleLock} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 8, border: "2px solid #16a34a", background: "#dcfce7", color: "#16a34a", fontWeight: 700, cursor: "pointer", fontSize: 12 }}><IconLock /> Lock Pairings</button>
+          ) : (
+            <>
+              <button onClick={handleUnlock} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 8, border: "2px solid #f59e0b", background: "#fef3c7", color: "#92400e", fontWeight: 700, cursor: "pointer", fontSize: 12 }}><IconUnlock /> Unlock to Edit</button>
+              <button onClick={handleCopy} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 8, border: "none", background: "linear-gradient(135deg, #0f172a, #162d50)", color: "#fff", fontWeight: 700, cursor: "pointer", fontSize: 12 }}>Copy Summary</button>
+              <button onClick={handleMail} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 8, border: "none", background: "linear-gradient(135deg, #1e40af, #3b82f6)", color: "#fff", fontWeight: 700, cursor: "pointer", fontSize: 12 }}>Open in Mail</button>
+            </>
+          )}
+          {copyFeedback && <span style={{ fontSize: 12, color: "#16a34a", fontWeight: 600 }}>{copyFeedback}</span>}
+          {isLocked && <span style={{ marginLeft: "auto", fontSize: 11, color: "#64748b" }}>Locked {weekLock.lockedAt} by {weekLock.lockedBy}</span>}
+        </div>
+      )}
+      {!isAdmin && isLocked && <div style={{ fontSize: 12, padding: "8px 14px", background: "#fef3c7", borderRadius: 8, marginBottom: 12, color: "#92400e", fontWeight: 600 }}>Pairings locked by Admin — editing disabled</div>}
+
+      {validationMsg && <div style={{ background: "#fef2f2", border: "2px solid #dc2626", borderRadius: 8, padding: "10px 14px", marginBottom: 12, color: "#991b1b", fontSize: 13, fontWeight: 600 }}>{validationMsg}</div>}
+
+      {/* Main Grid */}
+      <div style={{ display: "grid", gridTemplateColumns: "300px 1fr", gap: 16, minHeight: 500 }}>
+        <div style={{ background: "#f5f7fb", borderRadius: 12, padding: 14, border: "1px solid #d1d9e6", maxHeight: 750, overflowY: "auto" }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "#16a34a", marginBottom: 2, letterSpacing: 0.5 }}>TEAM 1 POOL ({t1Avail.length})</div>
+          <div style={{ fontSize: 10, color: "#64748b", marginBottom: 8 }}>Hdcp ≤ {split.threshold != null ? fmtH(split.threshold) : "?"}</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 3, marginBottom: 14 }}>{t1Avail.map(p => <PlayerCard key={p.id} player={p} compact week={activeWeek} threshold={split.threshold} />)}</div>
+          <div style={{ borderTop: "2px solid #c1cad8", paddingTop: 10, marginBottom: 2 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: "#1e40af", marginBottom: 2, letterSpacing: 0.5 }}>TEAM 2 POOL ({t2Avail.length})</div>
+            <div style={{ fontSize: 10, color: "#64748b", marginBottom: 8 }}>Hdcp ≥ {split.threshold != null ? fmtH(split.threshold) : "?"}</div>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 3, marginBottom: 14 }}>{t2Avail.map(p => <PlayerCard key={p.id} player={p} compact week={activeWeek} threshold={split.threshold} />)}</div>
+          {maybePlayers.length > 0 && (
+            <>
+              <div style={{ borderTop: "2px solid #c1cad8", paddingTop: 10 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: "#8b5cf6", marginBottom: 2, letterSpacing: 0.5 }}>ON THE FENCE ({maybePlayers.length})</div>
+                <div style={{ fontSize: 10, color: "#64748b", marginBottom: 8 }}>Team projection shown</div>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                {maybePlayers.map(p => (
+                  <div key={p.id} style={{ position: "relative" }}>
+                    <PlayerCard player={p} compact week={activeWeek} threshold={split.threshold} />
+                    <span style={{ position: "absolute", top: 2, right: 4, fontSize: 8, fontWeight: 700, padding: "1px 4px", borderRadius: 3, background: projectTeam(p, split.threshold) === "T1" ? "#dcfce7" : "#dbeafe", color: projectTeam(p, split.threshold) === "T1" ? "#16a34a" : "#1e40af" }}>→{projectTeam(p, split.threshold)}</span>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          {["team1", "team2"].map(team => {
+            const ts = weekSched[team];
+            return (
+              <div key={team} style={{ background: "#fff", borderRadius: 12, border: "1px solid #d1d9e6", overflow: "hidden" }}>
+                <div style={{ background: team === "team1" ? "linear-gradient(135deg, #0f172a 0%, #162d50 100%)" : "linear-gradient(135deg, #0c1a3d 0%, #1a2f54 100%)", padding: "10px 16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div><span style={{ color: ACCENT, fontSize: 16, fontWeight: 700 }}>{team === "team1" ? "Team 1" : "Team 2"}</span><span style={{ color: "#94a3b8", fontSize: 12, marginLeft: 12 }}>{countAssigned(team)}/12 · vs {ts.opponent}</span>{ts.teamNum && <span style={{ color: "#fff", fontSize: 11, fontWeight: 800, marginLeft: 6, background: ACCENT + "33", padding: "2px 8px", borderRadius: 4, letterSpacing: 0.5 }}>{ts.teamNum}</span>}</div>
+                  <span style={{ fontSize: 11, color: "#94a3b8" }}>{team === "team1" ? `Hdcp ≤ ${split.threshold != null ? fmtH(split.threshold) : "?"}` : `Hdcp ≥ ${split.threshold != null ? fmtH(split.threshold) : "?"}`}</span>
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 0 }}>
+                  {["Home", "Away"].map(side => {
+                    const baseTee = side === "Home" ? weekSched.homeTee : weekSched.awayTee;
+                    return (
+                    <div key={side} style={{ padding: 12, borderRight: side === "Home" ? "1px solid #d1d9e6" : "none" }}>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: side === "Home" ? "#1e40af" : "#92400e", marginBottom: 4, display: "flex", alignItems: "center", gap: 6 }}>
+                        <span style={{ width: 14, height: 14, borderRadius: 3, background: side === "Home" ? "#dbeafe" : "#fef3c7", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9 }}>{side === "Home" ? "H" : "A"}</span>
+                        {side.toUpperCase()} — {side === "Home" ? "Phoenixville CC" : ts.opponent}
+                      </div>
+                      <div style={{ fontSize: 10, color: "#64748b", marginBottom: 8 }}>First tee: {baseTee} · 10-min intervals</div>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                        {[0, 1, 2].map(i => (<PairSlot key={i} pair={assignments[activeWeek][team][side.toLowerCase()][i]} pairNum={i + 1} onDrop={(id) => handleDrop(team, side.toLowerCase(), i, id)} onRemove={handleRemove} players={players} side={side} week={activeWeek} threshold={split.threshold} disabled={isLocked} teeOffset={i * 10} baseTee={baseTee} />))}
+                      </div>
+                    </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════════════════════════════════════
+function Dashboard({ players, schedule, lockState }) {
+  const weekAnalysis = [1, 2, 3].map(w => {
+    const split = computeTeamSplit(players, w);
+    const maybe = players.filter(p => p.availability[w] === "maybe");
+    return { week: w, ...split, maybeAll: maybe, date: schedule[w].date, homeTee: schedule[w].homeTee, awayTee: schedule[w].awayTee, t1Opp: schedule[w].team1.opponent, t2Opp: schedule[w].team2.opponent, t1Num: schedule[w].team1.teamNum, t2Num: schedule[w].team2.teamNum, ls: lockState[w] };
+  });
+  const totalPlayers = players.length;
+  const confirmed = players.filter(p => p.status === "confirmed").length;
+  const declined = players.filter(p => p.status === "declined").length;
+  const maybeP = players.filter(p => p.status === "maybe").length;
+  const contacted = players.filter(p => p.status === "contacted").length;
+  const notContacted = players.filter(p => p.status === "not_contacted").length;
+  const overallSplit = computeTeamSplit(players, 1);
+
+  // Compute average handicap for all players who said yes to ANY week
+  const anyYes = players.filter(p => [1,2,3].some(w => p.availability[w] === "yes"));
+  const overallAvgHdcp = anyYes.length > 0 ? (anyYes.reduce((s, p) => s + p.courseHdcp, 0) / anyYes.length).toFixed(1) : "—";
+  const t1AvgHdcp = overallSplit.t1.length > 0 ? (overallSplit.t1.reduce((s, p) => s + p.courseHdcp, 0) / overallSplit.t1.length).toFixed(1) : "—";
+  const t2AvgHdcp = overallSplit.t2.length > 0 ? (overallSplit.t2.reduce((s, p) => s + p.courseHdcp, 0) / overallSplit.t2.length).toFixed(1) : "—";
+
+  return (
+    <div>
+      <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a", marginBottom: 8, letterSpacing: 0.3 }}>Roster Recruitment</div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 10, marginBottom: 16 }}>
+        {[
+          { label: "Full Roster", val: totalPlayers, color: "#0f172a", sub: "All eligible" },
+          { label: "Confirmed", val: confirmed, color: "#16a34a", sub: "Signed up" },
+          { label: "Maybe", val: maybeP, color: "#8b5cf6", sub: "On the fence" },
+          { label: "Contacted", val: contacted, color: "#f59e0b", sub: "Awaiting reply" },
+          { label: "Declined", val: declined, color: "#dc2626", sub: "Not playing" },
+          { label: "Not Contacted", val: notContacted, color: "#94a3b8", sub: "Need outreach" },
+        ].map(({ label, val, color, sub }) => (
+          <div key={label} style={{ background: "#fff", borderRadius: 10, padding: "14px 12px", border: "1px solid #d1d9e6", textAlign: "center" }}>
+            <div style={{ fontSize: 26, fontWeight: 800, color }}>{val}</div>
+            <div style={{ fontSize: 10, color: "#64748b", fontWeight: 700, letterSpacing: 0.5 }}>{label.toUpperCase()}</div>
+            <div style={{ fontSize: 9, color: "#94a3b8", marginTop: 1 }}>{sub}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* HANDICAP DISTRIBUTION — full width */}
+      <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a", marginBottom: 8, letterSpacing: 0.3 }}>Handicap Distribution</div>
+      <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #d1d9e6", padding: 16, marginBottom: 16 }}>
+        {(() => {
+          const brackets = [
+            { label: "0–4", min: 0, max: 4 }, { label: "5–7", min: 5, max: 7 },
+            { label: "8–10", min: 8, max: 10 }, { label: "11–13", min: 11, max: 13 },
+            { label: "14–18", min: 14, max: 18 }, { label: "19+", min: 19, max: 99 },
+          ];
+          const maxCount = Math.max(...brackets.map(b => players.filter(p => p.courseHdcp >= b.min && p.courseHdcp <= b.max).length), 1);
+          return (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 12 }}>
+              {brackets.map(b => {
+                const all = players.filter(p => p.courseHdcp >= b.min && p.courseHdcp <= b.max);
+                const conf = all.filter(p => p.status === "confirmed");
+                const may = all.filter(p => p.status === "maybe");
+                const nc = all.filter(p => p.status === "not_contacted" || p.status === "contacted");
+                const teamProj = overallSplit.threshold !== null ? (b.max <= overallSplit.threshold ? "T1" : b.min > overallSplit.threshold ? "T2" : "T1/T2") : "T1";
+                return (
+                  <div key={b.label}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: "#0f172a" }}>Hdcp {b.label}</div>
+                      <span style={{ fontSize: 9, padding: "1px 5px", borderRadius: 3, background: teamProj === "T1" ? "#dcfce7" : teamProj === "T2" ? "#dbeafe" : "#eef2f7", color: teamProj === "T1" ? "#16a34a" : teamProj === "T2" ? "#1e40af" : "#64748b", fontWeight: 700 }}>→ {teamProj}</span>
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", height: 80, justifyContent: "flex-end", borderRadius: 5, overflow: "hidden", background: "#f1f5f9", position: "relative" }}>
+                      <div style={{ display: "flex", flexDirection: "column", justifyContent: "flex-end", height: "100%" }}>
+                        <div style={{ height: `${(all.length / maxCount) * 100}%`, minHeight: all.length > 0 ? 8 : 0, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
+                          {nc.length > 0 && <div style={{ height: `${(nc.length / all.length) * 100}%`, minHeight: 4, background: "linear-gradient(180deg, #94a3b8, #64748b)", transition: "height 0.3s" }} />}
+                          {may.length > 0 && <div style={{ height: `${(may.length / all.length) * 100}%`, minHeight: 4, background: "linear-gradient(180deg, #a78bfa, #7c3aed)", transition: "height 0.3s" }} />}
+                          {conf.length > 0 && <div style={{ height: `${(conf.length / all.length) * 100}%`, minHeight: 4, background: "linear-gradient(180deg, #22c55e, #16a34a)", transition: "height 0.3s" }} />}
+                        </div>
+                      </div>
+                    </div>
+                    <div style={{ fontSize: 10, color: "#64748b", textAlign: "center", marginTop: 4 }}>{all.length} total · {conf.length} conf</div>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })()}
+        <div style={{ display: "flex", gap: 16, marginTop: 10, fontSize: 10, color: "#64748b", justifyContent: "center" }}>
+          <span style={{ display: "flex", alignItems: "center", gap: 3 }}><span style={{ width: 8, height: 8, borderRadius: 2, background: "#16a34a" }} /> Confirmed</span>
+          <span style={{ display: "flex", alignItems: "center", gap: 3 }}><span style={{ width: 8, height: 8, borderRadius: 2, background: "#8b5cf6" }} /> Maybe</span>
+          <span style={{ display: "flex", alignItems: "center", gap: 3 }}><span style={{ width: 8, height: 8, borderRadius: 2, background: "#94a3b8" }} /> Not Yet</span>
+          <span style={{ marginLeft: 12, fontWeight: 600 }}>Avg Hdcp (all rostered): {overallAvgHdcp}</span>
+        </div>
+      </div>
+
+      {/* OVERALL TEAM POOLS */}
+      <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a", marginBottom: 8, letterSpacing: 0.3 }}>Overall Team Pools</div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 20 }}>
+        <div style={{ background: "#fff", borderRadius: 10, padding: "16px 14px", textAlign: "center", border: "2px solid #0f172a" }}>
+          <div style={{ fontSize: 28, fontWeight: 800, color: "#0f172a" }}>{overallSplit.t1.length}</div>
+          <div style={{ fontSize: 11, color: "#0f172a", fontWeight: 700, letterSpacing: 0.5 }}>TEAM 1 POOL</div>
+          <div style={{ fontSize: 11, color: "#64748b", marginTop: 3 }}>{overallSplit.t1Range ? `Hdcp ${fmtH(overallSplit.t1Range.min)} – ${fmtH(overallSplit.t1Range.max)}` : "—"}</div>
+          <div style={{ fontSize: 12, color: "#0f172a", fontWeight: 700, marginTop: 4 }}>Avg: {t1AvgHdcp}</div>
+        </div>
+        <div style={{ background: "#fff", borderRadius: 10, padding: "16px 14px", textAlign: "center", border: "2px solid #3b82f6" }}>
+          <div style={{ fontSize: 28, fontWeight: 800, color: "#3b82f6" }}>{overallSplit.t2.length}</div>
+          <div style={{ fontSize: 11, color: "#3b82f6", fontWeight: 700, letterSpacing: 0.5 }}>TEAM 2 POOL</div>
+          <div style={{ fontSize: 11, color: "#64748b", marginTop: 3 }}>{overallSplit.t2Range ? `Hdcp ${fmtH(overallSplit.t2Range.min)} – ${fmtH(overallSplit.t2Range.max)}` : "—"}</div>
+          <div style={{ fontSize: 12, color: "#3b82f6", fontWeight: 700, marginTop: 4 }}>Avg: {t2AvgHdcp}</div>
+        </div>
+      </div>
+
+      {weekAnalysis.map(wa => (
+        <div key={wa.week} style={{ background: "#fff", borderRadius: 12, border: "1px solid #d1d9e6", overflow: "hidden", marginBottom: 16 }}>
+          <div style={{ background: "linear-gradient(135deg, #0f172a 0%, #162d50 100%)", padding: "10px 16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <span style={{ color: ACCENT, fontSize: 17, fontWeight: 700 }}>Week {wa.week}</span>
+              <span style={{ color: "#cbd5e1", fontSize: 13, fontWeight: 600 }}>{fmtDateLong(wa.date)}</span>
+              <span style={{ color: "#94a3b8", fontSize: 11, marginLeft: 10 }}>Home: {wa.homeTee} · Away: {wa.awayTee}</span>
+              {wa.ls.locked && <span style={{ fontSize: 9, padding: "2px 8px", borderRadius: 4, background: "#16a34a33", color: "#4ade80", fontWeight: 700 }}>LOCKED</span>}
+              {wa.ls.modifiedAfterLock && <span style={{ fontSize: 9, padding: "2px 8px", borderRadius: 4, background: "#dc262633", color: "#fca5a5", fontWeight: 700 }}>STALE</span>}
+            </div>
+            {wa.threshold !== null && <div style={{ display: "flex", gap: 8, alignItems: "center" }}><span style={{ fontSize: 12, color: "#cbd5e1", fontWeight: 600 }}>First Team Threshold:</span><span style={{ fontSize: 18, fontWeight: 800, color: ACCENT }}>{fmtH(wa.threshold)}</span></div>}
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 0 }}>
+            {["team1", "team2"].map(team => {
+              const tp = team === "team1" ? wa.t1 : wa.t2;
+              const tm = team === "team1" ? wa.maybe1 : wa.maybe2;
+              const opp = team === "team1" ? wa.t1Opp : wa.t2Opp;
+              const num = team === "team1" ? wa.t1Num : wa.t2Num;
+              const range = team === "team1" ? wa.t1Range : wa.t2Range;
+              const have = tp.length; const gap = Math.max(0, 12 - have);
+              const avgHdcp = tp.length > 0 ? (tp.reduce((s, p) => s + p.courseHdcp, 0) / tp.length).toFixed(1) : "—";
+              return (
+                <div key={team} style={{ padding: 16, borderRight: team === "team1" ? "1px solid #d1d9e6" : "none" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
+                    <div>
+                      <div style={{ fontWeight: 700, color: "#0f172a", fontSize: 14 }}>
+                        <span style={{ background: team === "team1" ? "#dcfce7" : "#dbeafe", color: team === "team1" ? "#16a34a" : "#1e40af", padding: "2px 8px", borderRadius: 4, fontSize: 11, fontWeight: 700, marginRight: 8 }}>{team === "team1" ? "TEAM 1" : "TEAM 2"}</span>
+                        vs {opp} {num}
+                      </div>
+                      <div style={{ fontSize: 11, color: "#64748b", marginTop: 3 }}>3 pairs at PCC · 3 pairs at {opp}</div>
+                    </div>
+                    <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(opp)}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 10, color: "#1e40af", textDecoration: "none", background: "#dbeafe", padding: "3px 8px", borderRadius: 5, fontWeight: 600, whiteSpace: "nowrap" }}>Map</a>
+                  </div>
+                  <div style={{ display: "flex", height: 28, borderRadius: 6, overflow: "hidden", background: "#e2e8f0", marginBottom: 6 }}>
+                    <div style={{ width: `${Math.min(100, (have / 12) * 100)}%`, background: have >= 12 ? "linear-gradient(90deg, #16a34a, #22c55e)" : team === "team1" ? "linear-gradient(90deg, #16a34a, #4ade80)" : "linear-gradient(90deg, #1e40af, #60a5fa)", transition: "width 0.3s", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 11, fontWeight: 700 }}>{have}/12</div>
+                    {tm.length > 0 && <div style={{ width: `${(tm.length / 12) * 100}%`, background: "#8b5cf6", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 10, fontWeight: 700 }}>+{tm.length}?</div>}
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 11, marginBottom: 10 }}>
+                    <div style={{ color: "#64748b" }}>{range ? <span>Hdcp range: <b>{fmtH(range.min)}–{fmtH(range.max)}</b> <span style={{ marginLeft: 8, color: "#0f172a", fontWeight: 700 }}>Avg: {avgHdcp}</span></span> : <span>No players yet</span>}</div>
+                    <div>{gap > 0 ? <span style={{ color: "#dc2626", fontWeight: 700 }}>Need {gap} more</span> : <span style={{ color: "#16a34a", fontWeight: 700 }}>Full</span>}{tm.length > 0 && <span style={{ color: "#8b5cf6", marginLeft: 6 }}>({tm.length} maybe)</span>}</div>
+                  </div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 3 }}>
+                    {tp.map(p => { const parts = p.name.split(","); const last = parts[0].trim(); const first = (parts[1] || "").trim(); const display = first ? `${first.charAt(0)}. ${last}` : last; return (<span key={p.id} style={{ fontSize: 10, background: team === "team1" ? "#dcfce7" : "#dbeafe", color: team === "team1" ? "#16a34a" : "#1e40af", padding: "2px 6px", borderRadius: 4, fontWeight: 600, whiteSpace: "nowrap" }}>{display} ({fmtH(p.courseHdcp)})</span>); })}
+                    {tm.map(p => { const parts = p.name.split(","); const last = parts[0].trim(); const first = (parts[1] || "").trim(); const display = first ? `${first.charAt(0)}. ${last}` : last; return (<span key={p.id} style={{ fontSize: 10, background: "#ede9fe", color: "#8b5cf6", padding: "2px 6px", borderRadius: 4, fontWeight: 600, whiteSpace: "nowrap", fontStyle: "italic" }}>{display} ({fmtH(p.courseHdcp)})?</span>); })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+
+      <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #d1d9e6", overflow: "hidden" }}>
+          <div style={{ background: "linear-gradient(135deg, #0f172a 0%, #162d50 100%)", color: ACCENT, padding: "10px 16px", fontSize: 15, fontWeight: 700 }}>Follow-Up Targets</div>
+          <div style={{ padding: 16, display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 16 }}>
+            {[
+              { title: "CONTACTED — Awaiting Reply", filter: p => p.status === "contacted", bg: "#fef9c3", color: "#f59e0b", extra: p => p.contactOwner ? `By: ${p.contactOwner}` : "" },
+              { title: "MAYBE — On the Fence", filter: p => p.status === "maybe", bg: "#ede9fe", color: "#8b5cf6", extra: p => "Wks: " + [1,2,3].filter(w => p.availability[w] === "maybe").join(", ") },
+              { title: "NOT CONTACTED — Recruits", filter: p => p.status === "not_contacted", bg: "#f1f5f9", color: "#94a3b8", extra: p => "Index: " + p.index },
+              { title: "DECLINED — Re-Recruit", filter: p => p.status === "declined", bg: "#fee2e2", color: "#dc2626", extra: p => "Hdcp: " + fmtH(p.courseHdcp) },
+            ].map(group => {
+              const list = players.filter(group.filter).sort((a, b) => a.courseHdcp - b.courseHdcp);
+              return (
+                <div key={group.title}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: group.color, marginBottom: 6 }}>{group.title}</div>
+                  {list.length === 0 && <div style={{ fontSize: 11, color: "#94a3b8", fontStyle: "italic" }}>None</div>}
+                  {list.map(p => {
+                    const proj = projectTeam(p, overallSplit.threshold);
+                    return (
+                      <div key={p.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "4px 8px", background: group.bg, borderRadius: 6, marginBottom: 3, fontSize: 11 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                          <span style={{ fontWeight: 700, fontSize: 9, padding: "1px 5px", borderRadius: 3, background: proj === "T1" ? "#dcfce7" : "#dbeafe", color: proj === "T1" ? "#16a34a" : "#1e40af" }}>{proj}</span>
+                          <span style={{ fontWeight: 600 }}>{p.name} ({fmtH(p.courseHdcp)})</span>
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                          <span style={{ color: "#64748b", fontSize: 10 }}>{group.extra(p)}</span>
+                          {p.phone && <a href={`tel:${p.phone}`} style={{ fontSize: 12, textDecoration: "none" }}>📞</a>}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ROSTER
+// ═══════════════════════════════════════════════════════════════
+function Roster({ players, setPlayers }) {
+  const [search, setSearch] = useState("");
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [sortBy, setSortBy] = useState("handicap");
+  const [editingId, setEditingId] = useState(null);
+  const overallSplit = computeTeamSplit(players, 1);
+  const filtered = useMemo(() => {
+    let list = [...players];
+    if (search) list = list.filter(p => p.name.toLowerCase().includes(search.toLowerCase()) || p.ghin.includes(search));
+    if (filterStatus !== "all") list = list.filter(p => p.status === filterStatus);
+    if (sortBy === "handicap") list.sort((a, b) => a.courseHdcp - b.courseHdcp);
+    else if (sortBy === "name") list.sort((a, b) => a.name.localeCompare(b.name));
+    else if (sortBy === "status") list.sort((a, b) => a.status.localeCompare(b.status));
+    return list;
+  }, [players, search, filterStatus, sortBy]);
+  const updatePlayer = (id, field, value) => setPlayers(prev => prev.map(p => p.id === id ? { ...p, [field]: value } : p));
+  const updateAvail = (id, week, value) => setPlayers(prev => prev.map(p => p.id === id ? { ...p, availability: { ...p.availability, [week]: value } } : p));
+  const updateLocPref = (id, week, value) => setPlayers(prev => prev.map(p => p.id === id ? { ...p, locPref: { ...p.locPref, [week]: value } } : p));
+
+  const [uploadMsg, setUploadMsg] = useState(null);
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const ext = file.name.split(".").pop().toLowerCase();
+    try {
+      let text = "";
+      if (ext === "csv") {
+        text = await file.text();
+      } else if (ext === "xlsx" || ext === "xls") {
+        setUploadMsg("Reading Excel file...");
+        const Papa = await import("papaparse");
+        // For xlsx we read as text via SheetJS if available, otherwise prompt for csv
+        try {
+          const XLSX = await import("sheetjs");
+          const data = await file.arrayBuffer();
+          const wb = XLSX.read(data);
+          const ws = wb.Sheets[wb.SheetNames[0]];
+          text = XLSX.utils.sheet_to_csv(ws);
+        } catch {
+          setUploadMsg("Excel parsing not available in this environment. Please export as .csv and re-upload.");
+          return;
+        }
+      }
+      if (!text) { setUploadMsg("Could not read file."); return; }
+      // Parse CSV
+      const lines = text.trim().split("\n").map(l => l.split(",").map(c => c.trim().replace(/^"|"$/g, "")));
+      if (lines.length < 2) { setUploadMsg("File appears empty."); return; }
+      const header = lines[0].map(h => h.toLowerCase());
+      const nameIdx = header.findIndex(h => h.includes("name") || h.includes("player"));
+      const ghinIdx = header.findIndex(h => h.includes("ghin") || h.includes("ghin #"));
+      const hdcpIdx = header.findIndex(h => h.includes("hdcp") || h.includes("handicap") || h.includes("course"));
+      const indexIdx = header.findIndex(h => h.includes("index"));
+      const phoneIdx = header.findIndex(h => h.includes("phone") || h.includes("cell") || h.includes("mobile"));
+      const emailIdx = header.findIndex(h => h.includes("email") || h.includes("e-mail"));
+      if (nameIdx === -1) { setUploadMsg("Could not find a 'Name' or 'Player' column. Please check the file header row."); return; }
+      const maxId = Math.max(...players.map(p => p.id), 0);
+      const newPlayers = lines.slice(1).filter(row => row[nameIdx] && row[nameIdx].trim()).map((row, i) => ({
+        id: maxId + i + 1,
+        name: row[nameIdx] || "Unknown",
+        ghin: ghinIdx > -1 ? (row[ghinIdx] || "") : "",
+        courseHdcp: hdcpIdx > -1 ? (parseFloat(row[hdcpIdx]) || 15) : 15,
+        index: indexIdx > -1 ? (parseFloat(row[indexIdx]) || 15) : 15,
+        phone: phoneIdx > -1 ? (row[phoneIdx] || "") : "",
+        email: emailIdx > -1 ? (row[emailIdx] || "") : "",
+        status: "not_contacted", contactOwner: "", contactDate: "",
+        availability: { 1: "no", 2: "no", 3: "no" },
+        locPref: { 1: "", 2: "", 3: "" }, notes: "Imported"
+      }));
+      setPlayers(prev => [...prev, ...newPlayers]);
+      setUploadMsg(`Imported ${newPlayers.length} players from ${file.name}`);
+      setTimeout(() => setUploadMsg(null), 5000);
+    } catch (err) {
+      setUploadMsg("Error reading file: " + err.message);
+    }
+    e.target.value = "";
+  };
+
+  const addPlayer = () => {
+    const newId = Math.max(...players.map(p => p.id)) + 1;
+    setPlayers(prev => [...prev, { id: newId, name: "New, Player", ghin: "", courseHdcp: 15, index: 15.0, phone: "", email: "", status: "not_contacted", contactOwner: "", contactDate: "", availability: { 1: "no", 2: "no", 3: "no" }, locPref: { 1: "", 2: "", 3: "" }, notes: "EDIT ME" }]);
+    setEditingId(newId);
+  };
+
+  return (
+    <div>
+      {/* ROSTER UPLOAD */}
+      <div style={{ background: "#fff", borderRadius: 10, border: "1px solid #d1d9e6", padding: "14px 18px", marginBottom: 14, display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>Roster Upload</span>
+          <span style={{ fontSize: 11, color: "#64748b" }}>Import players from .csv or .xlsx</span>
+        </div>
+        <label style={{ padding: "7px 16px", borderRadius: 6, border: "2px dashed #7dd3fc", background: "#f0f9ff", color: "#0f172a", fontWeight: 600, cursor: "pointer", fontSize: 12, display: "flex", alignItems: "center", gap: 6 }}>
+          📁 Choose File
+          <input type="file" accept=".csv,.xlsx,.xls" onChange={handleFileUpload} style={{ display: "none" }} />
+        </label>
+        <span style={{ fontSize: 10, color: "#94a3b8" }}>Columns: Name, GHIN, Handicap/HDCP, Index, Phone, Email</span>
+        {uploadMsg && <span style={{ fontSize: 12, fontWeight: 600, color: uploadMsg.includes("Error") || uploadMsg.includes("not") ? "#dc2626" : "#16a34a", background: uploadMsg.includes("Error") || uploadMsg.includes("not") ? "#fee2e2" : "#dcfce7", padding: "4px 10px", borderRadius: 6 }}>{uploadMsg}</span>}
+      </div>
+
+      <div style={{ display: "flex", gap: 10, marginBottom: 16, flexWrap: "wrap" }}>
+        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by name or GHIN..." style={{ flex: "1 1 200px", padding: "8px 14px", borderRadius: 8, border: "1px solid #c1cad8", fontSize: 13, background: "#f5f7fb", outline: "none" }} />
+        <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} style={{ padding: "8px 14px", borderRadius: 8, border: "1px solid #c1cad8", fontSize: 13, background: "#f5f7fb", cursor: "pointer" }}>
+          <option value="all">All Statuses</option>
+          {Object.entries(STATUS_CONFIG).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+        </select>
+        <select value={sortBy} onChange={e => setSortBy(e.target.value)} style={{ padding: "8px 14px", borderRadius: 8, border: "1px solid #c1cad8", fontSize: 13, background: "#f5f7fb", cursor: "pointer" }}>
+          <option value="handicap">Sort: Handicap</option>
+          <option value="name">Sort: Name</option>
+          <option value="status">Sort: Status</option>
+        </select>
+        <button onClick={addPlayer} style={{ padding: "8px 16px", borderRadius: 8, border: "none", background: "linear-gradient(135deg, #0f172a, #1e3a5f)", color: ACCENT, fontWeight: 700, cursor: "pointer", fontSize: 13, whiteSpace: "nowrap" }}>+ Add Player</button>
+        <div style={{ fontSize: 13, color: "#64748b", display: "flex", alignItems: "center", fontWeight: 600 }}>{filtered.length} of {players.length}</div>
+      </div>
+      <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #d1d9e6", overflow: "hidden" }}>
+        <div style={{ overflowX: "auto" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+            <thead><tr style={{ background: "linear-gradient(135deg, #0f172a 0%, #162d50 100%)", color: ACCENT }}>
+              {["Proj", "Player", "HDCP", "Index", "GHIN", "Contact", "Status", "Wk1", "Wk2", "Wk3", "Loc1", "Loc2", "Loc3", "Notes"].map(h => (
+                <th key={h} style={{ padding: "10px 6px", textAlign: "left", fontWeight: 600, fontSize: 10, letterSpacing: 0.5, whiteSpace: "nowrap" }}>{h}</th>
+              ))}
+            </tr></thead>
+            <tbody>
+              {filtered.map((p, i) => {
+                const s = STATUS_CONFIG[p.status];
+                const proj = projectTeam(p, overallSplit.threshold);
+                return (
+                  <tr key={p.id} style={{ background: i % 2 === 0 ? "#fff" : "#f5f7fb", borderBottom: "1px solid #e2e8f0" }}>
+                    <td style={{ padding: "6px", textAlign: "center" }}><span style={{ fontSize: 10, fontWeight: 700, padding: "2px 6px", borderRadius: 4, background: proj === "T1" ? "#dcfce7" : "#dbeafe", color: proj === "T1" ? "#16a34a" : "#1e40af" }}>{proj}</span></td>
+                    <td style={{ padding: "6px 8px", fontWeight: 600, color: "#0f172a", whiteSpace: "nowrap" }}>
+                      {editingId === p.id ? <input value={p.name} onChange={e => updatePlayer(p.id, "name", e.target.value)} style={{ fontSize: 12, padding: "2px 6px", border: "1px solid #38bdf8", borderRadius: 4, width: "100%", background: "#eff6ff", fontWeight: 600 }} />
+                        : <span onClick={() => setEditingId(p.id)} style={{ cursor: "pointer" }}>{p.name}</span>}
+                    </td>
+                    <td style={{ padding: "6px", fontWeight: 800, color: "#0f172a", textAlign: "center" }}>
+                      {editingId === p.id ? <input type="number" step="0.1" value={p.courseHdcp} onChange={e => updatePlayer(p.id, "courseHdcp", parseFloat(e.target.value) || 0)} style={{ fontSize: 11, padding: "2px 4px", border: "1px solid #38bdf8", borderRadius: 4, width: 45, background: "#eff6ff", fontWeight: 800, textAlign: "center" }} />
+                        : <span onClick={() => setEditingId(p.id)} style={{ cursor: "pointer" }}>{fmtH(p.courseHdcp)}</span>}
+                    </td>
+                    <td style={{ padding: "6px", color: "#64748b", textAlign: "center" }}>
+                      {editingId === p.id ? <input type="number" step="0.1" value={p.index} onChange={e => updatePlayer(p.id, "index", parseFloat(e.target.value) || 0)} style={{ fontSize: 11, padding: "2px 4px", border: "1px solid #38bdf8", borderRadius: 4, width: 45, background: "#eff6ff", textAlign: "center" }} />
+                        : <span onClick={() => setEditingId(p.id)} style={{ cursor: "pointer" }}>{p.index}</span>}
+                    </td>
+                    <td style={{ padding: "6px", color: "#64748b", fontFamily: "monospace", fontSize: 10 }}>
+                      {editingId === p.id ? <input value={p.ghin} onChange={e => updatePlayer(p.id, "ghin", e.target.value)} style={{ fontSize: 10, padding: "2px 4px", border: "1px solid #38bdf8", borderRadius: 4, width: 70, background: "#eff6ff", fontFamily: "monospace" }} />
+                        : <span onClick={() => setEditingId(p.id)} style={{ cursor: "pointer" }}>{p.ghin}</span>}
+                    </td>
+                    <td style={{ padding: "4px 6px" }}>
+                      <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+                        {p.phone && <a href={`tel:${p.phone}`} title={p.phone} style={{ fontSize: 12, textDecoration: "none" }}>📞</a>}
+                        {p.email && <a href={`mailto:${p.email}`} title={p.email} style={{ fontSize: 12, textDecoration: "none" }}>✉️</a>}
+                        {p.contactOwner && <span style={{ fontSize: 9, color: "#64748b", background: "#f1f5f9", padding: "1px 4px", borderRadius: 3 }}>{p.contactOwner}</span>}
+                      </div>
+                    </td>
+                    <td style={{ padding: "6px" }}><select value={p.status} onChange={e => updatePlayer(p.id, "status", e.target.value)} style={{ fontSize: 10, padding: "2px 4px", borderRadius: 4, border: `1px solid ${s.color}44`, background: s.bg, color: s.color, fontWeight: 600, cursor: "pointer" }}>{Object.entries(STATUS_CONFIG).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}</select></td>
+                    {[1, 2, 3].map(w => (<td key={`a${w}`} style={{ padding: "3px 4px", textAlign: "center" }}><select value={p.availability[w]} onChange={e => updateAvail(p.id, w, e.target.value)} style={{ fontSize: 10, padding: "2px 2px", borderRadius: 4, border: `1px solid ${(AVAIL_COLORS[p.availability[w]] || "#ccc")}44`, background: p.availability[w] === "yes" ? "#dcfce7" : p.availability[w] === "maybe" ? "#ede9fe" : "#fee2e2", color: AVAIL_COLORS[p.availability[w]] || "#666", fontWeight: 600, cursor: "pointer", width: 50 }}><option value="no">No</option><option value="yes">Yes</option><option value="maybe">Maybe</option></select></td>))}
+                    {[1, 2, 3].map(w => (<td key={`l${w}`} style={{ padding: "3px 4px", textAlign: "center" }}><select value={p.locPref[w]} onChange={e => updateLocPref(p.id, w, e.target.value)} style={{ fontSize: 10, padding: "2px 2px", borderRadius: 4, border: "1px solid #c1cad8", background: "#f5f7fb", cursor: "pointer", width: 42 }}><option value="">-</option><option value="Home">H</option><option value="Away">A</option></select></td>))}
+                    <td style={{ padding: "3px 6px" }}>
+                      {editingId === p.id ? (
+                        <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+                          <input value={p.notes} onChange={e => updatePlayer(p.id, "notes", e.target.value)} placeholder="Notes..." style={{ fontSize: 10, padding: "2px 6px", border: "1px solid #38bdf8", borderRadius: 4, flex: 1, background: "#eff6ff" }} />
+                          <button onClick={() => setEditingId(null)} style={{ fontSize: 9, padding: "3px 8px", borderRadius: 4, border: "none", background: "#16a34a", color: "#fff", fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" }}>✓ Done</button>
+                        </div>
+                      ) : <div onClick={() => setEditingId(p.id)} style={{ fontSize: 10, color: p.notes ? "#92400e" : "#ccc", cursor: "pointer", fontStyle: p.notes ? "italic" : "normal", minWidth: 50 }}>{p.notes || "+"}</div>}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ROOT COMPONENT
+// ═══════════════════════════════════════════════════════════════
+export default function GAPManager() {
+  const [activeTab, setActiveTab] = useState("dashboard");
+  const [players, setPlayers] = useState(SAMPLE_PLAYERS);
+  const [schedule, setSchedule] = useState(DEFAULT_SCHEDULE);
+  const [lockState, setLockState] = useState(DEFAULT_LOCK_STATE);
+  const [userRole, setUserRole] = useState("admin"); // "admin" | "vice_captain"
+
+  const tabs = [
+    { id: "dashboard", label: "Dashboard", Icon: IconDashboard },
+    { id: "builder", label: "Team Builder", Icon: IconBuilder },
+    { id: "roster", label: "Roster", Icon: IconRoster },
+    { id: "setup", label: "Season Setup", Icon: IconSetup },
+  ];
+
+  return (
+    <div style={{ fontFamily: "'Poppins', 'Segoe UI', -apple-system, sans-serif", background: "#eef2f7", minHeight: "100vh", color: "#0f172a" }}>
+      <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+      <header style={{ background: "linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%)", padding: "0 24px", borderBottom: "3px solid #7dd3fc" }}>
+        <div style={{ maxWidth: 1400, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+            <div style={{ width: 42, height: 42, borderRadius: "50%", background: "linear-gradient(135deg, #7dd3fc, #38bdf8)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, fontWeight: 800, color: "#0f172a" }}>P</div>
+            <div>
+              <div style={{ color: "#7dd3fc", fontSize: 20, fontWeight: 700, lineHeight: 1.1 }}>Phoenixville CC</div>
+              <div style={{ color: "#94a3b8", fontSize: 11, letterSpacing: 1 }}>BMW GAP TEAM MATCHES 2026</div>
+            </div>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+            <nav style={{ display: "flex", gap: 2 }}>
+              {tabs.map(t => (
+                <button key={t.id} onClick={() => setActiveTab(t.id)} style={{ padding: "16px 20px", background: activeTab === t.id ? "#7dd3fc15" : "transparent", border: "none", borderBottom: activeTab === t.id ? "3px solid #7dd3fc" : "3px solid transparent", color: activeTab === t.id ? "#7dd3fc" : "#94a3b8", cursor: "pointer", fontSize: 13, fontWeight: 600, transition: "all 0.2s", display: "flex", alignItems: "center", gap: 6 }}>
+                  <t.Icon /> {t.label}
+                </button>
+              ))}
+            </nav>
+            {/* Role Toggle */}
+            <div style={{ display: "flex", alignItems: "center", gap: 6, background: "#0f172a", borderRadius: 8, padding: "4px 6px", border: "1px solid #334155" }}>
+              <button onClick={() => setUserRole("admin")} style={{ padding: "4px 10px", borderRadius: 6, border: "none", background: userRole === "admin" ? "#16a34a" : "transparent", color: userRole === "admin" ? "#fff" : "#64748b", fontSize: 10, fontWeight: 700, cursor: "pointer" }}>Admin</button>
+              <button onClick={() => setUserRole("vice_captain")} style={{ padding: "4px 10px", borderRadius: 6, border: "none", background: userRole === "vice_captain" ? "#f59e0b" : "transparent", color: userRole === "vice_captain" ? "#fff" : "#64748b", fontSize: 10, fontWeight: 700, cursor: "pointer" }}>Vice-Cpt</button>
+            </div>
+          </div>
+        </div>
+      </header>
+      <main style={{ maxWidth: 1400, margin: "0 auto", padding: "24px" }}>
+        {activeTab === "dashboard" && <Dashboard players={players} schedule={schedule} lockState={lockState} />}
+        {activeTab === "roster" && <Roster players={players} setPlayers={setPlayers} />}
+        {activeTab === "builder" && <TeamBuilder players={players} schedule={schedule} lockState={lockState} setLockState={setLockState} userRole={userRole} />}
+        {activeTab === "setup" && <SeasonSetup schedule={schedule} setSchedule={setSchedule} lockState={lockState} userRole={userRole} />}
+      </main>
+      <footer style={{ textAlign: "center", padding: "16px", color: "#64748b", fontSize: 11, borderTop: "1px solid #d1d9e6" }}>PCC GAP Match Manager · April 1 Handicap Revision · All matches scratch — no handicap strokes</footer>
+    </div>
+  );
+}
