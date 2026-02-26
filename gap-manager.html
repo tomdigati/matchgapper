@@ -51,64 +51,64 @@ const GAP_CLUBS = [
 // SAMPLE PLAYER DATA
 // ═══════════════════════════════════════════════════════════════
 const SAMPLE_PLAYERS = [
-  { id: 1, name: "Nattle, Frank", ghin: "980325", courseHdcp: 0, index: 0.7, phone: "610-555-0101", email: "fnattle@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "yes", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
+  { id: 1, name: "Nattle, Frank", ghin: "980325", courseHdcp: 0, index: 0.7, phone: "610-555-0101", email: "fnattle@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "yes", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "", teamRole: "" },
   { id: 2, name: "Digati, Thomas", ghin: "360689", courseHdcp: 3, index: 3.5, phone: "610-555-0102", email: "tdigati@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "yes", 3: "yes" }, locPref: { 1: "Home", 2: "", 3: "" }, notes: "" },
-  { id: 3, name: "Eanes, Matt", ghin: "3168779", courseHdcp: 3, index: 4.0, phone: "610-555-0103", email: "meanes@email.com", status: "maybe", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "maybe", 2: "no", 3: "maybe" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
-  { id: 4, name: "Fediukov, Luka", ghin: "3076131", courseHdcp: 3, index: 3.5, phone: "610-555-0104", email: "lfediukov@email.com", status: "declined", contactOwner: "Dever", contactDate: "", availability: { 1: "no", 2: "no", 3: "no" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
+  { id: 3, name: "Eanes, Matt", ghin: "3168779", courseHdcp: 3, index: 4.0, phone: "610-555-0103", email: "meanes@email.com", status: "maybe", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "maybe", 2: "no", 3: "maybe" }, locPref: { 1: "", 2: "", 3: "" }, notes: "", teamRole: "" },
+  { id: 4, name: "Fediukov, Luka", ghin: "3076131", courseHdcp: 3, index: 3.5, phone: "610-555-0104", email: "lfediukov@email.com", status: "declined", contactOwner: "Dever", contactDate: "", availability: { 1: "no", 2: "no", 3: "no" }, locPref: { 1: "", 2: "", 3: "" }, notes: "", teamRole: "" },
   { id: 5, name: "Kovalski, Daniel", ghin: "1181804", courseHdcp: 4, index: 4.5, phone: "610-555-0105", email: "dkovalski@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "no", 3: "yes" }, locPref: { 1: "Home", 2: "", 3: "" }, notes: "" },
-  { id: 6, name: "MacDonough, Matt", ghin: "10871700", courseHdcp: 4, index: 4.9, phone: "610-555-0106", email: "mmacdonough@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "yes", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
+  { id: 6, name: "MacDonough, Matt", ghin: "10871700", courseHdcp: 4, index: 4.9, phone: "610-555-0106", email: "mmacdonough@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "yes", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "", teamRole: "" },
   { id: 7, name: "Sullivan, Patrick M.", ghin: "6904516", courseHdcp: 4, index: 4.2, phone: "610-555-0107", email: "psullivan@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "yes", 3: "yes" }, locPref: { 1: "Away", 2: "", 3: "" }, notes: "" },
-  { id: 8, name: "Bostic, Jeff", ghin: "2172491", courseHdcp: 6, index: 6.6, phone: "610-555-0108", email: "jbostic@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "yes", 3: "no" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
-  { id: 9, name: "Coleman, Kevin", ghin: "7413202", courseHdcp: 6, index: 6.2, phone: "610-555-0109", email: "kcoleman@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "no", 2: "yes", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
-  { id: 10, name: "Loftus, Michael P", ghin: "7987449", courseHdcp: 6, index: 6.2, phone: "610-555-0110", email: "mloftus@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "yes", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
+  { id: 8, name: "Bostic, Jeff", ghin: "2172491", courseHdcp: 6, index: 6.6, phone: "610-555-0108", email: "jbostic@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "yes", 3: "no" }, locPref: { 1: "", 2: "", 3: "" }, notes: "", teamRole: "" },
+  { id: 9, name: "Coleman, Kevin", ghin: "7413202", courseHdcp: 6, index: 6.2, phone: "610-555-0109", email: "kcoleman@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "no", 2: "yes", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "", teamRole: "" },
+  { id: 10, name: "Loftus, Michael P", ghin: "7987449", courseHdcp: 6, index: 6.2, phone: "610-555-0110", email: "mloftus@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "yes", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "", teamRole: "" },
   { id: 11, name: "Statton, Brandon", ghin: "1794499", courseHdcp: 6, index: 6.3, phone: "610-555-0111", email: "bstatton@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "yes", 3: "no" }, locPref: { 1: "Away", 2: "", 3: "" }, notes: "" },
-  { id: 12, name: "Upadhyay, Manish", ghin: "8521960", courseHdcp: 6, index: 6.1, phone: "610-555-0112", email: "mupadhyay@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "no", 2: "yes", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
-  { id: 13, name: "Miller, Coleman", ghin: "10461311", courseHdcp: 6, index: 6.6, phone: "610-555-0113", email: "cmiller@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "", availability: { 1: "yes", 2: "no", 3: "no" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
-  { id: 14, name: "Hornig, Timothy", ghin: "904247", courseHdcp: 7, index: 6.6, phone: "610-555-0114", email: "thornig@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "yes", 3: "yes" }, locPref: { 1: "Away", 2: "", 3: "" }, notes: "Brett away week 1 if possible" },
+  { id: 12, name: "Upadhyay, Manish", ghin: "8521960", courseHdcp: 6, index: 6.1, phone: "610-555-0112", email: "mupadhyay@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "no", 2: "yes", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "", teamRole: "" },
+  { id: 13, name: "Miller, Coleman", ghin: "10461311", courseHdcp: 6, index: 6.6, phone: "610-555-0113", email: "cmiller@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "", availability: { 1: "yes", 2: "no", 3: "no" }, locPref: { 1: "", 2: "", 3: "" }, notes: "", teamRole: "" },
+  { id: 14, name: "Hornig, Timothy", ghin: "904247", courseHdcp: 7, index: 6.6, phone: "610-555-0114", email: "thornig@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "yes", 3: "yes" }, locPref: { 1: "Away", 2: "", 3: "" }, notes: "Brett away week 1 if possible", teamRole: "" },
   { id: 15, name: "Rubinstein, Brett", ghin: "10377386", courseHdcp: 7, index: 6.8, phone: "610-555-0115", email: "brubinstein@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "yes", 3: "no" }, locPref: { 1: "Home", 2: "", 3: "" }, notes: "" },
-  { id: 16, name: "Higgins, Tom", ghin: "1147574", courseHdcp: 7, index: 7.0, phone: "610-555-0116", email: "thiggins@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "no", 3: "no" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
-  { id: 17, name: "Howarth, Alex", ghin: "1226027", courseHdcp: 8, index: 8.1, phone: "610-555-0117", email: "ahowarth@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "no", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
-  { id: 18, name: "Jones, Ryan P", ghin: "2827080", courseHdcp: 8, index: 8.0, phone: "610-555-0118", email: "rjones@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "no", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "Mannons requesting location concessions" },
-  { id: 19, name: "Collins, Matthew P", ghin: "3670110", courseHdcp: 8, index: 7.7, phone: "610-555-0119", email: "mcollins@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "no", 2: "yes", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
-  { id: 20, name: "Mannon, Walker", ghin: "2600752", courseHdcp: 8, index: 7.6, phone: "610-555-0120", email: "wmannon@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "no", 2: "yes", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
-  { id: 21, name: "McKeon, Sean D", ghin: "53125", courseHdcp: 8, index: 7.7, phone: "610-555-0121", email: "smckeon@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "no", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
-  { id: 22, name: "Alexander, Tom", ghin: "10691692", courseHdcp: 9, index: 9.2, phone: "610-555-0122", email: "talexander@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "no", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
-  { id: 23, name: "Hess, Mark", ghin: "1959652", courseHdcp: 9, index: 8.7, phone: "610-555-0123", email: "mhess@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "no", 2: "yes", 3: "no" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
-  { id: 24, name: "Miller, Rich", ghin: "2155729", courseHdcp: 9, index: 9.2, phone: "610-555-0124", email: "rmiller@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "yes", 3: "no" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
+  { id: 16, name: "Higgins, Tom", ghin: "1147574", courseHdcp: 7, index: 7.0, phone: "610-555-0116", email: "thiggins@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "no", 3: "no" }, locPref: { 1: "", 2: "", 3: "" }, notes: "", teamRole: "" },
+  { id: 17, name: "Howarth, Alex", ghin: "1226027", courseHdcp: 8, index: 8.1, phone: "610-555-0117", email: "ahowarth@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "no", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "", teamRole: "" },
+  { id: 18, name: "Jones, Ryan P", ghin: "2827080", courseHdcp: 8, index: 8.0, phone: "610-555-0118", email: "rjones@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "no", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "Mannons requesting location concessions", teamRole: "" },
+  { id: 19, name: "Collins, Matthew P", ghin: "3670110", courseHdcp: 8, index: 7.7, phone: "610-555-0119", email: "mcollins@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "no", 2: "yes", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "", teamRole: "" },
+  { id: 20, name: "Mannon, Walker", ghin: "2600752", courseHdcp: 8, index: 7.6, phone: "610-555-0120", email: "wmannon@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "no", 2: "yes", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "", teamRole: "" },
+  { id: 21, name: "McKeon, Sean D", ghin: "53125", courseHdcp: 8, index: 7.7, phone: "610-555-0121", email: "smckeon@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "no", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "", teamRole: "" },
+  { id: 22, name: "Alexander, Tom", ghin: "10691692", courseHdcp: 9, index: 9.2, phone: "610-555-0122", email: "talexander@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "no", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "", teamRole: "" },
+  { id: 23, name: "Hess, Mark", ghin: "1959652", courseHdcp: 9, index: 8.7, phone: "610-555-0123", email: "mhess@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "no", 2: "yes", 3: "no" }, locPref: { 1: "", 2: "", 3: "" }, notes: "", teamRole: "" },
+  { id: 24, name: "Miller, Rich", ghin: "2155729", courseHdcp: 9, index: 9.2, phone: "610-555-0124", email: "rmiller@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "yes", 3: "no" }, locPref: { 1: "", 2: "", 3: "" }, notes: "", teamRole: "" },
   { id: 25, name: "Bayzick, Joshua", ghin: "10943526", courseHdcp: 10, index: 9.6, phone: "610-555-0125", email: "jbayzick@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "", availability: { 1: "yes", 2: "yes", 3: "yes" }, locPref: { 1: "Away", 2: "", 3: "" }, notes: "" },
-  { id: 26, name: "Mannon, Michael", ghin: "327820", courseHdcp: 10, index: 9.6, phone: "610-555-0126", email: "mmannon@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "no", 2: "no", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
-  { id: 27, name: "Russell, Garrett", ghin: "1567873", courseHdcp: 10, index: 10.0, phone: "610-555-0127", email: "grussell@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "no", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
-  { id: 28, name: "Stackhouse, Matthew", ghin: "12005753", courseHdcp: 10, index: 9.6, phone: "610-555-0128", email: "mstackhouse@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "yes", 3: "no" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
-  { id: 29, name: "Campbell, Tim", ghin: "6634388", courseHdcp: 11, index: 10.2, phone: "610-555-0129", email: "tcampbell@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "yes", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
-  { id: 30, name: "Zegel, Bob", ghin: "7949150", courseHdcp: 11, index: 10.2, phone: "610-555-0130", email: "bzegel@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "no", 3: "no" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
-  { id: 31, name: "Selinsky, Barry", ghin: "2924051", courseHdcp: 11, index: 10.4, phone: "610-555-0131", email: "bselinsky@email.com", status: "maybe", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "maybe", 2: "maybe", 3: "maybe" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
-  { id: 32, name: "Limaye, Kris", ghin: "3516581", courseHdcp: 12, index: 11.4, phone: "610-555-0132", email: "klimaye@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "yes", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
-  { id: 33, name: "Martin, Samuel", ghin: "3162048", courseHdcp: 12, index: 11.0, phone: "610-555-0133", email: "smartin@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "yes", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
-  { id: 34, name: "Silvestri, Robert M", ghin: "2236198", courseHdcp: 12, index: 11.4, phone: "610-555-0134", email: "rsilvestri@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "yes", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
-  { id: 35, name: "Morris, Stephen G.", ghin: "1301780", courseHdcp: 13, index: 12.1, phone: "610-555-0135", email: "smorris@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "yes", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
-  { id: 36, name: "Markley, William Scott", ghin: "2539798", courseHdcp: 14, index: 13.4, phone: "610-555-0136", email: "wmarkley@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "yes", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
-  { id: 37, name: "Mallowe, Christopher", ghin: "2364514", courseHdcp: 16, index: 14.7, phone: "610-555-0137", email: "cmallowe@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "yes", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
-  { id: 38, name: "Montani, Robert M Jr.", ghin: "2394814", courseHdcp: 17, index: 15.5, phone: "610-555-0138", email: "rmontani@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "maybe", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
-  { id: 39, name: "Caruso, Edward", ghin: "196331", courseHdcp: 18, index: 16.2, phone: "610-555-0139", email: "ecaruso@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "yes", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
-  { id: 40, name: "Cushing, Daniel", ghin: "12216061", courseHdcp: 18, index: 16.3, phone: "610-555-0140", email: "dcushing@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "", availability: { 1: "yes", 2: "yes", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
-  { id: 41, name: "Pettine, Benett C", ghin: "10855990", courseHdcp: 22, index: 19.6, phone: "610-555-0141", email: "bpettine@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-01", availability: { 1: "yes", 2: "yes", 3: "no" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
-  { id: 42, name: "Dempsey, Sean", ghin: "11264409", courseHdcp: 25.5, index: 28.0, phone: "610-555-0142", email: "sdempsey@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-06", availability: { 1: "no", 2: "yes", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
-  { id: 43, name: "Anapolsky, Jake", ghin: "11387958", courseHdcp: 10, index: 10.1, phone: "", email: "", status: "not_contacted", contactOwner: "", contactDate: "", availability: { 1: "no", 2: "no", 3: "no" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
-  { id: 44, name: "Anapolsky, Julian", ghin: "11264405", courseHdcp: 10, index: 9.6, phone: "", email: "", status: "not_contacted", contactOwner: "", contactDate: "", availability: { 1: "no", 2: "no", 3: "no" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
-  { id: 45, name: "Connolly, Michael", ghin: "2221455", courseHdcp: 10, index: 10.0, phone: "610-555-0145", email: "mconnolly@email.com", status: "declined", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "no", 2: "no", 3: "no" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
-  { id: 46, name: "Baker, Charlie", ghin: "11428615", courseHdcp: 12, index: 11.4, phone: "610-555-0146", email: "cbaker@email.com", status: "declined", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "no", 2: "no", 3: "no" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
-  { id: 47, name: "Manders, Matthew", ghin: "2781882", courseHdcp: 12, index: 11.1, phone: "610-555-0147", email: "mmanders@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "no", 2: "yes", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
-  { id: 48, name: "Armstrong, Rob", ghin: "3030644", courseHdcp: 13, index: 12.2, phone: "610-555-0148", email: "rarmstrong@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "no", 2: "yes", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
-  { id: 49, name: "Loftus, Jimmy", ghin: "896549", courseHdcp: 12, index: 11.0, phone: "610-555-0149", email: "jloftus@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "no", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "" },
+  { id: 26, name: "Mannon, Michael", ghin: "327820", courseHdcp: 10, index: 9.6, phone: "610-555-0126", email: "mmannon@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "no", 2: "no", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "", teamRole: "" },
+  { id: 27, name: "Russell, Garrett", ghin: "1567873", courseHdcp: 10, index: 10.0, phone: "610-555-0127", email: "grussell@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "no", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "", teamRole: "" },
+  { id: 28, name: "Stackhouse, Matthew", ghin: "12005753", courseHdcp: 10, index: 9.6, phone: "610-555-0128", email: "mstackhouse@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "yes", 3: "no" }, locPref: { 1: "", 2: "", 3: "" }, notes: "", teamRole: "" },
+  { id: 29, name: "Campbell, Tim", ghin: "6634388", courseHdcp: 11, index: 10.2, phone: "610-555-0129", email: "tcampbell@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "yes", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "", teamRole: "" },
+  { id: 30, name: "Zegel, Bob", ghin: "7949150", courseHdcp: 11, index: 10.2, phone: "610-555-0130", email: "bzegel@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "no", 3: "no" }, locPref: { 1: "", 2: "", 3: "" }, notes: "", teamRole: "" },
+  { id: 31, name: "Selinsky, Barry", ghin: "2924051", courseHdcp: 11, index: 10.4, phone: "610-555-0131", email: "bselinsky@email.com", status: "maybe", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "maybe", 2: "maybe", 3: "maybe" }, locPref: { 1: "", 2: "", 3: "" }, notes: "", teamRole: "" },
+  { id: 32, name: "Limaye, Kris", ghin: "3516581", courseHdcp: 12, index: 11.4, phone: "610-555-0132", email: "klimaye@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "yes", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "", teamRole: "" },
+  { id: 33, name: "Martin, Samuel", ghin: "3162048", courseHdcp: 12, index: 11.0, phone: "610-555-0133", email: "smartin@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "yes", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "", teamRole: "" },
+  { id: 34, name: "Silvestri, Robert M", ghin: "2236198", courseHdcp: 12, index: 11.4, phone: "610-555-0134", email: "rsilvestri@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "yes", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "", teamRole: "" },
+  { id: 35, name: "Morris, Stephen G.", ghin: "1301780", courseHdcp: 13, index: 12.1, phone: "610-555-0135", email: "smorris@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "yes", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "", teamRole: "" },
+  { id: 36, name: "Markley, William Scott", ghin: "2539798", courseHdcp: 14, index: 13.4, phone: "610-555-0136", email: "wmarkley@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "yes", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "", teamRole: "" },
+  { id: 37, name: "Mallowe, Christopher", ghin: "2364514", courseHdcp: 16, index: 14.7, phone: "610-555-0137", email: "cmallowe@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "yes", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "", teamRole: "" },
+  { id: 38, name: "Montani, Robert M Jr.", ghin: "2394814", courseHdcp: 17, index: 15.5, phone: "610-555-0138", email: "rmontani@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "maybe", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "", teamRole: "" },
+  { id: 39, name: "Caruso, Edward", ghin: "196331", courseHdcp: 18, index: 16.2, phone: "610-555-0139", email: "ecaruso@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "yes", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "", teamRole: "" },
+  { id: 40, name: "Cushing, Daniel", ghin: "12216061", courseHdcp: 18, index: 16.3, phone: "610-555-0140", email: "dcushing@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "", availability: { 1: "yes", 2: "yes", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "", teamRole: "" },
+  { id: 41, name: "Pettine, Benett C", ghin: "10855990", courseHdcp: 22, index: 19.6, phone: "610-555-0141", email: "bpettine@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-01", availability: { 1: "yes", 2: "yes", 3: "no" }, locPref: { 1: "", 2: "", 3: "" }, notes: "", teamRole: "" },
+  { id: 42, name: "Dempsey, Sean", ghin: "11264409", courseHdcp: 25.5, index: 28.0, phone: "610-555-0142", email: "sdempsey@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-06", availability: { 1: "no", 2: "yes", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "", teamRole: "" },
+  { id: 43, name: "Anapolsky, Jake", ghin: "11387958", courseHdcp: 10, index: 10.1, phone: "", email: "", status: "not_contacted", contactOwner: "", contactDate: "", availability: { 1: "no", 2: "no", 3: "no" }, locPref: { 1: "", 2: "", 3: "" }, notes: "", teamRole: "" },
+  { id: 44, name: "Anapolsky, Julian", ghin: "11264405", courseHdcp: 10, index: 9.6, phone: "", email: "", status: "not_contacted", contactOwner: "", contactDate: "", availability: { 1: "no", 2: "no", 3: "no" }, locPref: { 1: "", 2: "", 3: "" }, notes: "", teamRole: "" },
+  { id: 45, name: "Connolly, Michael", ghin: "2221455", courseHdcp: 10, index: 10.0, phone: "610-555-0145", email: "mconnolly@email.com", status: "declined", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "no", 2: "no", 3: "no" }, locPref: { 1: "", 2: "", 3: "" }, notes: "", teamRole: "" },
+  { id: 46, name: "Baker, Charlie", ghin: "11428615", courseHdcp: 12, index: 11.4, phone: "610-555-0146", email: "cbaker@email.com", status: "declined", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "no", 2: "no", 3: "no" }, locPref: { 1: "", 2: "", 3: "" }, notes: "", teamRole: "" },
+  { id: 47, name: "Manders, Matthew", ghin: "2781882", courseHdcp: 12, index: 11.1, phone: "610-555-0147", email: "mmanders@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "no", 2: "yes", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "", teamRole: "" },
+  { id: 48, name: "Armstrong, Rob", ghin: "3030644", courseHdcp: 13, index: 12.2, phone: "610-555-0148", email: "rarmstrong@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "no", 2: "yes", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "", teamRole: "" },
+  { id: 49, name: "Loftus, Jimmy", ghin: "896549", courseHdcp: 12, index: 11.0, phone: "610-555-0149", email: "jloftus@email.com", status: "confirmed", contactOwner: "Tom", contactDate: "2025-03-02", availability: { 1: "yes", 2: "no", 3: "yes" }, locPref: { 1: "", 2: "", 3: "" }, notes: "", teamRole: "" },
 ];
 
 // ═══════════════════════════════════════════════════════════════
 // DEFAULTS & CONFIG
 // ═══════════════════════════════════════════════════════════════
 const DEFAULT_SCHEDULE = {
-  1: { date: "2026-04-19", team1: { opponent: "White Manor Country Club", teamNum: "#1" }, team2: { opponent: "Bellewood Country Club", teamNum: "#2" }, homeTee: "8:00 AM", awayTee: "8:30 AM" },
-  2: { date: "2026-04-26", team1: { opponent: "North Hills Country Club", teamNum: "#1" }, team2: { opponent: "Northampton Valley Country Club", teamNum: "#1" }, homeTee: "8:00 AM", awayTee: "8:00 AM" },
-  3: { date: "2026-05-03", team1: { opponent: "RiverCrest Golf Club & Preserve", teamNum: "#1" }, team2: { opponent: "Philadelphia Cricket Club", teamNum: "#3" }, homeTee: "8:00 AM", awayTee: "8:30 AM" },
+  1: { date: "2026-04-19", team1: { opponent: "White Manor Country Club", teamNum: "#1" }, team2: { opponent: "Bellewood Country Club", teamNum: "#2" }, homeTee: "8:00 AM", awayTee: "8:30 AM", homeInterval: 10, awayInterval: 10 },
+  2: { date: "2026-04-26", team1: { opponent: "North Hills Country Club", teamNum: "#1" }, team2: { opponent: "Northampton Valley Country Club", teamNum: "#1" }, homeTee: "8:00 AM", awayTee: "8:00 AM", homeInterval: 10, awayInterval: 10 },
+  3: { date: "2026-05-03", team1: { opponent: "RiverCrest Golf Club & Preserve", teamNum: "#1" }, team2: { opponent: "Philadelphia Cricket Club", teamNum: "#3" }, homeTee: "8:00 AM", awayTee: "8:30 AM", homeInterval: 10, awayInterval: 10 },
 };
 
 const DEFAULT_LOCK_STATE = { 1: { locked: false, lockedAt: null, lockedBy: null, modifiedAfterLock: false, lastSentAt: null }, 2: { locked: false, lockedAt: null, lockedBy: null, modifiedAfterLock: false, lastSentAt: null }, 3: { locked: false, lockedAt: null, lockedBy: null, modifiedAfterLock: false, lastSentAt: null } };
@@ -121,6 +121,7 @@ const STATUS_CONFIG = {
   maybe: { label: "Maybe", short: "?", color: "#8b5cf6", bg: "#ede9fe" },
 };
 
+const getTeamCount = (sched) => { const keys = new Set(); Object.values(sched).forEach(w => Object.keys(w).forEach(k => { if (/^team\d+$/.test(k)) keys.add(k); })); return keys.size; };
 const AVAIL_COLORS = { yes: "#16a34a", no: "#dc2626", maybe: "#8b5cf6" };
 const fmtH = (h) => Number(h).toFixed(1);
 const fmtDate = (d) => { if (!d) return ""; const [y, m, day] = d.split("-"); const dt = new Date(+y, +m - 1, +day); return dt.toLocaleDateString("en-US", { month: "short", day: "numeric" }); };
@@ -256,13 +257,20 @@ function SeasonSetup({ schedule, setSchedule, lockState, userRole }) {
                   <span style={{ fontSize: 11, fontWeight: 600, color: "#64748b" }}>Home Tee</span>
                   <input value={ws.homeTee} onChange={e => updateWeek(week, "homeTee", e.target.value)} disabled={!isAdmin || locked} placeholder="8:00 AM"
                     style={{ padding: "6px 12px", borderRadius: 6, border: "1px solid #c1cad8", fontSize: 13, width: 100, background: isAdmin && !locked ? "#fff" : "#f1f5f9" }} />
+                  <select value={ws.homeInterval || 10} onChange={e => updateWeek(week, "homeInterval", parseInt(e.target.value))} disabled={!isAdmin || locked}
+                    style={{ padding: "6px 8px", borderRadius: 6, border: "1px solid #c1cad8", fontSize: 12, background: isAdmin && !locked ? "#fff" : "#f1f5f9", cursor: "pointer" }}>
+                    {[8, 9, 10, 11, 12, 15].map(m => <option key={m} value={m}>{m}-min intervals</option>)}
+                  </select>
                 </div>
                 <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                   <span style={{ fontSize: 11, fontWeight: 600, color: "#64748b" }}>Away Tee</span>
                   <input value={ws.awayTee} onChange={e => updateWeek(week, "awayTee", e.target.value)} disabled={!isAdmin || locked} placeholder="8:30 AM"
                     style={{ padding: "6px 12px", borderRadius: 6, border: "1px solid #c1cad8", fontSize: 13, width: 100, background: isAdmin && !locked ? "#fff" : "#f1f5f9" }} />
+                  <select value={ws.awayInterval || 10} onChange={e => updateWeek(week, "awayInterval", parseInt(e.target.value))} disabled={!isAdmin || locked}
+                    style={{ padding: "6px 8px", borderRadius: 6, border: "1px solid #c1cad8", fontSize: 12, background: isAdmin && !locked ? "#fff" : "#f1f5f9", cursor: "pointer" }}>
+                    {[8, 9, 10, 11, 12, 15].map(m => <option key={m} value={m}>{m}-min intervals</option>)}
+                  </select>
                 </div>
-                <span style={{ fontSize: 10, color: "#94a3b8", fontStyle: "italic" }}>First tee time listed — remaining pairs at 10-min intervals</span>
               </div>
               {["team1", "team2"].map(team => (
                 <div key={team} style={{ background: "#f5f7fb", borderRadius: 10, padding: 14, marginBottom: team === "team1" ? 12 : 0, border: "1px solid #e2e8f0" }}>
@@ -313,7 +321,11 @@ function Tooltip({ player, position, threshold }) {
     <div style={{ position: "fixed", top: position.y - 10, left: position.x + 16, zIndex: 9999, background: "#0f172a", color: "#eef2f7", borderRadius: 10, padding: "14px 18px", boxShadow: "0 8px 32px rgba(0,0,0,0.4)", maxWidth: 340, fontSize: 13, lineHeight: 1.5, pointerEvents: "none", border: "1px solid #1e2d4a" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
         <span style={{ fontSize: 16, fontWeight: 700, color: ACCENT }}>{player.name}</span>
-        {proj && <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 4, background: proj === "T1" ? "#16a34a33" : "#3b82f633", color: proj === "T1" ? "#4ade80" : "#60a5fa" }}>Proj: {proj === "T1" ? "Team 1" : "Team 2"}</span>}
+        <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+          {player.teamRole && player.teamRole.endsWith("_captain") && player.teamRole !== "vice_captain" && <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 4, background: "#f59e0b33", color: "#fbbf24" }}>Team {player.teamRole.replace("t","").replace("_captain","")} Captain</span>}
+          {player.teamRole === "vice_captain" && <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 4, background: "#7dd3fc33", color: "#7dd3fc" }}>Vice Captain</span>}
+          {proj && <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 4, background: proj === "T1" ? "#16a34a33" : "#3b82f633", color: proj === "T1" ? "#4ade80" : "#60a5fa" }}>Proj: {proj === "T1" ? "Team 1" : "Team 2"}</span>}
+        </div>
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "3px 16px" }}>
         <span style={{ color: "#94a3b8" }}>GHIN:</span><span>{player.ghin}</span>
@@ -334,7 +346,7 @@ function Tooltip({ player, position, threshold }) {
   );
 }
 
-function PlayerCard({ player, onDragStart, compact, week, threshold }) {
+function PlayerCard({ player, onDragStart, compact, week, threshold, isGameDayCaptain }) {
   const [hover, setHover] = useState(false);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
   const s = STATUS_CONFIG[player.status];
@@ -353,6 +365,9 @@ function PlayerCard({ player, onDragStart, compact, week, threshold }) {
           {!compact && <div style={{ fontSize: 11, color: "#64748b" }}>Idx: {player.index} · {player.ghin}</div>}
         </div>
         <div style={{ display: "flex", gap: 4, alignItems: "center", flexShrink: 0 }}>
+          {player.teamRole && player.teamRole.endsWith("_captain") && player.teamRole !== "vice_captain" && <span style={{ fontSize: 8, fontWeight: 800, padding: "2px 5px", borderRadius: 4, background: "#fef3c7", color: "#92400e", border: "1px solid #f59e0b" }}>T{player.teamRole.replace("t","").replace("_captain","")}C</span>}
+          {player.teamRole === "vice_captain" && <span style={{ fontSize: 8, fontWeight: 800, padding: "2px 5px", borderRadius: 4, background: "#e0f2fe", color: "#0369a1", border: "1px solid #7dd3fc" }}>VC</span>}
+          {isGameDayCaptain && <span style={{ fontSize: 8, fontWeight: 800, padding: "2px 5px", borderRadius: 4, background: "#fef3c7", color: "#92400e", border: "1px solid #f59e0b", letterSpacing: 0.5 }}>GDC</span>}
           {pref && <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 5px", borderRadius: 4, background: pref === "Home" ? "#dbeafe" : "#fef3c7", color: pref === "Home" ? "#1e40af" : "#92400e" }}>{pref === "Home" ? "H" : "A"}</span>}
           {avail && <span style={{ width: 8, height: 8, borderRadius: "50%", background: AVAIL_COLORS[avail] }} />}
           <span style={{ fontSize: 9, padding: "2px 5px", borderRadius: 4, background: s.bg, color: s.color, fontWeight: 600 }}>{s.short}</span>
@@ -386,7 +401,7 @@ function detectArchetype(p1, p2) {
   return "balanced";
 }
 
-function PairSlot({ pair, pairNum, onDrop, onRemove, players, side, week, threshold, disabled, teeOffset, baseTee }) {
+function PairSlot({ pair, pairNum, onDrop, onRemove, players, side, week, threshold, disabled, teeOffset, baseTee, gameDayCaptainId }) {
   const [dragOver, setDragOver] = useState(false);
   const [showTip, setShowTip] = useState(false);
   const p1 = pair[0] ? players.find(p => p.id === pair[0]) : null;
@@ -431,7 +446,7 @@ function PairSlot({ pair, pairNum, onDrop, onRemove, players, side, week, thresh
           const player = slot === 0 ? p1 : p2;
           return player ? (
             <div key={slot} style={{ display: "flex", alignItems: "center", gap: 4 }}>
-              <div style={{ flex: 1 }}><PlayerCard player={player} compact week={week} threshold={threshold} /></div>
+              <div style={{ flex: 1 }}><PlayerCard player={player} compact week={week} threshold={threshold} isGameDayCaptain={gameDayCaptainId === player.id} /></div>
               {!disabled && <button onClick={() => onRemove(player.id)} style={{ width: 22, height: 22, borderRadius: "50%", border: "1px solid #e5d5d5", background: "#fff5f5", color: "#dc2626", cursor: "pointer", fontSize: 12, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>×</button>}
             </div>
           ) : (
@@ -451,6 +466,8 @@ function TeamBuilder({ players, schedule, lockState, setLockState, userRole }) {
   const [activeWeek, setActiveWeek] = useState(1);
   const emptyWeek = () => ({ team1: { home: [[], [], []], away: [[], [], []] }, team2: { home: [[], [], []], away: [[], [], []] } });
   const [assignments, setAssignments] = useState({ 1: emptyWeek(), 2: emptyWeek(), 3: emptyWeek() });
+  const emptyWeekCaptains = () => ({ team1: { home: null, away: null }, team2: { home: null, away: null } });
+  const [weekCaptains, setWeekCaptains] = useState({ 1: emptyWeekCaptains(), 2: emptyWeekCaptains(), 3: emptyWeekCaptains() });
   const [validationMsg, setValidationMsg] = useState(null);
   const [copyFeedback, setCopyFeedback] = useState(null);
   const weekSched = schedule[activeWeek];
@@ -478,15 +495,20 @@ function TeamBuilder({ players, schedule, lockState, setLockState, userRole }) {
     if (isLocked) return;
     const player = players.find(p => p.id === playerId);
     if (!player) return;
-    if (split.threshold !== null) {
-      if (team === "team2" && player.courseHdcp < split.threshold) { setValidationMsg(`BLOCKED: ${player.name} (hdcp ${fmtH(player.courseHdcp)}) below threshold ${fmtH(split.threshold)} — must be Team 1.`); return; }
-      if (team === "team1" && player.courseHdcp > split.threshold) { setValidationMsg(`BLOCKED: ${player.name} (hdcp ${fmtH(player.courseHdcp)}) above threshold ${fmtH(split.threshold)} — must be Team 2.`); return; }
-    }
     setAssignments(prev => {
       const next = JSON.parse(JSON.stringify(prev));
       ["team1", "team2"].forEach(t => ["home", "away"].forEach(s => next[activeWeek][t][s].forEach(pair => { const idx = pair.indexOf(playerId); if (idx > -1) pair.splice(idx, 1); })));
       if (next[activeWeek][team][side][pairIdx].length < 2) next[activeWeek][team][side][pairIdx].push(playerId);
       setValidationMsg(validate(next)); return next;
+    });
+    // Auto-clear game-day captain if player was moved to a different team/side
+    setWeekCaptains(prev => {
+      const wk = { ...prev[activeWeek] };
+      let changed = false;
+      ["team1", "team2"].forEach(t => { ["home", "away"].forEach(s => {
+        if (wk[t]?.[s] === playerId && !(t === team && s === side)) { wk[t] = { ...wk[t], [s]: null }; changed = true; }
+      }); });
+      return changed ? { ...prev, [activeWeek]: wk } : prev;
     });
     // If was locked and someone modifies, mark as modified
     if (weekLock.lastSentAt) {
@@ -500,6 +522,13 @@ function TeamBuilder({ players, schedule, lockState, setLockState, userRole }) {
       const next = JSON.parse(JSON.stringify(prev));
       ["team1", "team2"].forEach(t => ["home", "away"].forEach(s => next[activeWeek][t][s].forEach(pair => { const idx = pair.indexOf(playerId); if (idx > -1) pair.splice(idx, 1); })));
       setValidationMsg(validate(next)); return next;
+    });
+    // Auto-clear game-day captain if removed player was selected
+    setWeekCaptains(prev => {
+      const wk = { ...prev[activeWeek] };
+      let changed = false;
+      ["team1", "team2"].forEach(t => { ["home", "away"].forEach(s => { if (wk[t]?.[s] === playerId) { wk[t] = { ...wk[t], [s]: null }; changed = true; } }); });
+      return changed ? { ...prev, [activeWeek]: wk } : prev;
     });
     if (weekLock.lastSentAt) {
       setLockState(prev => ({ ...prev, [activeWeek]: { ...prev[activeWeek], modifiedAfterLock: true } }));
@@ -516,20 +545,28 @@ function TeamBuilder({ players, schedule, lockState, setLockState, userRole }) {
   const buildSummary = () => {
     const ws = schedule[activeWeek];
     const w = assignments[activeWeek];
-    let text = `PHOENIXVILLE CC — BMW GAP TEAM MATCHES\nWeek ${activeWeek} · ${fmtDateLong(ws.date)}\nHome Tee (PCC): ${ws.homeTee} — Away Tee: ${ws.awayTee}\n(First tee listed, remaining pairs at 10-min intervals)\n${"═".repeat(50)}\n`;
+    let text = `PHOENIXVILLE CC — BMW GAP TEAM MATCHES\nWeek ${activeWeek} · ${fmtDateLong(ws.date)}\nHome Tee (PCC): ${ws.homeTee} (${ws.homeInterval || 10}-min intervals) — Away Tee: ${ws.awayTee} (${ws.awayInterval || 10}-min intervals)\n${"═".repeat(50)}\n`;
     ["team1", "team2"].forEach(team => {
       const ts = ws[team];
       text += `\n${team === "team1" ? "TEAM 1" : "TEAM 2"} vs ${ts.opponent} ${ts.teamNum}\n${"─".repeat(40)}\n`;
       ["home", "away"].forEach(side => {
         const loc = side === "home" ? "Phoenixville CC" : ts.opponent;
         const baseTee = side === "home" ? ws.homeTee : ws.awayTee;
+        const interval = side === "home" ? (ws.homeInterval || 10) : (ws.awayInterval || 10);
+        const gdcId = weekCaptains[activeWeek]?.[team]?.[side];
+        const gdcPlayer = gdcId ? players.find(p => p.id === gdcId) : null;
+        if (side === "away") text += "\n";
+        text += `\n  ${side.toUpperCase()} — ${loc}`;
+        text += gdcPlayer ? `  |  Game-Day Captain: ${gdcPlayer.name}\n` : "\n";
+        if (side === "away") text += `  * Note: Away captain has the option to change the order of players.\n`;
         w[team][side].forEach((pair, i) => {
-          const names = pair.map(id => { const p = players.find(pl => pl.id === id); return p ? `${p.name} (${fmtH(p.courseHdcp)})` : "TBD"; });
-          const pairTee = addMinutes(baseTee, i * 10);
-          if (names.length > 0) text += `  ${side.toUpperCase()} Pair ${i+1} @ ${pairTee} at ${loc}: ${names.join(" & ")}\n`;
+          const names = pair.map(id => { const p = players.find(pl => pl.id === id); return p ? `${p.name} (CH: ${Math.round(p.courseHdcp)}, GHIN: ${p.ghin || "N/A"})` : "TBD"; });
+          const pairTee = addMinutes(baseTee, i * interval);
+          if (names.length > 0) text += `  Pair ${i+1} @ ${pairTee}: ${names.join(" & ")}\n`;
         });
       });
     });
+    text += `\n${"═".repeat(50)}\n\n***REMINDER! The away team captain has the option to change the lineup when the home team is presented.***\n`;
     return text;
   };
 
@@ -548,8 +585,7 @@ function TeamBuilder({ players, schedule, lockState, setLockState, userRole }) {
   };
 
   const countAssigned = (team) => { const w = assignments[activeWeek]; let c = 0; ["home", "away"].forEach(s => w[team][s].forEach(pair => c += pair.length)); return c; };
-  const t1Avail = availablePlayers.filter(p => split.threshold === null || p.courseHdcp <= split.threshold);
-  const t2Avail = availablePlayers.filter(p => split.threshold !== null && p.courseHdcp >= split.threshold);
+  // Unified pool — all available players shown together, sorted by handicap
 
   return (
     <div>
@@ -585,7 +621,7 @@ function TeamBuilder({ players, schedule, lockState, setLockState, userRole }) {
       {/* Threshold Bar */}
       {split.threshold !== null && (
         <div style={{ background: "#fff", border: "1px solid #d1d9e6", borderRadius: 8, padding: "10px 16px", marginBottom: 12, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
-          <div style={{ fontSize: 13 }}><span style={{ fontWeight: 700 }}>First Team Threshold: </span><span style={{ fontWeight: 800, fontSize: 18 }}>{fmtH(split.threshold)}</span><span style={{ color: "#475569", marginLeft: 8, fontWeight: 500 }}>— Team 1 hdcp ≤ {fmtH(split.threshold)}, Team 2 hdcp ≥ {fmtH(split.threshold)}</span></div>
+          <div style={{ fontSize: 13 }}><span style={{ fontWeight: 700 }}>Suggested Split Point: </span><span style={{ fontWeight: 800, fontSize: 18 }}>{fmtH(split.threshold)}</span><span style={{ color: "#475569", marginLeft: 8, fontWeight: 500 }}>— GAP rule: Team 2 min hdcp must be ≥ Team 1 max hdcp</span></div>
           <div style={{ display: "flex", gap: 12, fontSize: 12 }}>
             <span style={{ background: "#dcfce7", padding: "3px 10px", borderRadius: 6, fontWeight: 600, color: "#16a34a" }}>T1: {fmtH(split.t1Range?.min)}–{fmtH(split.t1Range?.max)} ({split.t1.length}p)</span>
             <span style={{ background: "#dbeafe", padding: "3px 10px", borderRadius: 6, fontWeight: 600, color: "#1e40af" }}>T2: {fmtH(split.t2Range?.min)}–{fmtH(split.t2Range?.max)} ({split.t2.length}p)</span>
@@ -611,19 +647,34 @@ function TeamBuilder({ players, schedule, lockState, setLockState, userRole }) {
       )}
       {!isAdmin && isLocked && <div style={{ fontSize: 12, padding: "8px 14px", background: "#fef3c7", borderRadius: 8, marginBottom: 12, color: "#92400e", fontWeight: 600 }}>Pairings locked by Admin — editing disabled</div>}
 
-      {validationMsg && <div style={{ background: "#fef2f2", border: "2px solid #dc2626", borderRadius: 8, padding: "10px 14px", marginBottom: 12, color: "#991b1b", fontSize: 13, fontWeight: 600 }}>{validationMsg}</div>}
+      {validationMsg && <div style={{ background: "linear-gradient(90deg, #7f1d1d, #991b1b)", border: "2px solid #dc2626", borderRadius: 10, padding: "12px 18px", marginBottom: 14, display: "flex", alignItems: "center", gap: 12, color: "#fecaca" }}>
+        <span style={{ fontSize: 22, flexShrink: 0 }}>&#9888;</span>
+        <div>
+          <div style={{ fontWeight: 700, fontSize: 14, color: "#fff" }}>GAP Rule Violation</div>
+          <div style={{ fontSize: 12, opacity: 0.9 }}>{validationMsg}</div>
+        </div>
+      </div>}
 
       {/* Main Grid */}
       <div style={{ display: "grid", gridTemplateColumns: "300px 1fr", gap: 16, minHeight: 500 }}>
         <div style={{ background: "#f5f7fb", borderRadius: 12, padding: 14, border: "1px solid #d1d9e6", maxHeight: 750, overflowY: "auto" }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "#16a34a", marginBottom: 2, letterSpacing: 0.5 }}>TEAM 1 POOL ({t1Avail.length})</div>
-          <div style={{ fontSize: 10, color: "#64748b", marginBottom: 8 }}>Hdcp ≤ {split.threshold != null ? fmtH(split.threshold) : "?"}</div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 3, marginBottom: 14 }}>{t1Avail.map(p => <PlayerCard key={p.id} player={p} compact week={activeWeek} threshold={split.threshold} />)}</div>
-          <div style={{ borderTop: "2px solid #c1cad8", paddingTop: 10, marginBottom: 2 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: "#1e40af", marginBottom: 2, letterSpacing: 0.5 }}>TEAM 2 POOL ({t2Avail.length})</div>
-            <div style={{ fontSize: 10, color: "#64748b", marginBottom: 8 }}>Hdcp ≥ {split.threshold != null ? fmtH(split.threshold) : "?"}</div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "#0f172a", marginBottom: 2, letterSpacing: 0.5 }}>PHOENIXVILLE POOL ({availablePlayers.length})</div>
+          <div style={{ fontSize: 10, color: "#64748b", marginBottom: 8 }}>
+            All available — sorted by handicap
+            {split.threshold != null && <span style={{ marginLeft: 6 }}> · Threshold: {fmtH(split.threshold)}</span>}
           </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 3, marginBottom: 14 }}>{t2Avail.map(p => <PlayerCard key={p.id} player={p} compact week={activeWeek} threshold={split.threshold} />)}</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 3, marginBottom: 14 }}>
+            {availablePlayers.map(p => (
+              <div key={p.id} style={{ position: "relative" }}>
+                <PlayerCard player={p} compact week={activeWeek} threshold={split.threshold} />
+                {split.threshold != null && (
+                  <span style={{ position: "absolute", top: 2, right: 4, fontSize: 8, fontWeight: 700, padding: "1px 4px", borderRadius: 3, background: projectTeam(p, split.threshold) === "T1" ? "#dcfce7" : "#dbeafe", color: projectTeam(p, split.threshold) === "T1" ? "#16a34a" : "#1e40af" }}>
+                    {projectTeam(p, split.threshold)}
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
           {maybePlayers.length > 0 && (
             <>
               <div style={{ borderTop: "2px solid #c1cad8", paddingTop: 10 }}>
@@ -634,7 +685,7 @@ function TeamBuilder({ players, schedule, lockState, setLockState, userRole }) {
                 {maybePlayers.map(p => (
                   <div key={p.id} style={{ position: "relative" }}>
                     <PlayerCard player={p} compact week={activeWeek} threshold={split.threshold} />
-                    <span style={{ position: "absolute", top: 2, right: 4, fontSize: 8, fontWeight: 700, padding: "1px 4px", borderRadius: 3, background: projectTeam(p, split.threshold) === "T1" ? "#dcfce7" : "#dbeafe", color: projectTeam(p, split.threshold) === "T1" ? "#16a34a" : "#1e40af" }}>→{projectTeam(p, split.threshold)}</span>
+                    <span style={{ position: "absolute", top: 2, right: 4, fontSize: 8, fontWeight: 700, padding: "1px 4px", borderRadius: 3, background: projectTeam(p, split.threshold) === "T1" ? "#dcfce7" : "#dbeafe", color: projectTeam(p, split.threshold) === "T1" ? "#16a34a" : "#1e40af" }}>{"\u2192"}{projectTeam(p, split.threshold)}</span>
                   </div>
                 ))}
               </div>
@@ -653,15 +704,23 @@ function TeamBuilder({ players, schedule, lockState, setLockState, userRole }) {
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 0 }}>
                   {["Home", "Away"].map(side => {
                     const baseTee = side === "Home" ? weekSched.homeTee : weekSched.awayTee;
+                    const sidePlayers = assignments[activeWeek][team][side.toLowerCase()].flat().filter(id => id).map(id => players.find(p => p.id === id)).filter(Boolean);
                     return (
                     <div key={side} style={{ padding: 12, borderRight: side === "Home" ? "1px solid #d1d9e6" : "none" }}>
                       <div style={{ fontSize: 11, fontWeight: 700, color: side === "Home" ? "#1e40af" : "#92400e", marginBottom: 4, display: "flex", alignItems: "center", gap: 6 }}>
                         <span style={{ width: 14, height: 14, borderRadius: 3, background: side === "Home" ? "#dbeafe" : "#fef3c7", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9 }}>{side === "Home" ? "H" : "A"}</span>
                         {side.toUpperCase()} — {side === "Home" ? "Phoenixville CC" : ts.opponent}
                       </div>
-                      <div style={{ fontSize: 10, color: "#64748b", marginBottom: 8 }}>First tee: {baseTee} · 10-min intervals</div>
+                      <div style={{ fontSize: 10, color: "#64748b", marginBottom: 4 }}>First tee: {baseTee} · {side === "Home" ? (weekSched.homeInterval || 10) : (weekSched.awayInterval || 10)}-min intervals</div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
+                        <span style={{ fontSize: 10, fontWeight: 700, color: "#64748b" }}>Game-Day Cpt:</span>
+                        <select value={weekCaptains[activeWeek]?.[team]?.[side.toLowerCase()] || ""} onChange={e => { const val = e.target.value ? parseInt(e.target.value) : null; setWeekCaptains(prev => ({ ...prev, [activeWeek]: { ...prev[activeWeek], [team]: { ...prev[activeWeek][team], [side.toLowerCase()]: val } } })); }} disabled={isLocked} style={{ fontSize: 10, padding: "3px 6px", borderRadius: 4, border: "1px solid #f59e0b44", background: weekCaptains[activeWeek]?.[team]?.[side.toLowerCase()] ? "#fef3c7" : "#f5f7fb", color: "#92400e", fontWeight: 600, cursor: isLocked ? "default" : "pointer" }}>
+                          <option value="">-- Select --</option>
+                          {sidePlayers.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                        </select>
+                      </div>
                       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                        {[0, 1, 2].map(i => (<PairSlot key={i} pair={assignments[activeWeek][team][side.toLowerCase()][i]} pairNum={i + 1} onDrop={(id) => handleDrop(team, side.toLowerCase(), i, id)} onRemove={handleRemove} players={players} side={side} week={activeWeek} threshold={split.threshold} disabled={isLocked} teeOffset={i * 10} baseTee={baseTee} />))}
+                        {[0, 1, 2].map(i => { const interval = side === "Home" ? (weekSched.homeInterval || 10) : (weekSched.awayInterval || 10); return (<PairSlot key={i} pair={assignments[activeWeek][team][side.toLowerCase()][i]} pairNum={i + 1} onDrop={(id) => handleDrop(team, side.toLowerCase(), i, id)} onRemove={handleRemove} players={players} side={side} week={activeWeek} threshold={split.threshold} disabled={isLocked} teeOffset={i * interval} baseTee={baseTee} gameDayCaptainId={weekCaptains[activeWeek]?.[team]?.[side.toLowerCase()]} />); })}
                       </div>
                     </div>
                     );
@@ -701,6 +760,26 @@ function Dashboard({ players, schedule, lockState }) {
 
   return (
     <div>
+      {/* CAPTAIN DESIGNATIONS */}
+      {(() => {
+        const tc = getTeamCount(schedule);
+        const teamCaptains = Array.from({ length: tc }, (_, i) => ({ num: i + 1, player: players.find(p => p.teamRole === `t${i+1}_captain`) })).filter(c => c.player);
+        const vcs = players.filter(p => p.teamRole === "vice_captain");
+        if (teamCaptains.length === 0 && vcs.length === 0) return null;
+        return (
+          <div style={{ background: "linear-gradient(135deg, #0f172a 0%, #1a2f54 100%)", borderRadius: 12, padding: "14px 18px", marginBottom: 16, display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+            {teamCaptains.map(c => <div key={c.num} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ fontSize: 14, fontWeight: 800, padding: "3px 8px", borderRadius: 6, background: "#fef3c7", color: "#92400e", border: "2px solid #f59e0b" }}>T{c.num}C</span>
+              <div><div style={{ fontSize: 9, fontWeight: 700, color: "#f59e0b", letterSpacing: 1 }}>TEAM {c.num} CAPTAIN</div><div style={{ fontSize: 14, fontWeight: 700, color: "#fff" }}>{c.player.name}</div></div>
+            </div>)}
+            {vcs.map(vc => <div key={vc.id} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ fontSize: 14, fontWeight: 800, padding: "3px 8px", borderRadius: 6, background: "#e0f2fe", color: "#0369a1", border: "2px solid #7dd3fc" }}>VC</span>
+              <div><div style={{ fontSize: 9, fontWeight: 700, color: "#7dd3fc", letterSpacing: 1 }}>VICE CAPTAIN</div><div style={{ fontSize: 13, fontWeight: 600, color: "#cbd5e1" }}>{vc.name}</div></div>
+            </div>)}
+          </div>
+        );
+      })()}
+
       <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a", marginBottom: 8, letterSpacing: 0.3 }}>Roster Recruitment</div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 10, marginBottom: 16 }}>
         {[
@@ -877,7 +956,7 @@ function Dashboard({ players, schedule, lockState }) {
 // ═══════════════════════════════════════════════════════════════
 // ROSTER
 // ═══════════════════════════════════════════════════════════════
-function Roster({ players, setPlayers }) {
+function Roster({ players, setPlayers, schedule }) {
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [sortBy, setSortBy] = useState("handicap");
@@ -944,7 +1023,7 @@ function Roster({ players, setPlayers }) {
         email: emailIdx > -1 ? (row[emailIdx] || "") : "",
         status: "not_contacted", contactOwner: "", contactDate: "",
         availability: { 1: "no", 2: "no", 3: "no" },
-        locPref: { 1: "", 2: "", 3: "" }, notes: "Imported"
+        locPref: { 1: "", 2: "", 3: "" }, notes: "Imported", teamRole: ""
       }));
       setPlayers(prev => [...prev, ...newPlayers]);
       setUploadMsg(`Imported ${newPlayers.length} players from ${file.name}`);
@@ -957,7 +1036,7 @@ function Roster({ players, setPlayers }) {
 
   const addPlayer = () => {
     const newId = Math.max(...players.map(p => p.id)) + 1;
-    setPlayers(prev => [...prev, { id: newId, name: "New, Player", ghin: "", courseHdcp: 15, index: 15.0, phone: "", email: "", status: "not_contacted", contactOwner: "", contactDate: "", availability: { 1: "no", 2: "no", 3: "no" }, locPref: { 1: "", 2: "", 3: "" }, notes: "EDIT ME" }]);
+    setPlayers(prev => [...prev, { id: newId, name: "New, Player", ghin: "", courseHdcp: 15, index: 15.0, phone: "", email: "", status: "not_contacted", contactOwner: "", contactDate: "", availability: { 1: "no", 2: "no", 3: "no" }, locPref: { 1: "", 2: "", 3: "" }, notes: "EDIT ME", teamRole: "" }]);
     setEditingId(newId);
   };
 
@@ -995,7 +1074,7 @@ function Roster({ players, setPlayers }) {
         <div style={{ overflowX: "auto" }}>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
             <thead><tr style={{ background: "linear-gradient(135deg, #0f172a 0%, #162d50 100%)", color: ACCENT }}>
-              {["Proj", "Player", "HDCP", "Index", "GHIN", "Contact", "Status", "Wk1", "Wk2", "Wk3", "Loc1", "Loc2", "Loc3", "Notes"].map(h => (
+              {["Proj", "Role", "Player", "Course Handicap", "Index", "GHIN", "Contact", "Status", "Wk1", "Wk2", "Wk3", "Loc1", "Loc2", "Loc3", "Notes"].map(h => (
                 <th key={h} style={{ padding: "10px 6px", textAlign: "left", fontWeight: 600, fontSize: 10, letterSpacing: 0.5, whiteSpace: "nowrap" }}>{h}</th>
               ))}
             </tr></thead>
@@ -1006,13 +1085,21 @@ function Roster({ players, setPlayers }) {
                 return (
                   <tr key={p.id} style={{ background: i % 2 === 0 ? "#fff" : "#f5f7fb", borderBottom: "1px solid #e2e8f0" }}>
                     <td style={{ padding: "6px", textAlign: "center" }}><span style={{ fontSize: 10, fontWeight: 700, padding: "2px 6px", borderRadius: 4, background: proj === "T1" ? "#dcfce7" : "#dbeafe", color: proj === "T1" ? "#16a34a" : "#1e40af" }}>{proj}</span></td>
+                    <td style={{ padding: "6px", textAlign: "center" }}>
+                      {(() => { const isCpt = p.teamRole && p.teamRole.endsWith("_captain") && p.teamRole !== "vice_captain"; const isVC = p.teamRole === "vice_captain"; const tc = getTeamCount(schedule); return (
+                      <select value={p.teamRole || ""} onChange={e => { const newRole = e.target.value; if (newRole && newRole.endsWith("_captain") && newRole !== "vice_captain") { setPlayers(prev => prev.map(pl => pl.id === p.id ? { ...pl, teamRole: newRole } : pl.teamRole === newRole ? { ...pl, teamRole: "" } : pl)); } else { updatePlayer(p.id, "teamRole", newRole); } }} style={{ fontSize: 10, padding: "2px 4px", borderRadius: 4, border: `1px solid ${isCpt ? "#f59e0b" : isVC ? "#7dd3fc" : "#c1cad8"}`, background: isCpt ? "#fef3c7" : isVC ? "#e0f2fe" : "#f5f7fb", color: isCpt ? "#92400e" : isVC ? "#0369a1" : "#64748b", fontWeight: 600, cursor: "pointer" }}>
+                        <option value="">-</option>
+                        {Array.from({ length: tc }, (_, i) => <option key={i} value={`t${i+1}_captain`}>T{i+1} Cpt</option>)}
+                        <option value="vice_captain">Vice Cpt</option>
+                      </select>); })()}
+                    </td>
                     <td style={{ padding: "6px 8px", fontWeight: 600, color: "#0f172a", whiteSpace: "nowrap" }}>
                       {editingId === p.id ? <input value={p.name} onChange={e => updatePlayer(p.id, "name", e.target.value)} style={{ fontSize: 12, padding: "2px 6px", border: "1px solid #38bdf8", borderRadius: 4, width: "100%", background: "#eff6ff", fontWeight: 600 }} />
                         : <span onClick={() => setEditingId(p.id)} style={{ cursor: "pointer" }}>{p.name}</span>}
                     </td>
                     <td style={{ padding: "6px", fontWeight: 800, color: "#0f172a", textAlign: "center" }}>
                       {editingId === p.id ? <input type="number" step="0.1" value={p.courseHdcp} onChange={e => updatePlayer(p.id, "courseHdcp", parseFloat(e.target.value) || 0)} style={{ fontSize: 11, padding: "2px 4px", border: "1px solid #38bdf8", borderRadius: 4, width: 45, background: "#eff6ff", fontWeight: 800, textAlign: "center" }} />
-                        : <span onClick={() => setEditingId(p.id)} style={{ cursor: "pointer" }}>{fmtH(p.courseHdcp)}</span>}
+                        : <span onClick={() => setEditingId(p.id)} style={{ cursor: "pointer" }}>{Math.round(p.courseHdcp)}</span>}
                     </td>
                     <td style={{ padding: "6px", color: "#64748b", textAlign: "center" }}>
                       {editingId === p.id ? <input type="number" step="0.1" value={p.index} onChange={e => updatePlayer(p.id, "index", parseFloat(e.target.value) || 0)} style={{ fontSize: 11, padding: "2px 4px", border: "1px solid #38bdf8", borderRadius: 4, width: 45, background: "#eff6ff", textAlign: "center" }} />
@@ -1098,7 +1185,7 @@ function GAPManager() {
       </header>
       <main style={{ maxWidth: 1400, margin: "0 auto", padding: "24px" }}>
         {activeTab === "dashboard" && <Dashboard players={players} schedule={schedule} lockState={lockState} />}
-        {activeTab === "roster" && <Roster players={players} setPlayers={setPlayers} />}
+        {activeTab === "roster" && <Roster players={players} setPlayers={setPlayers} schedule={schedule} />}
         {activeTab === "builder" && <TeamBuilder players={players} schedule={schedule} lockState={lockState} setLockState={setLockState} userRole={userRole} />}
         {activeTab === "setup" && <SeasonSetup schedule={schedule} setSchedule={setSchedule} lockState={lockState} userRole={userRole} />}
       </main>
