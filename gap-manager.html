@@ -84,6 +84,316 @@ function useAuth() {
 }
 
 // ═══════════════════════════════════════════════════════════════
+// SUPABASE PLAYERS DATA LAYER
+// ═══════════════════════════════════════════════════════════════
+function dbPlayerToApp(p) {
+  return {
+    id: p.id, name: p.name, ghin: p.ghin || "", courseHdcp: Number(p.course_hdcp) || 15,
+    index: Number(p.index) || 15, phone: p.phone || "", email: p.email || "",
+    status: p.status || "not_contacted", contactOwner: p.contact_owner || "",
+    contactDate: p.contact_date || "",
+    availability: { 1: p.availability_1 || "no", 2: p.availability_2 || "no", 3: p.availability_3 || "no" },
+    locPref: { 1: p.loc_pref_1 || "", 2: p.loc_pref_2 || "", 3: p.loc_pref_3 || "" },
+    notes: p.notes || "",
+  };
+}
+
+function appPlayerToDb(p, club, userId) {
+  return {
+    club: club, name: p.name, ghin: p.ghin, course_hdcp: p.courseHdcp, index: p.index,
+    phone: p.phone, email: p.email, status: p.status, contact_owner: p.contactOwner,
+    contact_date: p.contactDate, availability_1: p.availability[1], availability_2: p.availability[2],
+    availability_3: p.availability[3], loc_pref_1: p.locPref[1], loc_pref_2: p.locPref[2],
+    loc_pref_3: p.locPref[3], notes: p.notes, created_by: userId,
+  };
+}
+
+async function loadPlayersFromDb(club) {
+  const { data, error } = await supabase.from("players").select("*").eq("club", club).order("course_hdcp");
+  if (error) { console.error("Load players error:", error); return []; }
+  return (data || []).map(dbPlayerToApp);
+}
+
+async function savePlayerToDb(player, club, userId) {
+  const row = appPlayerToDb(player, club, userId);
+  if (player.id && typeof player.id === "number" && player.id > 0) {
+    // Check if it exists in DB
+    const { data: existing } = await supabase.from("players").select("id").eq("id", player.id).single();
+    if (existing) {
+      const { error } = await supabase.from("players").update(row).eq("id", player.id);
+      if (error) console.error("Update player error:", error);
+      return player.id;
+    }
+  }
+  // Insert new
+  delete row.id;
+  const { data, error } = await supabase.from("players").insert(row).select("id").single();
+  if (error) { console.error("Insert player error:", error); return null; }
+  return data?.id;
+}
+
+async function deletePlayerFromDb(playerId) {
+  const { error } = await supabase.from("players").delete().eq("id", playerId);
+  if (error) console.error("Delete player error:", error);
+}
+
+async function bulkInsertPlayers(players, club, userId) {
+  const rows = players.map(p => {
+    const row = appPlayerToDb(p, club, userId);
+    delete row.id;
+    return row;
+  });
+  const { data, error } = await supabase.from("players").insert(rows).select("id");
+  if (error) { console.error("Bulk insert error:", error); return []; }
+  return data || [];
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ONBOARDING WIZARD
+// ═══════════════════════════════════════════════════════════════
+function OnboardingWizard({ profile, session, onComplete }) {
+  const [step, setStep] = useState(1); // 1=welcome, 2=upload, 3=review
+  const [importedPlayers, setImportedPlayers] = useState([]);
+  const [uploadMsg, setUploadMsg] = useState(null);
+  const [editingId, setEditingId] = useState(null);
+  const [saving, setSaving] = useState(false);
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      if (!text) { setUploadMsg({ type: "error", msg: "Could not read file." }); return; }
+      const lines = text.trim().split("\n").map(l => l.split(",").map(c => c.trim().replace(/^"|"$/g, "")));
+      if (lines.length < 2) { setUploadMsg({ type: "error", msg: "File appears empty." }); return; }
+      const header = lines[0].map(h => h.toLowerCase());
+      const nameIdx = header.findIndex(h => h.includes("name") || h.includes("player"));
+      const ghinIdx = header.findIndex(h => h.includes("ghin"));
+      const hdcpIdx = header.findIndex(h => h.includes("hdcp") || h.includes("handicap") || h.includes("course"));
+      const indexIdx = header.findIndex(h => h.includes("index"));
+      const phoneIdx = header.findIndex(h => h.includes("phone") || h.includes("cell") || h.includes("mobile"));
+      const emailIdx = header.findIndex(h => h.includes("email") || h.includes("e-mail"));
+      if (nameIdx === -1) { setUploadMsg({ type: "error", msg: "Could not find a 'Name' or 'Player' column. Please check the header row." }); return; }
+      const players = lines.slice(1).filter(row => row[nameIdx] && row[nameIdx].trim()).map((row, i) => ({
+        id: -(i + 1), // Temporary negative IDs
+        name: row[nameIdx] || "Unknown",
+        ghin: ghinIdx > -1 ? (row[ghinIdx] || "") : "",
+        courseHdcp: hdcpIdx > -1 ? (parseFloat(row[hdcpIdx]) || 15) : 15,
+        index: indexIdx > -1 ? (parseFloat(row[indexIdx]) || 15) : 15,
+        phone: phoneIdx > -1 ? (row[phoneIdx] || "") : "",
+        email: emailIdx > -1 ? (row[emailIdx] || "") : "",
+        status: "not_contacted", contactOwner: "", contactDate: "",
+        availability: { 1: "no", 2: "no", 3: "no" },
+        locPref: { 1: "", 2: "", 3: "" }, notes: "",
+      }));
+      setImportedPlayers(players);
+      setUploadMsg({ type: "success", msg: `Found ${players.length} players in ${file.name}` });
+      setStep(3);
+    } catch (err) {
+      setUploadMsg({ type: "error", msg: "Error reading file: " + err.message });
+    }
+    e.target.value = "";
+  };
+
+  const addManualPlayer = () => {
+    const tempId = -(importedPlayers.length + 1);
+    setImportedPlayers(prev => [...prev, {
+      id: tempId, name: "Last, First", ghin: "", courseHdcp: 15, index: 15.0,
+      phone: "", email: "", status: "not_contacted", contactOwner: "", contactDate: "",
+      availability: { 1: "no", 2: "no", 3: "no" }, locPref: { 1: "", 2: "", 3: "" }, notes: "",
+    }]);
+    setEditingId(tempId);
+  };
+
+  const updatePlayer = (id, field, value) => {
+    setImportedPlayers(prev => prev.map(p => p.id === id ? { ...p, [field]: value } : p));
+  };
+
+  const removePlayer = (id) => {
+    setImportedPlayers(prev => prev.filter(p => p.id !== id));
+  };
+
+  const handleFinish = async () => {
+    if (importedPlayers.length === 0) {
+      // Mark onboarded even with no players
+      await supabase.from("profiles").update({ onboarded: true }).eq("id", session.user.id);
+      onComplete();
+      return;
+    }
+    setSaving(true);
+    await bulkInsertPlayers(importedPlayers, profile.club, session.user.id);
+    await supabase.from("profiles").update({ onboarded: true }).eq("id", session.user.id);
+    setSaving(false);
+    onComplete();
+  };
+
+  return (
+    <div style={{ fontFamily: "'Poppins', 'Segoe UI', -apple-system, sans-serif", background: "#eef2f7", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+      <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+      <div style={{ width: "100%", maxWidth: 800, background: "#fff", borderRadius: 16, boxShadow: "0 8px 32px rgba(0,0,0,0.12)", overflow: "hidden" }}>
+        {/* Header */}
+        <div style={{ background: "linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%)", padding: "24px 32px", borderBottom: "3px solid #7dd3fc" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+              <div style={{ width: 42, height: 42, borderRadius: "50%", background: "linear-gradient(135deg, #7dd3fc, #38bdf8)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, fontWeight: 800, color: "#0f172a" }}>M</div>
+              <div>
+                <div style={{ color: "#7dd3fc", fontSize: 18, fontWeight: 700 }}>MatchGapper Setup</div>
+                <div style={{ color: "#94a3b8", fontSize: 11 }}>{profile.club}</div>
+              </div>
+            </div>
+            {/* Step indicator */}
+            <div style={{ display: "flex", gap: 8 }}>
+              {[1, 2, 3].map(s => (
+                <div key={s} style={{ width: 32, height: 32, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, background: step >= s ? "#7dd3fc" : "#334155", color: step >= s ? "#0f172a" : "#64748b", transition: "all 0.2s" }}>{s}</div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Step 1: Welcome */}
+        {step === 1 && (
+          <div style={{ padding: "40px 32px", textAlign: "center" }}>
+            <div style={{ fontSize: 28, fontWeight: 800, color: "#0f172a", marginBottom: 8 }}>Welcome, {profile.full_name?.split(" ")[0] || "Captain"}!</div>
+            <div style={{ fontSize: 15, color: "#64748b", marginBottom: 32, maxWidth: 500, margin: "0 auto 32px" }}>
+              Let's get your {profile.club} roster set up for the BMW GAP Team Matches. You can upload a CSV file or add players manually.
+            </div>
+            <div style={{ background: "#f5f7fb", borderRadius: 12, padding: 24, maxWidth: 400, margin: "0 auto", border: "1px solid #e2e8f0" }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: "#0f172a", marginBottom: 4 }}>Your Details</div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px 16px", fontSize: 13, textAlign: "left" }}>
+                <span style={{ color: "#64748b" }}>Name:</span><span style={{ fontWeight: 600 }}>{profile.full_name}</span>
+                <span style={{ color: "#64748b" }}>Club:</span><span style={{ fontWeight: 600 }}>{profile.club}</span>
+                <span style={{ color: "#64748b" }}>Role:</span><span style={{ fontWeight: 600 }}>{ROLE_CONFIG[profile.role]?.label}</span>
+              </div>
+            </div>
+            <button onClick={() => setStep(2)} style={{ marginTop: 32, padding: "14px 40px", borderRadius: 10, border: "none", background: "linear-gradient(135deg, #0f172a, #1e3a5f)", color: "#7dd3fc", fontWeight: 700, fontSize: 16, cursor: "pointer" }}>
+              Get Started
+            </button>
+          </div>
+        )}
+
+        {/* Step 2: Upload */}
+        {step === 2 && (
+          <div style={{ padding: "32px" }}>
+            <div style={{ fontSize: 22, fontWeight: 700, color: "#0f172a", marginBottom: 4 }}>Import Your Roster</div>
+            <div style={{ fontSize: 13, color: "#64748b", marginBottom: 24 }}>Upload a CSV file with your player list, or skip and add players manually.</div>
+
+            {/* Required fields */}
+            <div style={{ background: "#f0f9ff", border: "1px solid #bae6fd", borderRadius: 10, padding: 16, marginBottom: 20 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: "#0369a1", marginBottom: 8 }}>CSV Column Requirements</div>
+              <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: "#dc2626", marginBottom: 4 }}>REQUIRED</div>
+                  <div style={{ fontSize: 12, color: "#0f172a" }}>Name <span style={{ color: "#94a3b8" }}>(or Player)</span></div>
+                </div>
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", marginBottom: 4 }}>RECOMMENDED</div>
+                  <div style={{ fontSize: 12, color: "#0f172a" }}>GHIN, Handicap/HDCP, Index</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", marginBottom: 4 }}>OPTIONAL</div>
+                  <div style={{ fontSize: 12, color: "#0f172a" }}>Phone, Email</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Upload area */}
+            <label style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 20px", border: "3px dashed #7dd3fc", borderRadius: 12, background: "#f8fafc", cursor: "pointer", transition: "all 0.2s", marginBottom: 16 }}>
+              <div style={{ fontSize: 40, marginBottom: 8 }}>📁</div>
+              <div style={{ fontSize: 15, fontWeight: 700, color: "#0f172a", marginBottom: 4 }}>Click to upload CSV</div>
+              <div style={{ fontSize: 12, color: "#64748b" }}>or drag and drop your file here</div>
+              <input type="file" accept=".csv" onChange={handleFileUpload} style={{ display: "none" }} />
+            </label>
+
+            {uploadMsg && (
+              <div style={{ background: uploadMsg.type === "error" ? "#fee2e2" : "#dcfce7", color: uploadMsg.type === "error" ? "#991b1b" : "#166534", padding: "10px 14px", borderRadius: 8, fontSize: 13, fontWeight: 600, marginBottom: 16 }}>{uploadMsg.msg}</div>
+            )}
+
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 8 }}>
+              <button onClick={() => setStep(1)} style={{ padding: "10px 24px", borderRadius: 8, border: "1px solid #c1cad8", background: "#fff", color: "#64748b", fontWeight: 600, fontSize: 13, cursor: "pointer" }}>Back</button>
+              <div style={{ display: "flex", gap: 10 }}>
+                <button onClick={() => { setStep(3); }} style={{ padding: "10px 24px", borderRadius: 8, border: "1px solid #c1cad8", background: "#fff", color: "#0f172a", fontWeight: 600, fontSize: 13, cursor: "pointer" }}>Skip — Add Manually</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Step 3: Review & Edit */}
+        {step === 3 && (
+          <div style={{ padding: "32px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+              <div>
+                <div style={{ fontSize: 22, fontWeight: 700, color: "#0f172a" }}>Review Your Roster</div>
+                <div style={{ fontSize: 13, color: "#64748b" }}>{importedPlayers.length} player{importedPlayers.length !== 1 ? "s" : ""} — edit, add, or remove before saving</div>
+              </div>
+              <button onClick={addManualPlayer} style={{ padding: "8px 16px", borderRadius: 8, border: "none", background: "linear-gradient(135deg, #0f172a, #1e3a5f)", color: "#7dd3fc", fontWeight: 700, cursor: "pointer", fontSize: 12 }}>+ Add Player</button>
+            </div>
+
+            <div style={{ background: "#fff", borderRadius: 10, border: "1px solid #d1d9e6", overflow: "hidden", maxHeight: 400, overflowY: "auto", marginBottom: 20 }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+                <thead><tr style={{ background: "linear-gradient(135deg, #0f172a 0%, #162d50 100%)", color: "#7dd3fc", position: "sticky", top: 0 }}>
+                  {["Player Name*", "HDCP", "Index", "GHIN", "Phone", "Email", ""].map(h => (
+                    <th key={h} style={{ padding: "10px 8px", textAlign: "left", fontWeight: 600, fontSize: 10, letterSpacing: 0.5 }}>{h}</th>
+                  ))}
+                </tr></thead>
+                <tbody>
+                  {importedPlayers.length === 0 ? (
+                    <tr><td colSpan={7} style={{ padding: 30, textAlign: "center", color: "#94a3b8", fontSize: 13 }}>No players yet. Click "+ Add Player" or go back to upload a CSV.</td></tr>
+                  ) : importedPlayers.map((p, i) => (
+                    <tr key={p.id} style={{ background: i % 2 === 0 ? "#fff" : "#f5f7fb", borderBottom: "1px solid #e2e8f0" }}>
+                      <td style={{ padding: "6px 8px" }}>
+                        {editingId === p.id ? <input value={p.name} onChange={e => updatePlayer(p.id, "name", e.target.value)} style={{ fontSize: 12, padding: "4px 6px", border: "1px solid #38bdf8", borderRadius: 4, width: "100%", background: "#eff6ff", fontWeight: 600 }} />
+                          : <span onClick={() => setEditingId(p.id)} style={{ cursor: "pointer", fontWeight: 600 }}>{p.name}</span>}
+                      </td>
+                      <td style={{ padding: "6px 8px" }}>
+                        {editingId === p.id ? <input type="number" step="0.1" value={p.courseHdcp} onChange={e => updatePlayer(p.id, "courseHdcp", parseFloat(e.target.value) || 0)} style={{ fontSize: 11, padding: "4px", border: "1px solid #38bdf8", borderRadius: 4, width: 50, background: "#eff6ff", fontWeight: 800, textAlign: "center" }} />
+                          : <span onClick={() => setEditingId(p.id)} style={{ cursor: "pointer", fontWeight: 800 }}>{Number(p.courseHdcp).toFixed(1)}</span>}
+                      </td>
+                      <td style={{ padding: "6px 8px", color: "#64748b" }}>
+                        {editingId === p.id ? <input type="number" step="0.1" value={p.index} onChange={e => updatePlayer(p.id, "index", parseFloat(e.target.value) || 0)} style={{ fontSize: 11, padding: "4px", border: "1px solid #38bdf8", borderRadius: 4, width: 50, background: "#eff6ff", textAlign: "center" }} />
+                          : <span onClick={() => setEditingId(p.id)} style={{ cursor: "pointer" }}>{p.index}</span>}
+                      </td>
+                      <td style={{ padding: "6px 8px", fontFamily: "monospace", fontSize: 10 }}>
+                        {editingId === p.id ? <input value={p.ghin} onChange={e => updatePlayer(p.id, "ghin", e.target.value)} style={{ fontSize: 10, padding: "4px", border: "1px solid #38bdf8", borderRadius: 4, width: 70, background: "#eff6ff", fontFamily: "monospace" }} />
+                          : <span onClick={() => setEditingId(p.id)} style={{ cursor: "pointer" }}>{p.ghin || "—"}</span>}
+                      </td>
+                      <td style={{ padding: "6px 8px", fontSize: 11 }}>
+                        {editingId === p.id ? <input value={p.phone} onChange={e => updatePlayer(p.id, "phone", e.target.value)} style={{ fontSize: 11, padding: "4px", border: "1px solid #38bdf8", borderRadius: 4, width: 100, background: "#eff6ff" }} />
+                          : <span onClick={() => setEditingId(p.id)} style={{ cursor: "pointer", color: "#64748b" }}>{p.phone || "—"}</span>}
+                      </td>
+                      <td style={{ padding: "6px 8px", fontSize: 11 }}>
+                        {editingId === p.id ? <input value={p.email} onChange={e => updatePlayer(p.id, "email", e.target.value)} style={{ fontSize: 11, padding: "4px", border: "1px solid #38bdf8", borderRadius: 4, width: 130, background: "#eff6ff" }} />
+                          : <span onClick={() => setEditingId(p.id)} style={{ cursor: "pointer", color: "#64748b" }}>{p.email || "—"}</span>}
+                      </td>
+                      <td style={{ padding: "6px 8px" }}>
+                        <div style={{ display: "flex", gap: 4 }}>
+                          {editingId === p.id && <button onClick={() => setEditingId(null)} style={{ fontSize: 9, padding: "3px 8px", borderRadius: 4, border: "none", background: "#16a34a", color: "#fff", fontWeight: 700, cursor: "pointer" }}>Done</button>}
+                          <button onClick={() => removePlayer(p.id)} style={{ fontSize: 9, padding: "3px 6px", borderRadius: 4, border: "1px solid #fca5a5", background: "#fff5f5", color: "#dc2626", cursor: "pointer" }}>Remove</button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <button onClick={() => setStep(2)} style={{ padding: "10px 24px", borderRadius: 8, border: "1px solid #c1cad8", background: "#fff", color: "#64748b", fontWeight: 600, fontSize: 13, cursor: "pointer" }}>Back</button>
+              <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                {importedPlayers.length === 0 && <span style={{ fontSize: 12, color: "#94a3b8" }}>You can add players later from the Roster tab</span>}
+                <button onClick={handleFinish} disabled={saving}
+                  style={{ padding: "12px 32px", borderRadius: 10, border: "none", background: "linear-gradient(135deg, #0f172a, #1e3a5f)", color: "#7dd3fc", fontWeight: 700, fontSize: 15, cursor: saving ? "wait" : "pointer", opacity: saving ? 0.7 : 1 }}>
+                  {saving ? "Saving..." : importedPlayers.length > 0 ? `Save ${importedPlayers.length} Players & Continue` : "Skip & Continue"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
 // LOGIN SCREEN
 // ═══════════════════════════════════════════════════════════════
 function LoginScreen({ onSignIn, onSignUp }) {
@@ -1066,7 +1376,7 @@ function Dashboard({ players, schedule, lockState, clubName }) {
 // ═══════════════════════════════════════════════════════════════
 // ROSTER
 // ═══════════════════════════════════════════════════════════════
-function Roster({ players, setPlayers }) {
+function Roster({ players, setPlayers, addPlayerWithSync, clubName, userId }) {
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [sortBy, setSortBy] = useState("handicap");
@@ -1122,9 +1432,7 @@ function Roster({ players, setPlayers }) {
       const phoneIdx = header.findIndex(h => h.includes("phone") || h.includes("cell") || h.includes("mobile"));
       const emailIdx = header.findIndex(h => h.includes("email") || h.includes("e-mail"));
       if (nameIdx === -1) { setUploadMsg("Could not find a 'Name' or 'Player' column. Please check the file header row."); return; }
-      const maxId = Math.max(...players.map(p => p.id), 0);
       const newPlayers = lines.slice(1).filter(row => row[nameIdx] && row[nameIdx].trim()).map((row, i) => ({
-        id: maxId + i + 1,
         name: row[nameIdx] || "Unknown",
         ghin: ghinIdx > -1 ? (row[ghinIdx] || "") : "",
         courseHdcp: hdcpIdx > -1 ? (parseFloat(row[hdcpIdx]) || 15) : 15,
@@ -1135,7 +1443,14 @@ function Roster({ players, setPlayers }) {
         availability: { 1: "no", 2: "no", 3: "no" },
         locPref: { 1: "", 2: "", 3: "" }, notes: "Imported"
       }));
-      setPlayers(prev => [...prev, ...newPlayers]);
+      // Bulk insert to Supabase and reload
+      if (clubName && userId) {
+        const inserted = await bulkInsertPlayers(newPlayers, clubName, userId);
+        const dbPlayers = await loadPlayersFromDb(clubName);
+        setPlayers(prev => dbPlayers);
+      } else {
+        setPlayers(prev => [...prev, ...newPlayers.map((p, i) => ({ ...p, id: Math.max(...prev.map(x => x.id), 0) + i + 1 }))]);
+      }
       setUploadMsg(`Imported ${newPlayers.length} players from ${file.name}`);
       setTimeout(() => setUploadMsg(null), 5000);
     } catch (err) {
@@ -1144,10 +1459,16 @@ function Roster({ players, setPlayers }) {
     e.target.value = "";
   };
 
-  const addPlayer = () => {
-    const newId = Math.max(...players.map(p => p.id)) + 1;
-    setPlayers(prev => [...prev, { id: newId, name: "New, Player", ghin: "", courseHdcp: 15, index: 15.0, phone: "", email: "", status: "not_contacted", contactOwner: "", contactDate: "", availability: { 1: "no", 2: "no", 3: "no" }, locPref: { 1: "", 2: "", 3: "" }, notes: "EDIT ME" }]);
-    setEditingId(newId);
+  const addPlayer = async () => {
+    const newPlayer = { name: "New, Player", ghin: "", courseHdcp: 15, index: 15.0, phone: "", email: "", status: "not_contacted", contactOwner: "", contactDate: "", availability: { 1: "no", 2: "no", 3: "no" }, locPref: { 1: "", 2: "", 3: "" }, notes: "EDIT ME" };
+    if (addPlayerWithSync) {
+      const newId = await addPlayerWithSync(newPlayer);
+      if (newId) setEditingId(newId);
+    } else {
+      const newId = Math.max(...players.map(p => p.id), 0) + 1;
+      setPlayers(prev => [...prev, { ...newPlayer, id: newId }]);
+      setEditingId(newId);
+    }
   };
 
   return (
@@ -1391,9 +1712,10 @@ function AdminPanel({ currentUserId }) {
 // ROOT COMPONENT (with Supabase Auth)
 // ═══════════════════════════════════════════════════════════════
 function GAPManager() {
-  const { session, profile, loading, signIn, signUp, signOut } = useAuth();
+  const { session, profile, loading, signIn, signUp, signOut, fetchProfile } = useAuth();
   const [activeTab, setActiveTab] = useState("dashboard");
-  const [players, setPlayers] = useState(SAMPLE_PLAYERS);
+  const [players, setPlayers] = useState([]);
+  const [playersLoaded, setPlayersLoaded] = useState(false);
   const [schedule, setSchedule] = useState(DEFAULT_SCHEDULE);
   const [lockState, setLockState] = useState(DEFAULT_LOCK_STATE);
 
@@ -1405,11 +1727,54 @@ function GAPManager() {
   const clubName = profile?.club || "My Club";
   const clubInitial = clubName.charAt(0).toUpperCase();
 
+  // Load players from Supabase when profile is ready
+  useEffect(() => {
+    if (profile?.club && profile?.onboarded) {
+      loadPlayersFromDb(profile.club).then(dbPlayers => {
+        setPlayers(dbPlayers);
+        setPlayersLoaded(true);
+      });
+    }
+  }, [profile?.club, profile?.onboarded]);
+
+  // Wrapper to save player changes to Supabase
+  const setPlayersWithSync = useCallback((updater) => {
+    setPlayers(prev => {
+      const next = typeof updater === "function" ? updater(prev) : updater;
+      // Find changed players and sync to DB
+      next.forEach(p => {
+        const old = prev.find(op => op.id === p.id);
+        if (!old || JSON.stringify(old) !== JSON.stringify(p)) {
+          savePlayerToDb(p, clubName, session?.user?.id);
+        }
+      });
+      // Find deleted players
+      prev.forEach(p => {
+        if (!next.find(np => np.id === p.id)) {
+          deletePlayerFromDb(p.id);
+        }
+      });
+      return next;
+    });
+  }, [clubName, session?.user?.id]);
+
+  // Handle new player add (needs to get DB id back)
+  const addPlayerWithSync = useCallback(async (newPlayer) => {
+    const row = appPlayerToDb(newPlayer, clubName, session?.user?.id);
+    delete row.id;
+    const { data, error } = await supabase.from("players").insert(row).select("*").single();
+    if (data) {
+      setPlayers(prev => [...prev, dbPlayerToApp(data)]);
+      return data.id;
+    }
+    return null;
+  }, [clubName, session?.user?.id]);
+
   if (loading) {
     return (
       <div style={{ fontFamily: "'Poppins', sans-serif", background: "#eef2f7", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <div style={{ textAlign: "center", color: "#64748b" }}>
-          <div style={{ width: 56, height: 56, borderRadius: "50%", background: "linear-gradient(135deg, #7dd3fc, #38bdf8)", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 28, fontWeight: 800, color: "#0f172a", marginBottom: 16 }}>P</div>
+          <div style={{ width: 56, height: 56, borderRadius: "50%", background: "linear-gradient(135deg, #7dd3fc, #38bdf8)", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 28, fontWeight: 800, color: "#0f172a", marginBottom: 16 }}>M</div>
           <div style={{ fontSize: 16, fontWeight: 600 }}>Loading...</div>
         </div>
       </div>
@@ -1418,6 +1783,13 @@ function GAPManager() {
 
   if (!session) {
     return <LoginScreen onSignIn={signIn} onSignUp={signUp} />;
+  }
+
+  // Show onboarding wizard for new users
+  if (profile && !profile.onboarded) {
+    return <OnboardingWizard profile={profile} session={session} onComplete={() => {
+      fetchProfile(session.user.id);
+    }} />;
   }
 
   const tabs = [
@@ -1463,7 +1835,7 @@ function GAPManager() {
       </header>
       <main style={{ maxWidth: 1400, margin: "0 auto", padding: "24px" }}>
         {activeTab === "dashboard" && <Dashboard players={players} schedule={schedule} lockState={lockState} clubName={clubName} />}
-        {activeTab === "roster" && <Roster players={players} setPlayers={setPlayers} />}
+        {activeTab === "roster" && <Roster players={players} setPlayers={setPlayersWithSync} addPlayerWithSync={addPlayerWithSync} clubName={clubName} userId={session.user.id} />}
         {activeTab === "builder" && <TeamBuilder players={players} schedule={schedule} lockState={lockState} setLockState={setLockState} userRole={userRole} clubName={clubName} />}
         {activeTab === "setup" && <SeasonSetup schedule={schedule} setSchedule={setSchedule} lockState={lockState} userRole={userRole} clubName={clubName} />}
         {activeTab === "admin" && isAdmin && <AdminPanel currentUserId={session.user.id} />}
