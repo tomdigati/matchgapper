@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "dev",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["/Users/tomdigati/Desktop/matchgapper/.claude/worktrees/vigorous-wilson/serve.py"],
+      "port": 8080
+    }
+  ]
+}
