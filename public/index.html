@@ -1988,6 +1988,171 @@ function AdminPanel({ currentUserId, clubName }) {
 }
 
 // ═══════════════════════════════════════════════════════════════
+// PLATFORM ADMIN (platform_admin only — cross-club management)
+// ═══════════════════════════════════════════════════════════════
+const IconPlatform = () => (<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>);
+
+function PlatformAdmin({ currentUserId }) {
+  const [clubs, setClubs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [feedback, setFeedback] = useState(null);
+  const [processing, setProcessing] = useState(null);
+
+  useEffect(() => { loadClubs(); }, []);
+
+  async function loadClubs() {
+    setLoading(true);
+    const { data, error } = await supabase.from("clubs").select("*").order("created_at", { ascending: false });
+    if (data) setClubs(data);
+    if (error) setFeedback({ type: "error", msg: "Failed to load clubs: " + error.message });
+    setLoading(false);
+  }
+
+  async function approveClub(club) {
+    setProcessing(club.id);
+    setFeedback(null);
+    // Update club status to approved
+    const { error: updateErr } = await supabase.from("clubs").update({ status: "approved", verified: true }).eq("id", club.id);
+    if (updateErr) {
+      setFeedback({ type: "error", msg: "Failed to approve: " + updateErr.message });
+      setProcessing(null);
+      return;
+    }
+    // Auto-create admin invitation for the pro
+    const { data: inviteData, error: inviteErr } = await supabase.from("invitations").insert({
+      email: club.pro_email,
+      club: club.name,
+      role: "admin",
+      invited_by: currentUserId,
+    }).select("token").single();
+    if (inviteErr) {
+      setFeedback({ type: "error", msg: "Club approved but invite creation failed: " + inviteErr.message });
+    } else {
+      const inviteUrl = `${window.location.origin}${window.location.pathname}?invite=${inviteData.token}`;
+      setClubs(prev => prev.map(c => c.id === club.id ? { ...c, status: "approved", verified: true } : c));
+      setFeedback({ type: "success", msg: `${club.name} approved! Send this invite link to ${club.pro_email}: ${inviteUrl}` });
+    }
+    setProcessing(null);
+  }
+
+  async function rejectClub(clubId) {
+    setProcessing(clubId);
+    const { error } = await supabase.from("clubs").update({ status: "rejected" }).eq("id", clubId);
+    if (error) {
+      setFeedback({ type: "error", msg: "Failed to reject: " + error.message });
+    } else {
+      setClubs(prev => prev.map(c => c.id === clubId ? { ...c, status: "rejected" } : c));
+      setFeedback({ type: "success", msg: "Club registration rejected." });
+      setTimeout(() => setFeedback(null), 3000);
+    }
+    setProcessing(null);
+  }
+
+  const pending = clubs.filter(c => c.status === "pending");
+  const approved = clubs.filter(c => c.status === "approved");
+  const rejected = clubs.filter(c => c.status === "rejected");
+
+  return (
+    <div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+        <div>
+          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: "#0f172a" }}>Platform Administration</h2>
+          <p style={{ margin: "4px 0 0", fontSize: 13, color: "#64748b" }}>Approve club registrations and manage the MatchGapper platform</p>
+        </div>
+        <button onClick={loadClubs} style={{ padding: "8px 16px", borderRadius: 8, border: "1px solid #c1cad8", background: "#fff", color: "#0f172a", fontWeight: 600, cursor: "pointer", fontSize: 12 }}>Refresh</button>
+      </div>
+
+      {feedback && (
+        <div style={{ background: feedback.type === "error" ? "#fee2e2" : "#dcfce7", color: feedback.type === "error" ? "#991b1b" : "#166534", padding: "12px 16px", borderRadius: 8, fontSize: 13, fontWeight: 600, marginBottom: 14, wordBreak: "break-all" }}>{feedback.msg}</div>
+      )}
+
+      {loading ? (
+        <div style={{ textAlign: "center", padding: 40, color: "#64748b" }}>Loading clubs...</div>
+      ) : (
+        <>
+          {/* Pending registrations */}
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: "#0f172a", marginBottom: 10, display: "flex", alignItems: "center", gap: 8 }}>
+              Pending Registrations
+              {pending.length > 0 && <span style={{ fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 10, background: "#fef3c7", color: "#92400e" }}>{pending.length}</span>}
+            </div>
+            {pending.length === 0 ? (
+              <div style={{ background: "#f5f7fb", borderRadius: 10, padding: 24, textAlign: "center", color: "#94a3b8", fontSize: 13 }}>No pending registrations</div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {pending.map(club => (
+                  <div key={club.id} style={{ background: "#fff", borderRadius: 12, border: "2px solid #fbbf24", padding: 20, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
+                    <div>
+                      <div style={{ fontSize: 16, fontWeight: 700, color: "#0f172a" }}>{club.name}</div>
+                      <div style={{ fontSize: 13, color: "#64748b", marginTop: 2 }}>
+                        PGA Pro: <strong>{club.pro_name}</strong> &middot; {club.pro_email}
+                      </div>
+                      <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 4 }}>
+                        Submitted {new Date(club.created_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <button onClick={() => approveClub(club)} disabled={processing === club.id}
+                        style={{ padding: "8px 20px", borderRadius: 8, border: "none", background: "#16a34a", color: "#fff", fontWeight: 700, fontSize: 13, cursor: processing === club.id ? "wait" : "pointer" }}>
+                        {processing === club.id ? "..." : "Approve & Create Invite"}
+                      </button>
+                      <button onClick={() => rejectClub(club.id)} disabled={processing === club.id}
+                        style={{ padding: "8px 16px", borderRadius: 8, border: "1px solid #fca5a5", background: "#fff5f5", color: "#dc2626", fontWeight: 600, fontSize: 13, cursor: "pointer" }}>
+                        Reject
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Approved clubs */}
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: "#0f172a", marginBottom: 10 }}>
+              Active Clubs <span style={{ fontSize: 11, fontWeight: 600, color: "#64748b" }}>({approved.length})</span>
+            </div>
+            <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #d1d9e6", overflow: "hidden" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+                <thead>
+                  <tr style={{ background: "linear-gradient(135deg, #0f172a 0%, #162d50 100%)", color: ACCENT }}>
+                    {["Club", "PGA Pro", "Email", "Approved"].map(h => (
+                      <th key={h} style={{ padding: "12px 16px", textAlign: "left", fontWeight: 600, fontSize: 11, letterSpacing: 0.5 }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {approved.length === 0 ? (
+                    <tr><td colSpan={4} style={{ padding: 24, textAlign: "center", color: "#94a3b8" }}>No approved clubs yet</td></tr>
+                  ) : approved.map((club, i) => (
+                    <tr key={club.id} style={{ background: i % 2 === 0 ? "#fff" : "#f5f7fb", borderBottom: "1px solid #e2e8f0" }}>
+                      <td style={{ padding: "12px 16px", fontWeight: 700 }}>{club.name}</td>
+                      <td style={{ padding: "12px 16px" }}>{club.pro_name}</td>
+                      <td style={{ padding: "12px 16px", color: "#64748b", fontSize: 12 }}>{club.pro_email}</td>
+                      <td style={{ padding: "12px 16px", color: "#94a3b8", fontSize: 11 }}>{new Date(club.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Rejected (collapsible) */}
+          {rejected.length > 0 && (
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: "#94a3b8", marginBottom: 8 }}>Rejected ({rejected.length})</div>
+              {rejected.map(club => (
+                <div key={club.id} style={{ fontSize: 12, color: "#94a3b8", padding: "4px 0" }}>{club.name} — {club.pro_email}</div>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
 // ROOT COMPONENT (with Supabase Auth)
 // ═══════════════════════════════════════════════════════════════
 function GAPManager() {
@@ -2020,6 +2185,7 @@ function GAPManager() {
   const userRole = profile?.role || "vice_captain";
   const isAdmin = userRole === "admin";
   const isCaptain = userRole === "captain" || isAdmin;
+  const isPlatformAdmin = profile?.platform_admin === true;
   const rc = ROLE_CONFIG[userRole] || ROLE_CONFIG.vice_captain;
   const clubName = profile?.club || "My Club";
   const clubInitial = clubName.charAt(0).toUpperCase();
@@ -2111,6 +2277,7 @@ function GAPManager() {
     { id: "roster", label: "Roster", Icon: IconRoster },
     { id: "setup", label: "Season Setup", Icon: IconSetup },
     ...(isAdmin ? [{ id: "admin", label: "Admin", Icon: IconAdmin }] : []),
+    ...(isPlatformAdmin ? [{ id: "platform", label: "Platform", Icon: IconPlatform }] : []),
   ];
 
   return (
@@ -2152,6 +2319,7 @@ function GAPManager() {
         {activeTab === "builder" && <TeamBuilder players={players} schedule={schedule} lockState={lockState} setLockState={setLockState} userRole={userRole} clubName={clubName} />}
         {activeTab === "setup" && <SeasonSetup schedule={schedule} setSchedule={setSchedule} lockState={lockState} userRole={userRole} clubName={clubName} />}
         {activeTab === "admin" && isAdmin && <AdminPanel currentUserId={session.user.id} clubName={clubName} />}
+        {activeTab === "platform" && isPlatformAdmin && <PlatformAdmin currentUserId={session.user.id} />}
       </main>
       <footer style={{ textAlign: "center", padding: "16px", color: "#64748b", fontSize: 11, borderTop: "1px solid #d1d9e6" }}>MatchGapper · BMW GAP Team Match Manager · All matches scratch — no handicap strokes</footer>
     </div>
