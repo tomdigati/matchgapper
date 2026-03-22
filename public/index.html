@@ -394,17 +394,122 @@ function OnboardingWizard({ profile, session, onComplete }) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// LOGIN SCREEN
+// CLUB REGISTRATION SCREEN (PGA Pro @pga.com only)
 // ═══════════════════════════════════════════════════════════════
-function LoginScreen({ onSignIn, onSignUp }) {
-  const [mode, setMode] = useState("signin");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+function ClubRegistration({ onBack }) {
+  const [proName, setProName] = useState("");
+  const [proEmail, setProEmail] = useState("");
+  const [clubName, setClubName] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError(null);
+    if (!proEmail.toLowerCase().endsWith("@pga.com")) {
+      setError("Club registration requires a @pga.com email address. Only PGA professionals can register clubs.");
+      return;
+    }
+    if (!clubName) { setError("Please select your club."); return; }
+    setSubmitting(true);
+    // Check if club already registered
+    const { data: existing } = await supabase.from("clubs").select("id, verified").eq("name", clubName);
+    if (existing && existing.length > 0) {
+      setError(`${clubName} is already registered. Contact your club admin for an invitation.`);
+      setSubmitting(false);
+      return;
+    }
+    const { error: insertErr } = await supabase.from("clubs").insert({
+      name: clubName, pro_name: proName, pro_email: proEmail.toLowerCase()
+    });
+    if (insertErr) {
+      setError("Registration failed: " + insertErr.message);
+    } else {
+      setSuccess(true);
+    }
+    setSubmitting(false);
+  };
+
+  if (success) {
+    return (
+      <div style={{ fontFamily: "'Poppins', 'Segoe UI', -apple-system, sans-serif", background: "#eef2f7", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+        <div style={{ width: 460, background: "#fff", borderRadius: 16, boxShadow: "0 8px 32px rgba(0,0,0,0.12)", overflow: "hidden" }}>
+          <div style={{ background: "linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%)", padding: "32px", textAlign: "center", borderBottom: "3px solid #16a34a" }}>
+            <div style={{ fontSize: 48, marginBottom: 12 }}>&#9989;</div>
+            <div style={{ color: "#7dd3fc", fontSize: 22, fontWeight: 700 }}>Club Registered!</div>
+          </div>
+          <div style={{ padding: "32px", textAlign: "center" }}>
+            <p style={{ fontSize: 15, color: "#0f172a", fontWeight: 600, marginBottom: 8 }}>{clubName}</p>
+            <p style={{ fontSize: 13, color: "#64748b", marginBottom: 24 }}>
+              A verification email will be sent to <strong>{proEmail}</strong>. Once verified, you'll receive an admin invitation link to set up your account and start inviting captains.
+            </p>
+            <button onClick={onBack} style={{ padding: "12px 32px", borderRadius: 8, border: "none", background: "linear-gradient(135deg, #0f172a, #1e3a5f)", color: "#7dd3fc", fontWeight: 700, fontSize: 14, cursor: "pointer" }}>
+              Back to Sign In
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ fontFamily: "'Poppins', 'Segoe UI', -apple-system, sans-serif", background: "#eef2f7", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+      <div style={{ width: 460, background: "#fff", borderRadius: 16, boxShadow: "0 8px 32px rgba(0,0,0,0.12)", overflow: "hidden" }}>
+        <div style={{ background: "linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%)", padding: "32px 32px 24px", textAlign: "center", borderBottom: "3px solid #7dd3fc" }}>
+          <div style={{ width: 56, height: 56, borderRadius: "50%", background: "linear-gradient(135deg, #7dd3fc, #38bdf8)", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 28, fontWeight: 800, color: "#0f172a", marginBottom: 12 }}>M</div>
+          <div style={{ color: "#7dd3fc", fontSize: 22, fontWeight: 700 }}>Register Your Club</div>
+          <div style={{ color: "#94a3b8", fontSize: 12, marginTop: 4 }}>PGA Professional verification required</div>
+        </div>
+        <form onSubmit={handleSubmit} style={{ padding: "28px 32px" }}>
+          <div style={{ background: "#fef3c7", border: "1px solid #fbbf24", borderRadius: 10, padding: 14, marginBottom: 20, fontSize: 12, color: "#92400e" }}>
+            <div style={{ fontWeight: 700, marginBottom: 4 }}>PGA Pro Authorization Required</div>
+            Only PGA professionals with a <strong>@pga.com</strong> email address can register a club. Once registered, the pro can invite captains and vice-captains.
+          </div>
+          <div style={{ marginBottom: 14 }}>
+            <label style={{ fontSize: 12, fontWeight: 600, color: "#475569", marginBottom: 4, display: "block" }}>PGA Professional Name</label>
+            <input value={proName} onChange={e => setProName(e.target.value)} placeholder="Mike Dever" required
+              style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid #c1cad8", fontSize: 14, background: "#f5f7fb", outline: "none", boxSizing: "border-box" }} />
+          </div>
+          <div style={{ marginBottom: 14 }}>
+            <label style={{ fontSize: 12, fontWeight: 600, color: "#475569", marginBottom: 4, display: "block" }}>PGA Email Address</label>
+            <input type="email" value={proEmail} onChange={e => setProEmail(e.target.value)} placeholder="mdever@pga.com" required
+              style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: `1px solid ${proEmail && !proEmail.toLowerCase().endsWith("@pga.com") ? "#dc2626" : "#c1cad8"}`, fontSize: 14, background: "#f5f7fb", outline: "none", boxSizing: "border-box" }} />
+            {proEmail && !proEmail.toLowerCase().endsWith("@pga.com") && (
+              <div style={{ fontSize: 11, color: "#dc2626", marginTop: 4, fontWeight: 600 }}>Must be a @pga.com email address</div>
+            )}
+          </div>
+          <div style={{ marginBottom: 20 }}>
+            <label style={{ fontSize: 12, fontWeight: 600, color: "#475569", marginBottom: 4, display: "block" }}>Club</label>
+            <ClubSearchDropdown value={clubName} onChange={setClubName} placeholder="Search 334 GAP member clubs..." />
+            {clubName && <div style={{ fontSize: 11, color: "#16a34a", marginTop: 4, fontWeight: 600 }}>{clubName}</div>}
+          </div>
+          {error && <div style={{ background: "#fee2e2", color: "#991b1b", padding: "10px 14px", borderRadius: 8, fontSize: 13, fontWeight: 600, marginBottom: 14 }}>{error}</div>}
+          <button type="submit" disabled={submitting}
+            style={{ width: "100%", padding: "12px", borderRadius: 8, border: "none", background: "linear-gradient(135deg, #0f172a, #1e3a5f)", color: "#7dd3fc", fontWeight: 700, fontSize: 15, cursor: submitting ? "wait" : "pointer", opacity: submitting ? 0.7 : 1 }}>
+            {submitting ? "Registering..." : "Register Club"}
+          </button>
+          <button type="button" onClick={onBack}
+            style={{ width: "100%", padding: "10px", borderRadius: 8, border: "1px solid #c1cad8", background: "#fff", color: "#64748b", fontWeight: 600, fontSize: 13, cursor: "pointer", marginTop: 10 }}>
+            Back to Sign In
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// INVITE SIGNUP SCREEN (accessed via ?invite=TOKEN)
+// ═══════════════════════════════════════════════════════════════
+function InviteSignup({ invite, onSignUp, onBack }) {
   const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState(invite.email || "");
+  const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [selectedRole, setSelectedRole] = useState("vice_captain");
-  const [selectedClub, setSelectedClub] = useState("");
   const [error, setError] = useState(null);
   const [message, setMessage] = useState(null);
   const [submitting, setSubmitting] = useState(false);
@@ -412,18 +517,106 @@ function LoginScreen({ onSignIn, onSignUp }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
-    setMessage(null);
+    if (password !== confirmPassword) { setError("Passwords do not match."); return; }
     setSubmitting(true);
-    if (mode === "signin") {
-      const { error } = await onSignIn(email, password);
-      if (error) setError(error.message);
-    } else {
-      if (password !== confirmPassword) { setError("Passwords do not match."); setSubmitting(false); return; }
-      if (!selectedClub) { setError("Please select your club."); setSubmitting(false); return; }
-      const { error } = await onSignUp(email, password, fullName, selectedRole, selectedClub);
-      if (error) setError(error.message);
-      else setMessage("Check your email for a confirmation link!");
+    const { data, error: signUpErr } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { full_name: fullName, role: invite.role, club: invite.club, invite_token: invite.token } }
+    });
+    if (signUpErr) {
+      setError(signUpErr.message);
+    } else if (data?.user) {
+      await supabase.from("profiles").update({ role: invite.role, club: invite.club }).eq("id", data.user.id);
+      // Mark invitation used
+      await supabase.from("invitations").update({ used: true, used_by: data.user.id }).eq("token", invite.token);
+      setMessage("Account created! Check your email for a confirmation link.");
     }
+    setSubmitting(false);
+  };
+
+  return (
+    <div style={{ fontFamily: "'Poppins', 'Segoe UI', -apple-system, sans-serif", background: "#eef2f7", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+      <div style={{ width: 420, background: "#fff", borderRadius: 16, boxShadow: "0 8px 32px rgba(0,0,0,0.12)", overflow: "hidden" }}>
+        <div style={{ background: "linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%)", padding: "32px 32px 24px", textAlign: "center", borderBottom: "3px solid #16a34a" }}>
+          <div style={{ width: 56, height: 56, borderRadius: "50%", background: "linear-gradient(135deg, #7dd3fc, #38bdf8)", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 28, fontWeight: 800, color: "#0f172a", marginBottom: 12 }}>M</div>
+          <div style={{ color: "#7dd3fc", fontSize: 22, fontWeight: 700 }}>You're Invited!</div>
+          <div style={{ color: "#94a3b8", fontSize: 12, marginTop: 4 }}>Join {invite.club} on MatchGapper</div>
+        </div>
+        <form onSubmit={handleSubmit} style={{ padding: "28px 32px" }}>
+          <div style={{ background: "#dcfce7", border: "1px solid #86efac", borderRadius: 10, padding: 14, marginBottom: 20, display: "flex", gap: 16 }}>
+            <div>
+              <div style={{ fontSize: 12, color: "#64748b" }}>Club</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>{invite.club}</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 12, color: "#64748b" }}>Role</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>{ROLE_CONFIG[invite.role]?.label || invite.role}</div>
+            </div>
+          </div>
+          <div style={{ marginBottom: 14 }}>
+            <label style={{ fontSize: 12, fontWeight: 600, color: "#475569", marginBottom: 4, display: "block" }}>Full Name</label>
+            <input value={fullName} onChange={e => setFullName(e.target.value)} placeholder="John Smith" required
+              style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid #c1cad8", fontSize: 14, background: "#f5f7fb", outline: "none", boxSizing: "border-box" }} />
+          </div>
+          <div style={{ marginBottom: 14 }}>
+            <label style={{ fontSize: 12, fontWeight: 600, color: "#475569", marginBottom: 4, display: "block" }}>Email</label>
+            <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" required
+              style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid #c1cad8", fontSize: 14, background: invite.email ? "#e2e8f0" : "#f5f7fb", outline: "none", boxSizing: "border-box" }}
+              readOnly={!!invite.email} />
+          </div>
+          <div style={{ marginBottom: 14 }}>
+            <label style={{ fontSize: 12, fontWeight: 600, color: "#475569", marginBottom: 4, display: "block" }}>Password</label>
+            <div style={{ position: "relative" }}>
+              <input type={showPassword ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)} placeholder="Min 6 characters" required minLength={6}
+                style={{ width: "100%", padding: "10px 14px", paddingRight: 60, borderRadius: 8, border: "1px solid #c1cad8", fontSize: 14, background: "#f5f7fb", outline: "none", boxSizing: "border-box" }} />
+              <button type="button" onClick={() => setShowPassword(!showPassword)}
+                style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", padding: "4px 8px", borderRadius: 4, border: "none", background: showPassword ? "#0f172a" : "#e2e8f0", color: showPassword ? "#7dd3fc" : "#64748b", fontSize: 10, fontWeight: 700, cursor: "pointer" }}>
+                {showPassword ? "HIDE" : "SHOW"}
+              </button>
+            </div>
+          </div>
+          <div style={{ marginBottom: 20 }}>
+            <label style={{ fontSize: 12, fontWeight: 600, color: "#475569", marginBottom: 4, display: "block" }}>Confirm Password</label>
+            <input type={showPassword ? "text" : "password"} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="Re-enter password" required minLength={6}
+              style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: `1px solid ${confirmPassword && confirmPassword !== password ? "#dc2626" : "#c1cad8"}`, fontSize: 14, background: "#f5f7fb", outline: "none", boxSizing: "border-box" }} />
+            {confirmPassword && confirmPassword !== password && (
+              <div style={{ fontSize: 11, color: "#dc2626", marginTop: 4, fontWeight: 600 }}>Passwords do not match</div>
+            )}
+          </div>
+          {error && <div style={{ background: "#fee2e2", color: "#991b1b", padding: "10px 14px", borderRadius: 8, fontSize: 13, fontWeight: 600, marginBottom: 14 }}>{error}</div>}
+          {message && <div style={{ background: "#dcfce7", color: "#166534", padding: "10px 14px", borderRadius: 8, fontSize: 13, fontWeight: 600, marginBottom: 14 }}>{message}</div>}
+          <button type="submit" disabled={submitting || !!message}
+            style={{ width: "100%", padding: "12px", borderRadius: 8, border: "none", background: "linear-gradient(135deg, #0f172a, #1e3a5f)", color: "#7dd3fc", fontWeight: 700, fontSize: 15, cursor: submitting ? "wait" : "pointer", opacity: submitting || message ? 0.7 : 1 }}>
+            {submitting ? "Creating Account..." : "Create Account"}
+          </button>
+          <button type="button" onClick={onBack}
+            style={{ width: "100%", padding: "10px", borderRadius: 8, border: "1px solid #c1cad8", background: "#fff", color: "#64748b", fontWeight: 600, fontSize: 13, cursor: "pointer", marginTop: 10 }}>
+            Back to Sign In
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// LOGIN SCREEN (Sign In only — signup requires invitation)
+// ═══════════════════════════════════════════════════════════════
+function LoginScreen({ onSignIn, onSignUp, onRegisterClub }) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError(null);
+    setSubmitting(true);
+    const { error } = await onSignIn(email, password);
+    if (error) setError(error.message);
     setSubmitting(false);
   };
 
@@ -437,46 +630,12 @@ function LoginScreen({ onSignIn, onSignUp }) {
           <div style={{ color: "#94a3b8", fontSize: 12, letterSpacing: 1, marginTop: 4 }}>BMW GAP TEAM MATCH MANAGER</div>
         </div>
         <form onSubmit={handleSubmit} style={{ padding: "28px 32px" }}>
-          <div style={{ display: "flex", gap: 0, marginBottom: 20, background: "#f1f5f9", borderRadius: 8, padding: 3 }}>
-            <button type="button" onClick={() => { setMode("signin"); setError(null); setMessage(null); }} style={{ flex: 1, padding: "8px", borderRadius: 6, border: "none", background: mode === "signin" ? "#0f172a" : "transparent", color: mode === "signin" ? "#7dd3fc" : "#64748b", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>Sign In</button>
-            <button type="button" onClick={() => { setMode("signup"); setError(null); setMessage(null); }} style={{ flex: 1, padding: "8px", borderRadius: 6, border: "none", background: mode === "signup" ? "#0f172a" : "transparent", color: mode === "signup" ? "#7dd3fc" : "#64748b", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>Sign Up</button>
-          </div>
-          {mode === "signup" && (
-            <>
-            <div style={{ marginBottom: 14 }}>
-              <label style={{ fontSize: 12, fontWeight: 600, color: "#475569", marginBottom: 4, display: "block" }}>Full Name</label>
-              <input value={fullName} onChange={e => setFullName(e.target.value)} placeholder="John Smith" required
-                style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid #c1cad8", fontSize: 14, background: "#f5f7fb", outline: "none", boxSizing: "border-box" }} />
-            </div>
-            <div style={{ marginBottom: 14 }}>
-              <label style={{ fontSize: 12, fontWeight: 600, color: "#475569", marginBottom: 4, display: "block" }}>Home Club</label>
-              <ClubSearchDropdown value={selectedClub} onChange={setSelectedClub} placeholder="Search 334 GAP member clubs..." />
-              {selectedClub && <div style={{ fontSize: 11, color: "#16a34a", marginTop: 4, fontWeight: 600 }}>{selectedClub}</div>}
-            </div>
-            <div style={{ marginBottom: 14 }}>
-              <label style={{ fontSize: 12, fontWeight: 600, color: "#475569", marginBottom: 6, display: "block" }}>Role</label>
-              <div style={{ display: "flex", gap: 8 }}>
-                {[
-                  { value: "admin", label: "Admin", desc: "Full control", color: "#16a34a", bg: "#dcfce7" },
-                  { value: "captain", label: "Captain", desc: "Manage teams", color: "#1e40af", bg: "#dbeafe" },
-                  { value: "vice_captain", label: "Vice Captain", desc: "View & assist", color: "#f59e0b", bg: "#fef3c7" },
-                ].map(r => (
-                  <button key={r.value} type="button" onClick={() => setSelectedRole(r.value)}
-                    style={{ flex: 1, padding: "10px 8px", borderRadius: 8, border: selectedRole === r.value ? `2px solid ${r.color}` : "2px solid #e2e8f0", background: selectedRole === r.value ? r.bg : "#f5f7fb", cursor: "pointer", textAlign: "center", transition: "all 0.15s" }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: selectedRole === r.value ? r.color : "#475569" }}>{r.label}</div>
-                    <div style={{ fontSize: 10, color: "#64748b", marginTop: 2 }}>{r.desc}</div>
-                  </button>
-                ))}
-              </div>
-            </div>
-            </>
-          )}
           <div style={{ marginBottom: 14 }}>
             <label style={{ fontSize: 12, fontWeight: 600, color: "#475569", marginBottom: 4, display: "block" }}>Email</label>
             <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" required
               style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid #c1cad8", fontSize: 14, background: "#f5f7fb", outline: "none", boxSizing: "border-box" }} />
           </div>
-          <div style={{ marginBottom: mode === "signup" ? 14 : 20 }}>
+          <div style={{ marginBottom: 20 }}>
             <label style={{ fontSize: 12, fontWeight: 600, color: "#475569", marginBottom: 4, display: "block" }}>Password</label>
             <div style={{ position: "relative" }}>
               <input type={showPassword ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)} placeholder="Min 6 characters" required minLength={6}
@@ -487,22 +646,21 @@ function LoginScreen({ onSignIn, onSignUp }) {
               </button>
             </div>
           </div>
-          {mode === "signup" && (
-            <div style={{ marginBottom: 20 }}>
-              <label style={{ fontSize: 12, fontWeight: 600, color: "#475569", marginBottom: 4, display: "block" }}>Confirm Password</label>
-              <input type={showPassword ? "text" : "password"} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="Re-enter password" required minLength={6}
-                style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: `1px solid ${confirmPassword && confirmPassword !== password ? "#dc2626" : "#c1cad8"}`, fontSize: 14, background: "#f5f7fb", outline: "none", boxSizing: "border-box" }} />
-              {confirmPassword && confirmPassword !== password && (
-                <div style={{ fontSize: 11, color: "#dc2626", marginTop: 4, fontWeight: 600 }}>Passwords do not match</div>
-              )}
-            </div>
-          )}
           {error && <div style={{ background: "#fee2e2", color: "#991b1b", padding: "10px 14px", borderRadius: 8, fontSize: 13, fontWeight: 600, marginBottom: 14 }}>{error}</div>}
-          {message && <div style={{ background: "#dcfce7", color: "#166534", padding: "10px 14px", borderRadius: 8, fontSize: 13, fontWeight: 600, marginBottom: 14 }}>{message}</div>}
           <button type="submit" disabled={submitting}
             style={{ width: "100%", padding: "12px", borderRadius: 8, border: "none", background: "linear-gradient(135deg, #0f172a, #1e3a5f)", color: "#7dd3fc", fontWeight: 700, fontSize: 15, cursor: submitting ? "wait" : "pointer", opacity: submitting ? 0.7 : 1, transition: "opacity 0.2s" }}>
-            {submitting ? "..." : mode === "signin" ? "Sign In" : "Create Account"}
+            {submitting ? "Signing In..." : "Sign In"}
           </button>
+          <div style={{ borderTop: "1px solid #e2e8f0", marginTop: 24, paddingTop: 20, textAlign: "center" }}>
+            <div style={{ fontSize: 12, color: "#94a3b8", marginBottom: 12 }}>New to MatchGapper?</div>
+            <div style={{ fontSize: 13, color: "#64748b", marginBottom: 16 }}>
+              Signup is by <strong>invitation only</strong>. Ask your club captain or admin for an invite link.
+            </div>
+            <button type="button" onClick={onRegisterClub}
+              style={{ padding: "10px 20px", borderRadius: 8, border: "1px solid #c1cad8", background: "#f8fafc", color: "#0f172a", fontWeight: 600, fontSize: 13, cursor: "pointer" }}>
+              PGA Pro? Register Your Club
+            </button>
+          </div>
         </form>
       </div>
     </div>
@@ -1564,15 +1722,47 @@ function Roster({ players, setPlayers, addPlayerWithSync, clubName, userId }) {
 // ═══════════════════════════════════════════════════════════════
 // ADMIN PANEL (Admin-only)
 // ═══════════════════════════════════════════════════════════════
-function AdminPanel({ currentUserId }) {
+function AdminPanel({ currentUserId, clubName }) {
   const [users, setUsers] = useState([]);
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [saving, setSaving] = useState(null);
   const [feedback, setFeedback] = useState(null);
+  const [inviteTab, setInviteTab] = useState("users"); // "users" or "invites"
+  const [invites, setInvites] = useState([]);
+  const [newInviteEmail, setNewInviteEmail] = useState("");
+  const [newInviteRole, setNewInviteRole] = useState("vice_captain");
+  const [sendingInvite, setSendingInvite] = useState(false);
 
   useEffect(() => {
     loadUsers();
+    loadInvites();
   }, []);
+
+  async function loadInvites() {
+    const { data } = await supabase.from("invitations").select("*").eq("club", clubName).order("created_at", { ascending: false });
+    if (data) setInvites(data);
+  }
+
+  async function sendInvite() {
+    if (!newInviteEmail) return;
+    setSendingInvite(true);
+    setFeedback(null);
+    const { data, error } = await supabase.from("invitations").insert({
+      email: newInviteEmail.toLowerCase(),
+      club: clubName,
+      role: newInviteRole,
+      invited_by: currentUserId,
+    }).select("*").single();
+    if (error) {
+      setFeedback({ type: "error", msg: "Failed to create invite: " + error.message });
+    } else {
+      setInvites(prev => [data, ...prev]);
+      const inviteUrl = `${window.location.origin}${window.location.pathname}?invite=${data.token}`;
+      setFeedback({ type: "success", msg: `Invite created! Share this link: ${inviteUrl}` });
+      setNewInviteEmail("");
+    }
+    setSendingInvite(false);
+  }
 
   async function loadUsers() {
     setLoadingUsers(true);
@@ -1629,67 +1819,156 @@ function AdminPanel({ currentUserId }) {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
         <div>
           <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: "#0f172a" }}>Admin Panel</h2>
-          <p style={{ margin: "4px 0 0", fontSize: 13, color: "#64748b" }}>Manage user accounts and role permissions</p>
+          <p style={{ margin: "4px 0 0", fontSize: 13, color: "#64748b" }}>Manage users, roles, and invitations</p>
         </div>
-        <button onClick={loadUsers} style={{ padding: "8px 16px", borderRadius: 8, border: "1px solid #c1cad8", background: "#fff", color: "#0f172a", fontWeight: 600, cursor: "pointer", fontSize: 12 }}>Refresh</button>
+        <button onClick={() => { loadUsers(); loadInvites(); }} style={{ padding: "8px 16px", borderRadius: 8, border: "1px solid #c1cad8", background: "#fff", color: "#0f172a", fontWeight: 600, cursor: "pointer", fontSize: 12 }}>Refresh</button>
+      </div>
+
+      {/* Tab toggle */}
+      <div style={{ display: "flex", gap: 0, marginBottom: 16, background: "#f1f5f9", borderRadius: 8, padding: 3, maxWidth: 300 }}>
+        <button onClick={() => setInviteTab("users")} style={{ flex: 1, padding: "8px", borderRadius: 6, border: "none", background: inviteTab === "users" ? "#0f172a" : "transparent", color: inviteTab === "users" ? "#7dd3fc" : "#64748b", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>Users</button>
+        <button onClick={() => setInviteTab("invites")} style={{ flex: 1, padding: "8px", borderRadius: 6, border: "none", background: inviteTab === "invites" ? "#0f172a" : "transparent", color: inviteTab === "invites" ? "#7dd3fc" : "#64748b", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>Invitations</button>
       </div>
 
       {feedback && (
         <div style={{ background: feedback.type === "error" ? "#fee2e2" : "#dcfce7", color: feedback.type === "error" ? "#991b1b" : "#166534", padding: "10px 16px", borderRadius: 8, fontSize: 13, fontWeight: 600, marginBottom: 14 }}>{feedback.msg}</div>
       )}
 
-      {loadingUsers ? (
-        <div style={{ textAlign: "center", padding: 40, color: "#64748b", fontSize: 14 }}>Loading users...</div>
-      ) : (
-        <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #d1d9e6", overflow: "hidden" }}>
-          <div style={{ overflowX: "auto" }}>
+      {inviteTab === "users" && (
+        loadingUsers ? (
+          <div style={{ textAlign: "center", padding: 40, color: "#64748b", fontSize: 14 }}>Loading users...</div>
+        ) : (
+          <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #d1d9e6", overflow: "hidden" }}>
+            <div style={{ overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+                <thead>
+                  <tr style={{ background: "linear-gradient(135deg, #0f172a 0%, #162d50 100%)", color: ACCENT }}>
+                    {["Name", "Email", "Role", "Joined", "Actions"].map(h => (
+                      <th key={h} style={{ padding: "12px 16px", textAlign: "left", fontWeight: 600, fontSize: 11, letterSpacing: 0.5 }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {users.map((u, i) => {
+                    const rc = ROLE_CONFIG[u.role] || ROLE_CONFIG.vice_captain;
+                    const isCurrentUser = u.id === currentUserId;
+                    const joinDate = u.created_at ? new Date(u.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—";
+                    return (
+                      <tr key={u.id} style={{ background: i % 2 === 0 ? "#fff" : "#f5f7fb", borderBottom: "1px solid #e2e8f0" }}>
+                        <td style={{ padding: "12px 16px", fontWeight: 600, color: "#0f172a" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                            {u.full_name || "—"}
+                            {isCurrentUser && <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 6px", borderRadius: 4, background: "#e0f2fe", color: "#0369a1" }}>YOU</span>}
+                          </div>
+                        </td>
+                        <td style={{ padding: "12px 16px", color: "#64748b", fontSize: 12 }}>{u.email}</td>
+                        <td style={{ padding: "12px 16px" }}>
+                          <div style={{ display: "flex", gap: 4 }}>
+                            {roleOptions.map(r => (
+                              <button key={r.value} onClick={() => updateRole(u.id, r.value)}
+                                disabled={saving === u.id || (isCurrentUser && r.value !== "admin")}
+                                style={{
+                                  padding: "4px 10px", borderRadius: 6, fontSize: 11, fontWeight: 700, cursor: saving === u.id ? "wait" : "pointer",
+                                  border: u.role === r.value ? `2px solid ${r.color}` : "1px solid #e2e8f0",
+                                  background: u.role === r.value ? r.bg : "#f8fafc",
+                                  color: u.role === r.value ? r.color : "#94a3b8",
+                                  opacity: (isCurrentUser && r.value !== "admin") ? 0.4 : 1,
+                                  transition: "all 0.15s",
+                                }}>
+                                {r.label}
+                              </button>
+                            ))}
+                          </div>
+                        </td>
+                        <td style={{ padding: "12px 16px", color: "#94a3b8", fontSize: 11 }}>{joinDate}</td>
+                        <td style={{ padding: "12px 16px" }}>
+                          {!isCurrentUser && (
+                            <button onClick={() => deleteUser(u.id)}
+                              disabled={saving === u.id}
+                              style={{ padding: "4px 10px", borderRadius: 6, border: "1px solid #fca5a5", background: "#fff5f5", color: "#dc2626", fontSize: 11, fontWeight: 600, cursor: "pointer" }}>
+                              Remove
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            <div style={{ padding: "12px 16px", background: "#f5f7fb", borderTop: "1px solid #e2e8f0", fontSize: 11, color: "#64748b" }}>
+              {users.length} user{users.length !== 1 ? "s" : ""} registered
+            </div>
+          </div>
+        )
+      )}
+
+      {inviteTab === "invites" && (
+        <div>
+          {/* Send invite form */}
+          <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #d1d9e6", padding: 20, marginBottom: 16 }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: "#0f172a", marginBottom: 12 }}>Send Invitation</div>
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "flex-end" }}>
+              <div style={{ flex: "1 1 200px" }}>
+                <label style={{ fontSize: 11, fontWeight: 600, color: "#64748b", display: "block", marginBottom: 4 }}>Email Address</label>
+                <input type="email" value={newInviteEmail} onChange={e => setNewInviteEmail(e.target.value)} placeholder="captain@email.com"
+                  style={{ width: "100%", padding: "8px 12px", borderRadius: 6, border: "1px solid #c1cad8", fontSize: 13, background: "#f5f7fb", outline: "none", boxSizing: "border-box" }} />
+              </div>
+              <div style={{ flex: "0 0 160px" }}>
+                <label style={{ fontSize: 11, fontWeight: 600, color: "#64748b", display: "block", marginBottom: 4 }}>Role</label>
+                <select value={newInviteRole} onChange={e => setNewInviteRole(e.target.value)}
+                  style={{ width: "100%", padding: "8px 12px", borderRadius: 6, border: "1px solid #c1cad8", fontSize: 13, background: "#f5f7fb", cursor: "pointer" }}>
+                  <option value="captain">Captain</option>
+                  <option value="vice_captain">Vice Captain</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+              <button onClick={sendInvite} disabled={sendingInvite || !newInviteEmail}
+                style={{ padding: "8px 20px", borderRadius: 6, border: "none", background: "linear-gradient(135deg, #0f172a, #1e3a5f)", color: "#7dd3fc", fontWeight: 700, fontSize: 13, cursor: sendingInvite ? "wait" : "pointer", opacity: sendingInvite || !newInviteEmail ? 0.6 : 1 }}>
+                {sendingInvite ? "Sending..." : "Send Invite"}
+              </button>
+            </div>
+            <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 8 }}>Invitations expire after 7 days. The recipient will use the link to create their account.</div>
+          </div>
+
+          {/* Invite list */}
+          <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #d1d9e6", overflow: "hidden" }}>
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
               <thead>
                 <tr style={{ background: "linear-gradient(135deg, #0f172a 0%, #162d50 100%)", color: ACCENT }}>
-                  {["Name", "Email", "Role", "Joined", "Actions"].map(h => (
+                  {["Email", "Role", "Status", "Created", "Link"].map(h => (
                     <th key={h} style={{ padding: "12px 16px", textAlign: "left", fontWeight: 600, fontSize: 11, letterSpacing: 0.5 }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {users.map((u, i) => {
-                  const rc = ROLE_CONFIG[u.role] || ROLE_CONFIG.vice_captain;
-                  const isCurrentUser = u.id === currentUserId;
-                  const joinDate = u.created_at ? new Date(u.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—";
+                {invites.length === 0 ? (
+                  <tr><td colSpan={5} style={{ padding: 30, textAlign: "center", color: "#94a3b8", fontSize: 13 }}>No invitations sent yet</td></tr>
+                ) : invites.map((inv, i) => {
+                  const expired = new Date(inv.expires_at) < new Date();
+                  const status = inv.used ? "Used" : expired ? "Expired" : "Pending";
+                  const statusColor = inv.used ? "#16a34a" : expired ? "#dc2626" : "#f59e0b";
+                  const statusBg = inv.used ? "#dcfce7" : expired ? "#fee2e2" : "#fef3c7";
+                  const inviteUrl = `${window.location.origin}${window.location.pathname}?invite=${inv.token}`;
                   return (
-                    <tr key={u.id} style={{ background: i % 2 === 0 ? "#fff" : "#f5f7fb", borderBottom: "1px solid #e2e8f0" }}>
-                      <td style={{ padding: "12px 16px", fontWeight: 600, color: "#0f172a" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                          {u.full_name || "—"}
-                          {isCurrentUser && <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 6px", borderRadius: 4, background: "#e0f2fe", color: "#0369a1" }}>YOU</span>}
-                        </div>
-                      </td>
-                      <td style={{ padding: "12px 16px", color: "#64748b", fontSize: 12 }}>{u.email}</td>
+                    <tr key={inv.id} style={{ background: i % 2 === 0 ? "#fff" : "#f5f7fb", borderBottom: "1px solid #e2e8f0" }}>
+                      <td style={{ padding: "12px 16px", fontWeight: 600 }}>{inv.email}</td>
                       <td style={{ padding: "12px 16px" }}>
-                        <div style={{ display: "flex", gap: 4 }}>
-                          {roleOptions.map(r => (
-                            <button key={r.value} onClick={() => updateRole(u.id, r.value)}
-                              disabled={saving === u.id || (isCurrentUser && r.value !== "admin")}
-                              style={{
-                                padding: "4px 10px", borderRadius: 6, fontSize: 11, fontWeight: 700, cursor: saving === u.id ? "wait" : "pointer",
-                                border: u.role === r.value ? `2px solid ${r.color}` : "1px solid #e2e8f0",
-                                background: u.role === r.value ? r.bg : "#f8fafc",
-                                color: u.role === r.value ? r.color : "#94a3b8",
-                                opacity: (isCurrentUser && r.value !== "admin") ? 0.4 : 1,
-                                transition: "all 0.15s",
-                              }}>
-                              {r.label}
-                            </button>
-                          ))}
-                        </div>
+                        <span style={{ fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 4, background: (ROLE_CONFIG[inv.role] || ROLE_CONFIG.vice_captain).bg, color: (ROLE_CONFIG[inv.role] || ROLE_CONFIG.vice_captain).color }}>
+                          {(ROLE_CONFIG[inv.role] || ROLE_CONFIG.vice_captain).label}
+                        </span>
                       </td>
-                      <td style={{ padding: "12px 16px", color: "#94a3b8", fontSize: 11 }}>{joinDate}</td>
                       <td style={{ padding: "12px 16px" }}>
-                        {!isCurrentUser && (
-                          <button onClick={() => deleteUser(u.id)}
-                            disabled={saving === u.id}
-                            style={{ padding: "4px 10px", borderRadius: 6, border: "1px solid #fca5a5", background: "#fff5f5", color: "#dc2626", fontSize: 11, fontWeight: 600, cursor: "pointer" }}>
-                            Remove
+                        <span style={{ fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 4, background: statusBg, color: statusColor }}>{status}</span>
+                      </td>
+                      <td style={{ padding: "12px 16px", color: "#94a3b8", fontSize: 11 }}>
+                        {new Date(inv.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                      </td>
+                      <td style={{ padding: "12px 16px" }}>
+                        {!inv.used && !expired && (
+                          <button onClick={() => { navigator.clipboard.writeText(inviteUrl); setFeedback({ type: "success", msg: "Invite link copied!" }); setTimeout(() => setFeedback(null), 3000); }}
+                            style={{ padding: "4px 10px", borderRadius: 6, border: "1px solid #c1cad8", background: "#f8fafc", color: "#0f172a", fontSize: 11, fontWeight: 600, cursor: "pointer" }}>
+                            Copy Link
                           </button>
                         )}
                       </td>
@@ -1698,9 +1977,9 @@ function AdminPanel({ currentUserId }) {
                 })}
               </tbody>
             </table>
-          </div>
-          <div style={{ padding: "12px 16px", background: "#f5f7fb", borderTop: "1px solid #e2e8f0", fontSize: 11, color: "#64748b" }}>
-            {users.length} user{users.length !== 1 ? "s" : ""} registered
+            <div style={{ padding: "12px 16px", background: "#f5f7fb", borderTop: "1px solid #e2e8f0", fontSize: 11, color: "#64748b" }}>
+              {invites.length} invitation{invites.length !== 1 ? "s" : ""} total
+            </div>
           </div>
         </div>
       )}
@@ -1718,6 +1997,24 @@ function GAPManager() {
   const [playersLoaded, setPlayersLoaded] = useState(false);
   const [schedule, setSchedule] = useState(DEFAULT_SCHEDULE);
   const [lockState, setLockState] = useState(DEFAULT_LOCK_STATE);
+  const [appScreen, setAppScreen] = useState("main"); // "main", "register_club"
+  const [inviteData, setInviteData] = useState(null); // holds validated invite info
+  const [inviteLoading, setInviteLoading] = useState(false);
+
+  // Check for invite token in URL on mount
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const inviteToken = params.get("invite");
+    if (inviteToken) {
+      setInviteLoading(true);
+      supabase.from("invitations").select("*").eq("token", inviteToken).single().then(({ data, error }) => {
+        if (data && !data.used && new Date(data.expires_at) > new Date()) {
+          setInviteData({ ...data, token: inviteToken });
+        }
+        setInviteLoading(false);
+      });
+    }
+  }, []);
 
   // Derive role from profile — default to vice_captain for safety
   const userRole = profile?.role || "vice_captain";
@@ -1782,7 +2079,23 @@ function GAPManager() {
   }
 
   if (!session) {
-    return <LoginScreen onSignIn={signIn} onSignUp={signUp} />;
+    if (inviteLoading) {
+      return (
+        <div style={{ fontFamily: "'Poppins', sans-serif", background: "#eef2f7", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ textAlign: "center", color: "#64748b" }}>
+            <div style={{ width: 56, height: 56, borderRadius: "50%", background: "linear-gradient(135deg, #7dd3fc, #38bdf8)", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 28, fontWeight: 800, color: "#0f172a", marginBottom: 16 }}>M</div>
+            <div style={{ fontSize: 16, fontWeight: 600 }}>Validating invitation...</div>
+          </div>
+        </div>
+      );
+    }
+    if (inviteData) {
+      return <InviteSignup invite={inviteData} onSignUp={signUp} onBack={() => { setInviteData(null); window.history.replaceState({}, "", window.location.pathname); }} />;
+    }
+    if (appScreen === "register_club") {
+      return <ClubRegistration onBack={() => setAppScreen("main")} />;
+    }
+    return <LoginScreen onSignIn={signIn} onSignUp={signUp} onRegisterClub={() => setAppScreen("register_club")} />;
   }
 
   // Show onboarding wizard for new users
@@ -1838,7 +2151,7 @@ function GAPManager() {
         {activeTab === "roster" && <Roster players={players} setPlayers={setPlayersWithSync} addPlayerWithSync={addPlayerWithSync} clubName={clubName} userId={session.user.id} />}
         {activeTab === "builder" && <TeamBuilder players={players} schedule={schedule} lockState={lockState} setLockState={setLockState} userRole={userRole} clubName={clubName} />}
         {activeTab === "setup" && <SeasonSetup schedule={schedule} setSchedule={setSchedule} lockState={lockState} userRole={userRole} clubName={clubName} />}
-        {activeTab === "admin" && isAdmin && <AdminPanel currentUserId={session.user.id} />}
+        {activeTab === "admin" && isAdmin && <AdminPanel currentUserId={session.user.id} clubName={clubName} />}
       </main>
       <footer style={{ textAlign: "center", padding: "16px", color: "#64748b", fontSize: 11, borderTop: "1px solid #d1d9e6" }}>MatchGapper · BMW GAP Team Match Manager · All matches scratch — no handicap strokes</footer>
     </div>
