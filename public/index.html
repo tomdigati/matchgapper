@@ -151,12 +151,13 @@ async function bulkInsertPlayers(players, club, userId) {
 // ═══════════════════════════════════════════════════════════════
 // ONBOARDING WIZARD
 // ═══════════════════════════════════════════════════════════════
-function OnboardingWizard({ profile, session, onComplete }) {
+function OnboardingWizard({ profile, session, onComplete, onSetTeamCount }) {
   const [step, setStep] = useState(1); // 1=welcome, 2=upload, 3=review
   const [importedPlayers, setImportedPlayers] = useState([]);
   const [uploadMsg, setUploadMsg] = useState(null);
   const [editingId, setEditingId] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [teamCount, setTeamCount] = useState(2);
 
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
@@ -278,7 +279,20 @@ function OnboardingWizard({ profile, session, onComplete }) {
                 <span style={{ color: "#64748b" }}>Role:</span><span style={{ fontWeight: 600 }}>{ROLE_CONFIG[profile.role]?.label}</span>
               </div>
             </div>
-            <button onClick={() => setStep(2)} style={{ marginTop: 32, padding: "14px 40px", borderRadius: 10, border: "none", background: "linear-gradient(135deg, #0f172a, #1e3a5f)", color: "#7dd3fc", fontWeight: 600, fontSize: 16, cursor: "pointer" }}>
+            <div style={{ background: "#f0f9ff", borderRadius: 12, padding: 24, maxWidth: 400, margin: "24px auto 0", border: "1px solid #bae6fd" }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: "#0369a1", marginBottom: 8 }}>How many teams does your club field?</div>
+              <div style={{ fontSize: 12, color: "#64748b", marginBottom: 12 }}>Each team has 12 players (3 home pairs + 3 away pairs). This applies to all 3 match weeks.</div>
+              <div style={{ display: "flex", gap: 6, justifyContent: "center" }}>
+                {[1,2,3,4,5,6].map(n => (
+                  <button key={n} onClick={() => setTeamCount(n)}
+                    style={{ width: 44, height: 44, borderRadius: 8, border: teamCount === n ? "2px solid #0369a1" : "1px solid #c1cad8", background: teamCount === n ? "#0369a1" : "#fff", color: teamCount === n ? "#fff" : "#0f172a", fontSize: 16, fontWeight: 600, cursor: "pointer", transition: "all 0.15s" }}>
+                    {n}
+                  </button>
+                ))}
+              </div>
+              <div style={{ fontSize: 11, color: "#64748b", marginTop: 8 }}>{teamCount} team{teamCount !== 1 ? "s" : ""} = {teamCount * 12} players needed</div>
+            </div>
+            <button onClick={() => { if (onSetTeamCount) onSetTeamCount(teamCount); setStep(2); }} style={{ marginTop: 32, padding: "14px 40px", borderRadius: 10, border: "none", background: "linear-gradient(135deg, #0f172a, #1e3a5f)", color: "#7dd3fc", fontWeight: 600, fontSize: 16, cursor: "pointer" }}>
               Get Started
             </button>
           </div>
@@ -789,19 +803,11 @@ const SAMPLE_PLAYERS = [
 // ═══════════════════════════════════════════════════════════════
 // DEFAULTS & CONFIG
 // ═══════════════════════════════════════════════════════════════
+const EMPTY_TEAM = () => ({ opponent: "", teamNum: "#1", homeTee: "", awayTee: "", homeInterval: 10, awayInterval: 10 });
 const DEFAULT_SCHEDULE = {
-  1: { date: "2026-04-19", teamCount: 2, teams: [
-    { opponent: "White Manor Country Club", teamNum: "#1", homeTee: "8:00 AM", awayTee: "8:30 AM", homeInterval: 10, awayInterval: 10 },
-    { opponent: "Bellewood Country Club", teamNum: "#2", homeTee: "8:00 AM", awayTee: "8:30 AM", homeInterval: 10, awayInterval: 10 },
-  ]},
-  2: { date: "2026-04-26", teamCount: 2, teams: [
-    { opponent: "North Hills Country Club", teamNum: "#1", homeTee: "8:00 AM", awayTee: "8:00 AM", homeInterval: 10, awayInterval: 10 },
-    { opponent: "Northampton Valley Country Club", teamNum: "#1", homeTee: "8:00 AM", awayTee: "8:00 AM", homeInterval: 10, awayInterval: 10 },
-  ]},
-  3: { date: "2026-05-03", teamCount: 2, teams: [
-    { opponent: "RiverCrest Golf Club & Preserve", teamNum: "#1", homeTee: "8:00 AM", awayTee: "8:30 AM", homeInterval: 10, awayInterval: 10 },
-    { opponent: "Philadelphia Cricket Club", teamNum: "#3", homeTee: "8:00 AM", awayTee: "8:30 AM", homeInterval: 10, awayInterval: 10 },
-  ]},
+  1: { date: "", teamCount: 2, teams: [EMPTY_TEAM(), EMPTY_TEAM()] },
+  2: { date: "", teamCount: 2, teams: [EMPTY_TEAM(), EMPTY_TEAM()] },
+  3: { date: "", teamCount: 2, teams: [EMPTY_TEAM(), EMPTY_TEAM()] },
 };
 
 const DEFAULT_LOCK_STATE = { 1: { locked: false, lockedAt: null, lockedBy: null, modifiedAfterLock: false, lastSentAt: null }, 2: { locked: false, lockedAt: null, lockedBy: null, modifiedAfterLock: false, lastSentAt: null }, 3: { locked: false, lockedAt: null, lockedBy: null, modifiedAfterLock: false, lastSentAt: null } };
@@ -968,7 +974,7 @@ function SeasonSetup({ schedule, setSchedule, lockState, userRole, clubName }) {
         const oldTeams = ws.teams || [];
         const teams = [];
         for (let i = 0; i < newCount; i++) {
-          teams.push(oldTeams[i] || { opponent: "", teamNum: "#1", homeTee: "", awayTee: "", homeInterval: 10, awayInterval: 10 });
+          teams.push(oldTeams[i] || EMPTY_TEAM());
         }
         next[w] = { ...ws, teamCount: newCount, teams };
       });
@@ -2523,6 +2529,18 @@ function GAPManager() {
   if (profile && !profile.onboarded) {
     return <OnboardingWizard profile={profile} session={session} onComplete={() => {
       fetchProfile(session.user.id);
+    }} onSetTeamCount={(count) => {
+      setSchedule(prev => {
+        const next = { ...prev };
+        [1, 2, 3].forEach(w => {
+          const ws = next[w];
+          const oldTeams = ws.teams || [];
+          const teams = [];
+          for (let i = 0; i < count; i++) { teams.push(oldTeams[i] || EMPTY_TEAM()); }
+          next[w] = { ...ws, teamCount: count, teams };
+        });
+        return next;
+      });
     }} />;
   }
 
