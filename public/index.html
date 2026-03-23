@@ -1543,6 +1543,9 @@ function Dashboard({ players, schedule, lockState, clubName }) {
     return { week: w, ...split, teamCount: tc, maybeAll: maybe, date: schedule[w].date, teams: schedule[w].teams || [], ls: lockState[w] };
   });
   const totalPlayers = players.length;
+  const maxTeamCount = Math.max(...[1,2,3].map(w => schedule[w]?.teamCount || 2));
+  const playersNeeded = maxTeamCount * 12;
+  const rosterGap = Math.max(0, playersNeeded - totalPlayers);
   const confirmed = players.filter(p => p.status === "confirmed").length;
   const declined = players.filter(p => p.status === "declined").length;
   const maybeP = players.filter(p => p.status === "maybe").length;
@@ -1560,7 +1563,7 @@ function Dashboard({ players, schedule, lockState, clubName }) {
       <div style={{ fontSize: 14, fontWeight: 600, color: "#0f172a", marginBottom: 8, letterSpacing: 0.3 }}>Roster Recruitment</div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 10, marginBottom: 16 }}>
         {[
-          { label: "Full Roster", val: totalPlayers, color: "#0f172a", sub: "All eligible" },
+          { label: "Rostered", val: totalPlayers, color: rosterGap > 0 ? "#dc2626" : "#0f172a", sub: `${playersNeeded} needed (${maxTeamCount} teams)` },
           { label: "Available", val: confirmed, color: "#16a34a", sub: "Signed up" },
           { label: "Maybe", val: maybeP, color: "#8b5cf6", sub: "On the fence" },
           { label: "Contacted", val: contacted, color: "#f59e0b", sub: "No replies" },
