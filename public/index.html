@@ -962,13 +962,17 @@ function SeasonSetup({ schedule, setSchedule, lockState, userRole, clubName }) {
   const updateTeamCount = (week, newCount) => {
     if (!isAdmin) return;
     setSchedule(prev => {
-      const ws = prev[week];
-      const oldTeams = ws.teams || [];
-      const teams = [];
-      for (let i = 0; i < newCount; i++) {
-        teams.push(oldTeams[i] || { opponent: "", teamNum: "#1", homeTee: "", awayTee: "", interval: 10 });
-      }
-      return { ...prev, [week]: { ...ws, teamCount: newCount, teams } };
+      const next = { ...prev };
+      [1, 2, 3].forEach(w => {
+        const ws = next[w];
+        const oldTeams = ws.teams || [];
+        const teams = [];
+        for (let i = 0; i < newCount; i++) {
+          teams.push(oldTeams[i] || { opponent: "", teamNum: "#1", homeTee: "", awayTee: "", interval: 10 });
+        }
+        next[w] = { ...ws, teamCount: newCount, teams };
+      });
+      return next;
     });
   };
   return (
