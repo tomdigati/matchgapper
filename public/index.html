@@ -22,7 +22,7 @@
 // SUPABASE CONFIG
 // ═══════════════════════════════════════════════════════════════
 const SUPABASE_URL = "https://fckgerhhaesaclattpac.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_qzXQ1UuEokT2T66L15L55g_5J7_NLB0";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZja2dlcmhoYWVzYWNsYXR0cGFjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwNTI2MjEsImV4cCI6MjA4OTYyODYyMX0.Aidco8XmsObg9moszM3v700qyA8DJwbY8uudmzD6-GM";
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ═══════════════════════════════════════════════════════════════
@@ -151,12 +151,13 @@ async function bulkInsertPlayers(players, club, userId) {
 // ═══════════════════════════════════════════════════════════════
 // ONBOARDING WIZARD
 // ═══════════════════════════════════════════════════════════════
-function OnboardingWizard({ profile, session, onComplete }) {
+function OnboardingWizard({ profile, session, onComplete, onSetTeamCount }) {
   const [step, setStep] = useState(1); // 1=welcome, 2=upload, 3=review
   const [importedPlayers, setImportedPlayers] = useState([]);
   const [uploadMsg, setUploadMsg] = useState(null);
   const [editingId, setEditingId] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [teamCount, setTeamCount] = useState(2);
 
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
@@ -164,19 +165,32 @@ function OnboardingWizard({ profile, session, onComplete }) {
     try {
       const text = await file.text();
       if (!text) { setUploadMsg({ type: "error", msg: "Could not read file." }); return; }
-      const lines = text.trim().split("\n").map(l => l.split(",").map(c => c.trim().replace(/^"|"$/g, "")));
+      const parseCSVLine = (line) => { const result = []; let current = ""; let inQuotes = false; for (let i = 0; i < line.length; i++) { const ch = line[i]; if (ch === '"') { if (inQuotes && line[i+1] === '"') { current += '"'; i++; } else { inQuotes = !inQuotes; } } else if (ch === ',' && !inQuotes) { result.push(current.trim()); current = ""; } else { current += ch; } } result.push(current.trim()); return result; };
+      const lines = text.trim().split("\n").map(l => parseCSVLine(l));
       if (lines.length < 2) { setUploadMsg({ type: "error", msg: "File appears empty." }); return; }
-      const header = lines[0].map(h => h.toLowerCase());
-      const nameIdx = header.findIndex(h => h.includes("name") || h.includes("player"));
+      const header = lines[0].map(h => h.toLowerCase().trim());
+      const firstNameIdx = header.findIndex(h => h === "first name" || h === "firstname" || h === "first");
+      const lastNameIdx = header.findIndex(h => h === "last name" || h === "lastname" || h === "last");
+      const nameIdx = header.findIndex(h => h === "name" || h === "player" || h === "player name");
       const ghinIdx = header.findIndex(h => h.includes("ghin"));
       const hdcpIdx = header.findIndex(h => h.includes("hdcp") || h.includes("handicap") || h.includes("course"));
       const indexIdx = header.findIndex(h => h.includes("index"));
       const phoneIdx = header.findIndex(h => h.includes("phone") || h.includes("cell") || h.includes("mobile"));
       const emailIdx = header.findIndex(h => h.includes("email") || h.includes("e-mail"));
-      if (nameIdx === -1) { setUploadMsg({ type: "error", msg: "Could not find a 'Name' or 'Player' column. Please check the header row." }); return; }
-      const players = lines.slice(1).filter(row => row[nameIdx] && row[nameIdx].trim()).map((row, i) => ({
-        id: -(i + 1), // Temporary negative IDs
-        name: row[nameIdx] || "Unknown",
+      const hasSeparateNames = firstNameIdx > -1 && lastNameIdx > -1;
+      if (!hasSeparateNames && nameIdx === -1) { setUploadMsg({ type: "error", msg: "Could not find name columns. Use 'First Name' and 'Last Name' columns, or a single 'Name' column." }); return; }
+      const getName = (row) => {
+        if (hasSeparateNames) {
+          const first = (row[firstNameIdx] || "").trim();
+          const last = (row[lastNameIdx] || "").trim();
+          return last && first ? `${last}, ${first}` : last || first || "Unknown";
+        }
+        return row[nameIdx] || "Unknown";
+      };
+      const hasData = (row) => hasSeparateNames ? ((row[firstNameIdx] || "").trim() || (row[lastNameIdx] || "").trim()) : (row[nameIdx] || "").trim();
+      const players = lines.slice(1).filter(row => hasData(row)).map((row, i) => ({
+        id: -(i + 1),
+        name: getName(row),
         ghin: ghinIdx > -1 ? (row[ghinIdx] || "") : "",
         courseHdcp: hdcpIdx > -1 ? (parseFloat(row[hdcpIdx]) || 15) : 15,
         index: indexIdx > -1 ? (parseFloat(row[indexIdx]) || 15) : 15,
@@ -229,22 +243,22 @@ function OnboardingWizard({ profile, session, onComplete }) {
 
   return (
     <div style={{ fontFamily: "'Poppins', 'Segoe UI', -apple-system, sans-serif", background: "#eef2f7", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
-      <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+      <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet" />
       <div style={{ width: "100%", maxWidth: 800, background: "#fff", borderRadius: 16, boxShadow: "0 8px 32px rgba(0,0,0,0.12)", overflow: "hidden" }}>
         {/* Header */}
         <div style={{ background: "linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%)", padding: "24px 32px", borderBottom: "3px solid #7dd3fc" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-              <div style={{ width: 42, height: 42, borderRadius: "50%", background: "linear-gradient(135deg, #7dd3fc, #38bdf8)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, fontWeight: 800, color: "#0f172a" }}>M</div>
+              <div style={{ width: 42, height: 42, borderRadius: "50%", background: "linear-gradient(135deg, #7dd3fc, #38bdf8)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, fontWeight: 600, color: "#0f172a" }}>M</div>
               <div>
-                <div style={{ color: "#7dd3fc", fontSize: 18, fontWeight: 700 }}>MatchGapper Setup</div>
+                <div style={{ color: "#7dd3fc", fontSize: 18, fontWeight: 600 }}>MatchGapper Setup</div>
                 <div style={{ color: "#94a3b8", fontSize: 11 }}>{profile.club}</div>
               </div>
             </div>
             {/* Step indicator */}
             <div style={{ display: "flex", gap: 8 }}>
               {[1, 2, 3].map(s => (
-                <div key={s} style={{ width: 32, height: 32, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, background: step >= s ? "#7dd3fc" : "#334155", color: step >= s ? "#0f172a" : "#64748b", transition: "all 0.2s" }}>{s}</div>
+                <div key={s} style={{ width: 32, height: 32, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 600, background: step >= s ? "#7dd3fc" : "#334155", color: step >= s ? "#0f172a" : "#64748b", transition: "all 0.2s" }}>{s}</div>
               ))}
             </div>
           </div>
@@ -253,7 +267,7 @@ function OnboardingWizard({ profile, session, onComplete }) {
         {/* Step 1: Welcome */}
         {step === 1 && (
           <div style={{ padding: "40px 32px", textAlign: "center" }}>
-            <div style={{ fontSize: 28, fontWeight: 800, color: "#0f172a", marginBottom: 8 }}>Welcome, {profile.full_name?.split(" ")[0] || "Captain"}!</div>
+            <div style={{ fontSize: 28, fontWeight: 600, color: "#0f172a", marginBottom: 8 }}>Welcome, {profile.full_name?.split(" ")[0] || "Captain"}!</div>
             <div style={{ fontSize: 15, color: "#64748b", marginBottom: 32, maxWidth: 500, margin: "0 auto 32px" }}>
               Let's get your {profile.club} roster set up for the BMW GAP Team Matches. You can upload a CSV file or add players manually.
             </div>
@@ -265,7 +279,20 @@ function OnboardingWizard({ profile, session, onComplete }) {
                 <span style={{ color: "#64748b" }}>Role:</span><span style={{ fontWeight: 600 }}>{ROLE_CONFIG[profile.role]?.label}</span>
               </div>
             </div>
-            <button onClick={() => setStep(2)} style={{ marginTop: 32, padding: "14px 40px", borderRadius: 10, border: "none", background: "linear-gradient(135deg, #0f172a, #1e3a5f)", color: "#7dd3fc", fontWeight: 700, fontSize: 16, cursor: "pointer" }}>
+            <div style={{ background: "#f0f9ff", borderRadius: 12, padding: 24, maxWidth: 400, margin: "24px auto 0", border: "1px solid #bae6fd" }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: "#0369a1", marginBottom: 8 }}>How many teams does your club field?</div>
+              <div style={{ fontSize: 12, color: "#64748b", marginBottom: 12 }}>Each team has 12 players (3 home pairs + 3 away pairs). This applies to all 3 match weeks.</div>
+              <div style={{ display: "flex", gap: 6, justifyContent: "center" }}>
+                {[1,2,3,4,5,6].map(n => (
+                  <button key={n} onClick={() => setTeamCount(n)}
+                    style={{ width: 44, height: 44, borderRadius: 8, border: teamCount === n ? "2px solid #0369a1" : "1px solid #c1cad8", background: teamCount === n ? "#0369a1" : "#fff", color: teamCount === n ? "#fff" : "#0f172a", fontSize: 16, fontWeight: 600, cursor: "pointer", transition: "all 0.15s" }}>
+                    {n}
+                  </button>
+                ))}
+              </div>
+              <div style={{ fontSize: 11, color: "#64748b", marginTop: 8 }}>{teamCount} team{teamCount !== 1 ? "s" : ""} = {teamCount * 12} players needed</div>
+            </div>
+            <button onClick={() => { if (onSetTeamCount) onSetTeamCount(teamCount); setStep(2); }} style={{ marginTop: 32, padding: "14px 40px", borderRadius: 10, border: "none", background: "linear-gradient(135deg, #0f172a, #1e3a5f)", color: "#7dd3fc", fontWeight: 600, fontSize: 16, cursor: "pointer" }}>
               Get Started
             </button>
           </div>
@@ -274,34 +301,49 @@ function OnboardingWizard({ profile, session, onComplete }) {
         {/* Step 2: Upload */}
         {step === 2 && (
           <div style={{ padding: "32px" }}>
-            <div style={{ fontSize: 22, fontWeight: 700, color: "#0f172a", marginBottom: 4 }}>Import Your Roster</div>
-            <div style={{ fontSize: 13, color: "#64748b", marginBottom: 24 }}>Upload a CSV file with your player list, or skip and add players manually.</div>
+            <div style={{ fontSize: 22, fontWeight: 600, color: "#0f172a", marginBottom: 4 }}>Import Your Roster</div>
+            <div style={{ fontSize: 13, color: "#64748b", marginBottom: 24 }}>Upload a CSV or Excel file with your player list, or skip and add players manually.</div>
 
-            {/* Required fields */}
-            <div style={{ background: "#f0f9ff", border: "1px solid #bae6fd", borderRadius: 10, padding: 16, marginBottom: 20 }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: "#0369a1", marginBottom: 8 }}>CSV Column Requirements</div>
-              <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
-                <div>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: "#dc2626", marginBottom: 4 }}>REQUIRED</div>
-                  <div style={{ fontSize: 12, color: "#0f172a" }}>Name <span style={{ color: "#94a3b8" }}>(or Player)</span></div>
-                </div>
-                <div>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", marginBottom: 4 }}>RECOMMENDED</div>
-                  <div style={{ fontSize: 12, color: "#0f172a" }}>GHIN, Handicap/HDCP, Index</div>
-                </div>
-                <div>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", marginBottom: 4 }}>OPTIONAL</div>
-                  <div style={{ fontSize: 12, color: "#0f172a" }}>Phone, Email</div>
-                </div>
+            {/* Column requirements */}
+            <div style={{ background: "#f0f9ff", border: "1px solid #bae6fd", borderRadius: 10, padding: 16, marginBottom: 16 }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: "#0369a1", marginBottom: 10 }}>Column Requirements</div>
+              <div style={{ fontSize: 12, color: "#0f172a", lineHeight: 1.8 }}>
+                <div>Your file should have a <strong>header row</strong> with the following column names:</div>
+                <table style={{ width: "100%", fontSize: 11, marginTop: 8, borderCollapse: "collapse" }}>
+                  <thead><tr style={{ borderBottom: "1px solid #bae6fd" }}>
+                    <th style={{ textAlign: "left", padding: "4px 8px", color: "#0369a1", fontWeight: 600 }}>Column</th>
+                    <th style={{ textAlign: "left", padding: "4px 8px", color: "#0369a1", fontWeight: 600 }}>Status</th>
+                    <th style={{ textAlign: "left", padding: "4px 8px", color: "#0369a1", fontWeight: 600 }}>Format</th>
+                  </tr></thead>
+                  <tbody>
+                    <tr><td style={{ padding: "3px 8px", fontWeight: 600 }}>First Name</td><td style={{ padding: "3px 8px", color: "#dc2626", fontWeight: 600 }}>Required</td><td style={{ padding: "3px 8px", color: "#64748b" }}>e.g. James</td></tr>
+                    <tr style={{ background: "#f8fafc" }}><td style={{ padding: "3px 8px", fontWeight: 600 }}>Last Name</td><td style={{ padding: "3px 8px", color: "#dc2626", fontWeight: 600 }}>Required</td><td style={{ padding: "3px 8px", color: "#64748b" }}>e.g. Anderson</td></tr>
+                    <tr><td style={{ padding: "3px 8px", fontWeight: 600 }}>GHIN</td><td style={{ padding: "3px 8px", color: "#dc2626", fontWeight: 600 }}>Required</td><td style={{ padding: "3px 8px", color: "#64748b" }}>7-digit GHIN number</td></tr>
+                    <tr style={{ background: "#f8fafc" }}><td style={{ padding: "3px 8px", fontWeight: 600 }}>Handicap</td><td style={{ padding: "3px 8px", color: "#dc2626", fontWeight: 600 }}>Required</td><td style={{ padding: "3px 8px", color: "#64748b" }}>Course handicap (e.g. 8)</td></tr>
+                    <tr><td style={{ padding: "3px 8px", fontWeight: 600 }}>Index</td><td style={{ padding: "3px 8px", color: "#f59e0b", fontWeight: 600 }}>Recommended</td><td style={{ padding: "3px 8px", color: "#64748b" }}>Handicap index (e.g. 7.7)</td></tr>
+                    <tr style={{ background: "#f8fafc" }}><td style={{ padding: "3px 8px", fontWeight: 600 }}>Phone</td><td style={{ padding: "3px 8px", color: "#94a3b8" }}>Optional</td><td style={{ padding: "3px 8px", color: "#64748b" }}>e.g. 610-555-0101</td></tr>
+                    <tr><td style={{ padding: "3px 8px", fontWeight: 600 }}>Email</td><td style={{ padding: "3px 8px", color: "#94a3b8" }}>Optional</td><td style={{ padding: "3px 8px", color: "#64748b" }}>e.g. james@email.com</td></tr>
+                  </tbody>
+                </table>
               </div>
             </div>
 
+            {/* Download template */}
+            <button onClick={() => {
+              const tpl = "First Name,Last Name,GHIN,Handicap,Index,Phone,Email\n";
+              const blob = new Blob([tpl], { type: "text/csv" });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a"); a.href = url; a.download = "matchgapper_roster_template.csv"; a.click(); URL.revokeObjectURL(url);
+            }} style={{ width: "100%", padding: "10px", borderRadius: 8, border: "1px solid #bae6fd", background: "#f0f9ff", color: "#0369a1", fontWeight: 600, fontSize: 13, cursor: "pointer", marginBottom: 16, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+              Download Blank Template (.csv)
+            </button>
+
             {/* Upload area */}
             <label style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 20px", border: "3px dashed #7dd3fc", borderRadius: 12, background: "#f8fafc", cursor: "pointer", transition: "all 0.2s", marginBottom: 16 }}>
-              <div style={{ fontSize: 40, marginBottom: 8 }}>📁</div>
-              <div style={{ fontSize: 15, fontWeight: 700, color: "#0f172a", marginBottom: 4 }}>Click to upload CSV</div>
-              <div style={{ fontSize: 12, color: "#64748b" }}>or drag and drop your file here</div>
-              <input type="file" accept=".csv" onChange={handleFileUpload} style={{ display: "none" }} />
+              <div style={{ fontSize: 40, marginBottom: 8 }}>&#128193;</div>
+              <div style={{ fontSize: 15, fontWeight: 600, color: "#0f172a", marginBottom: 4 }}>Click to upload your roster</div>
+              <div style={{ fontSize: 12, color: "#64748b" }}>Accepts .csv and .xlsx files</div>
+              <input type="file" accept=".csv,.xlsx,.xls" onChange={handleFileUpload} style={{ display: "none" }} />
             </label>
 
             {uploadMsg && (
@@ -322,10 +364,10 @@ function OnboardingWizard({ profile, session, onComplete }) {
           <div style={{ padding: "32px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
               <div>
-                <div style={{ fontSize: 22, fontWeight: 700, color: "#0f172a" }}>Review Your Roster</div>
+                <div style={{ fontSize: 22, fontWeight: 600, color: "#0f172a" }}>Review Your Roster</div>
                 <div style={{ fontSize: 13, color: "#64748b" }}>{importedPlayers.length} player{importedPlayers.length !== 1 ? "s" : ""} — edit, add, or remove before saving</div>
               </div>
-              <button onClick={addManualPlayer} style={{ padding: "8px 16px", borderRadius: 8, border: "none", background: "linear-gradient(135deg, #0f172a, #1e3a5f)", color: "#7dd3fc", fontWeight: 700, cursor: "pointer", fontSize: 12 }}>+ Add Player</button>
+              <button onClick={addManualPlayer} style={{ padding: "8px 16px", borderRadius: 8, border: "none", background: "linear-gradient(135deg, #0f172a, #1e3a5f)", color: "#7dd3fc", fontWeight: 600, cursor: "pointer", fontSize: 12 }}>+ Add Player</button>
             </div>
 
             <div style={{ background: "#fff", borderRadius: 10, border: "1px solid #d1d9e6", overflow: "hidden", maxHeight: 400, overflowY: "auto", marginBottom: 20 }}>
@@ -345,8 +387,8 @@ function OnboardingWizard({ profile, session, onComplete }) {
                           : <span onClick={() => setEditingId(p.id)} style={{ cursor: "pointer", fontWeight: 600 }}>{p.name}</span>}
                       </td>
                       <td style={{ padding: "6px 8px" }}>
-                        {editingId === p.id ? <input type="number" step="0.1" value={p.courseHdcp} onChange={e => updatePlayer(p.id, "courseHdcp", parseFloat(e.target.value) || 0)} style={{ fontSize: 11, padding: "4px", border: "1px solid #38bdf8", borderRadius: 4, width: 50, background: "#eff6ff", fontWeight: 800, textAlign: "center" }} />
-                          : <span onClick={() => setEditingId(p.id)} style={{ cursor: "pointer", fontWeight: 800 }}>{Number(p.courseHdcp).toFixed(1)}</span>}
+                        {editingId === p.id ? <input type="number" step="0.1" value={p.courseHdcp} onChange={e => updatePlayer(p.id, "courseHdcp", parseFloat(e.target.value) || 0)} style={{ fontSize: 11, padding: "4px", border: "1px solid #38bdf8", borderRadius: 4, width: 50, background: "#eff6ff", fontWeight: 600, textAlign: "center" }} />
+                          : <span onClick={() => setEditingId(p.id)} style={{ cursor: "pointer", fontWeight: 600 }}>{Number(p.courseHdcp).toFixed(1)}</span>}
                       </td>
                       <td style={{ padding: "6px 8px", color: "#64748b" }}>
                         {editingId === p.id ? <input type="number" step="0.1" value={p.index} onChange={e => updatePlayer(p.id, "index", parseFloat(e.target.value) || 0)} style={{ fontSize: 11, padding: "4px", border: "1px solid #38bdf8", borderRadius: 4, width: 50, background: "#eff6ff", textAlign: "center" }} />
@@ -366,7 +408,7 @@ function OnboardingWizard({ profile, session, onComplete }) {
                       </td>
                       <td style={{ padding: "6px 8px" }}>
                         <div style={{ display: "flex", gap: 4 }}>
-                          {editingId === p.id && <button onClick={() => setEditingId(null)} style={{ fontSize: 9, padding: "3px 8px", borderRadius: 4, border: "none", background: "#16a34a", color: "#fff", fontWeight: 700, cursor: "pointer" }}>Done</button>}
+                          {editingId === p.id && <button onClick={() => setEditingId(null)} style={{ fontSize: 9, padding: "3px 8px", borderRadius: 4, border: "none", background: "#16a34a", color: "#fff", fontWeight: 600, cursor: "pointer" }}>Done</button>}
                           <button onClick={() => removePlayer(p.id)} style={{ fontSize: 9, padding: "3px 6px", borderRadius: 4, border: "1px solid #fca5a5", background: "#fff5f5", color: "#dc2626", cursor: "pointer" }}>Remove</button>
                         </div>
                       </td>
@@ -381,7 +423,7 @@ function OnboardingWizard({ profile, session, onComplete }) {
               <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
                 {importedPlayers.length === 0 && <span style={{ fontSize: 12, color: "#94a3b8" }}>You can add players later from the Roster tab</span>}
                 <button onClick={handleFinish} disabled={saving}
-                  style={{ padding: "12px 32px", borderRadius: 10, border: "none", background: "linear-gradient(135deg, #0f172a, #1e3a5f)", color: "#7dd3fc", fontWeight: 700, fontSize: 15, cursor: saving ? "wait" : "pointer", opacity: saving ? 0.7 : 1 }}>
+                  style={{ padding: "12px 32px", borderRadius: 10, border: "none", background: "linear-gradient(135deg, #0f172a, #1e3a5f)", color: "#7dd3fc", fontWeight: 600, fontSize: 15, cursor: saving ? "wait" : "pointer", opacity: saving ? 0.7 : 1 }}>
                   {saving ? "Saving..." : importedPlayers.length > 0 ? `Save ${importedPlayers.length} Players & Continue` : "Skip & Continue"}
                 </button>
               </div>
@@ -394,17 +436,122 @@ function OnboardingWizard({ profile, session, onComplete }) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// LOGIN SCREEN
+// CLUB REGISTRATION SCREEN (PGA Pro @pga.com only)
 // ═══════════════════════════════════════════════════════════════
-function LoginScreen({ onSignIn, onSignUp }) {
-  const [mode, setMode] = useState("signin");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+function ClubRegistration({ onBack }) {
+  const [proName, setProName] = useState("");
+  const [proEmail, setProEmail] = useState("");
+  const [clubName, setClubName] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError(null);
+    if (!proEmail.toLowerCase().endsWith("@pga.com")) {
+      setError("Club registration requires a @pga.com email address. Only PGA professionals can register clubs.");
+      return;
+    }
+    if (!clubName) { setError("Please select your club."); return; }
+    setSubmitting(true);
+    // Check if club already registered
+    const { data: existing } = await supabase.from("clubs").select("id, verified").eq("name", clubName);
+    if (existing && existing.length > 0) {
+      setError(`${clubName} is already registered. Contact your club admin for an invitation.`);
+      setSubmitting(false);
+      return;
+    }
+    const { error: insertErr } = await supabase.from("clubs").insert({
+      name: clubName, pro_name: proName, pro_email: proEmail.toLowerCase()
+    });
+    if (insertErr) {
+      setError("Registration failed: " + insertErr.message);
+    } else {
+      setSuccess(true);
+    }
+    setSubmitting(false);
+  };
+
+  if (success) {
+    return (
+      <div style={{ fontFamily: "'Poppins', 'Segoe UI', -apple-system, sans-serif", background: "#eef2f7", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet" />
+        <div style={{ width: 460, background: "#fff", borderRadius: 16, boxShadow: "0 8px 32px rgba(0,0,0,0.12)", overflow: "hidden" }}>
+          <div style={{ background: "linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%)", padding: "32px", textAlign: "center", borderBottom: "3px solid #16a34a" }}>
+            <div style={{ fontSize: 48, marginBottom: 12 }}>&#9989;</div>
+            <div style={{ color: "#7dd3fc", fontSize: 22, fontWeight: 600 }}>Club Registered!</div>
+          </div>
+          <div style={{ padding: "32px", textAlign: "center" }}>
+            <p style={{ fontSize: 15, color: "#0f172a", fontWeight: 600, marginBottom: 8 }}>{clubName}</p>
+            <p style={{ fontSize: 13, color: "#64748b", marginBottom: 24 }}>
+              A verification email will be sent to <strong>{proEmail}</strong>. Once verified, you'll receive an admin invitation link to set up your account and start inviting captains.
+            </p>
+            <button onClick={onBack} style={{ padding: "12px 32px", borderRadius: 8, border: "none", background: "linear-gradient(135deg, #0f172a, #1e3a5f)", color: "#7dd3fc", fontWeight: 600, fontSize: 14, cursor: "pointer" }}>
+              Back to Sign In
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ fontFamily: "'Poppins', 'Segoe UI', -apple-system, sans-serif", background: "#eef2f7", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet" />
+      <div style={{ width: 460, background: "#fff", borderRadius: 16, boxShadow: "0 8px 32px rgba(0,0,0,0.12)", overflow: "hidden" }}>
+        <div style={{ background: "linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%)", padding: "32px 32px 24px", textAlign: "center", borderBottom: "3px solid #7dd3fc" }}>
+          <div style={{ width: 56, height: 56, borderRadius: "50%", background: "linear-gradient(135deg, #7dd3fc, #38bdf8)", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 28, fontWeight: 600, color: "#0f172a", marginBottom: 12 }}>M</div>
+          <div style={{ color: "#7dd3fc", fontSize: 22, fontWeight: 600 }}>Register Your Club</div>
+          <div style={{ color: "#94a3b8", fontSize: 12, marginTop: 4 }}>PGA Professional verification required</div>
+        </div>
+        <form onSubmit={handleSubmit} style={{ padding: "28px 32px" }}>
+          <div style={{ background: "#fef3c7", border: "1px solid #fbbf24", borderRadius: 10, padding: 14, marginBottom: 20, fontSize: 12, color: "#92400e" }}>
+            <div style={{ fontWeight: 600, marginBottom: 4 }}>PGA Pro Authorization Required</div>
+            Only PGA professionals with a <strong>@pga.com</strong> email address can register a club. Once registered, the pro can invite captains and vice-captains.
+          </div>
+          <div style={{ marginBottom: 14 }}>
+            <label style={{ fontSize: 12, fontWeight: 600, color: "#475569", marginBottom: 4, display: "block" }}>PGA Professional Name</label>
+            <input value={proName} onChange={e => setProName(e.target.value)} placeholder="Mike Dever" required
+              style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid #c1cad8", fontSize: 14, background: "#f5f7fb", outline: "none", boxSizing: "border-box" }} />
+          </div>
+          <div style={{ marginBottom: 14 }}>
+            <label style={{ fontSize: 12, fontWeight: 600, color: "#475569", marginBottom: 4, display: "block" }}>PGA Email Address</label>
+            <input type="email" value={proEmail} onChange={e => setProEmail(e.target.value)} placeholder="mdever@pga.com" required
+              style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: `1px solid ${proEmail && !proEmail.toLowerCase().endsWith("@pga.com") ? "#dc2626" : "#c1cad8"}`, fontSize: 14, background: "#f5f7fb", outline: "none", boxSizing: "border-box" }} />
+            {proEmail && !proEmail.toLowerCase().endsWith("@pga.com") && (
+              <div style={{ fontSize: 11, color: "#dc2626", marginTop: 4, fontWeight: 600 }}>Must be a @pga.com email address</div>
+            )}
+          </div>
+          <div style={{ marginBottom: 20 }}>
+            <label style={{ fontSize: 12, fontWeight: 600, color: "#475569", marginBottom: 4, display: "block" }}>Club</label>
+            <ClubSearchDropdown value={clubName} onChange={setClubName} placeholder="Search 334 GAP member clubs..." />
+            {clubName && <div style={{ fontSize: 11, color: "#16a34a", marginTop: 4, fontWeight: 600 }}>{clubName}</div>}
+          </div>
+          {error && <div style={{ background: "#fee2e2", color: "#991b1b", padding: "10px 14px", borderRadius: 8, fontSize: 13, fontWeight: 600, marginBottom: 14 }}>{error}</div>}
+          <button type="submit" disabled={submitting}
+            style={{ width: "100%", padding: "12px", borderRadius: 8, border: "none", background: "linear-gradient(135deg, #0f172a, #1e3a5f)", color: "#7dd3fc", fontWeight: 600, fontSize: 15, cursor: submitting ? "wait" : "pointer", opacity: submitting ? 0.7 : 1 }}>
+            {submitting ? "Registering..." : "Register Club"}
+          </button>
+          <button type="button" onClick={onBack}
+            style={{ width: "100%", padding: "10px", borderRadius: 8, border: "1px solid #c1cad8", background: "#fff", color: "#64748b", fontWeight: 600, fontSize: 13, cursor: "pointer", marginTop: 10 }}>
+            Back to Sign In
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// INVITE SIGNUP SCREEN (accessed via ?invite=TOKEN)
+// ═══════════════════════════════════════════════════════════════
+function InviteSignup({ invite, onSignUp, onBack }) {
   const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState(invite.email || "");
+  const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [selectedRole, setSelectedRole] = useState("vice_captain");
-  const [selectedClub, setSelectedClub] = useState("");
   const [error, setError] = useState(null);
   const [message, setMessage] = useState(null);
   const [submitting, setSubmitting] = useState(false);
@@ -412,97 +559,150 @@ function LoginScreen({ onSignIn, onSignUp }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
-    setMessage(null);
+    if (password !== confirmPassword) { setError("Passwords do not match."); return; }
     setSubmitting(true);
-    if (mode === "signin") {
-      const { error } = await onSignIn(email, password);
-      if (error) setError(error.message);
-    } else {
-      if (password !== confirmPassword) { setError("Passwords do not match."); setSubmitting(false); return; }
-      if (!selectedClub) { setError("Please select your club."); setSubmitting(false); return; }
-      const { error } = await onSignUp(email, password, fullName, selectedRole, selectedClub);
-      if (error) setError(error.message);
-      else setMessage("Check your email for a confirmation link!");
+    const { data, error: signUpErr } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { full_name: fullName, role: invite.role, club: invite.club, invite_token: invite.token } }
+    });
+    if (signUpErr) {
+      setError(signUpErr.message);
+    } else if (data?.user) {
+      await supabase.from("profiles").update({ role: invite.role, club: invite.club }).eq("id", data.user.id);
+      // Mark invitation used
+      await supabase.from("invitations").update({ used: true, used_by: data.user.id }).eq("token", invite.token);
+      setMessage("Account created! Check your email for a confirmation link.");
     }
     setSubmitting(false);
   };
 
   return (
     <div style={{ fontFamily: "'Poppins', 'Segoe UI', -apple-system, sans-serif", background: "#eef2f7", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+      <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet" />
       <div style={{ width: 420, background: "#fff", borderRadius: 16, boxShadow: "0 8px 32px rgba(0,0,0,0.12)", overflow: "hidden" }}>
-        <div style={{ background: "linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%)", padding: "32px 32px 24px", textAlign: "center", borderBottom: "3px solid #7dd3fc" }}>
-          <div style={{ width: 56, height: 56, borderRadius: "50%", background: "linear-gradient(135deg, #7dd3fc, #38bdf8)", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 28, fontWeight: 800, color: "#0f172a", marginBottom: 12 }}>M</div>
-          <div style={{ color: "#7dd3fc", fontSize: 22, fontWeight: 700, lineHeight: 1.2 }}>MatchGapper</div>
-          <div style={{ color: "#94a3b8", fontSize: 12, letterSpacing: 1, marginTop: 4 }}>BMW GAP TEAM MATCH MANAGER</div>
+        <div style={{ background: "linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%)", padding: "32px 32px 24px", textAlign: "center", borderBottom: "3px solid #16a34a" }}>
+          <div style={{ width: 56, height: 56, borderRadius: "50%", background: "linear-gradient(135deg, #7dd3fc, #38bdf8)", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 28, fontWeight: 600, color: "#0f172a", marginBottom: 12 }}>M</div>
+          <div style={{ color: "#7dd3fc", fontSize: 22, fontWeight: 600 }}>You're Invited!</div>
+          <div style={{ color: "#94a3b8", fontSize: 12, marginTop: 4 }}>Join {invite.club} on MatchGapper</div>
         </div>
         <form onSubmit={handleSubmit} style={{ padding: "28px 32px" }}>
-          <div style={{ display: "flex", gap: 0, marginBottom: 20, background: "#f1f5f9", borderRadius: 8, padding: 3 }}>
-            <button type="button" onClick={() => { setMode("signin"); setError(null); setMessage(null); }} style={{ flex: 1, padding: "8px", borderRadius: 6, border: "none", background: mode === "signin" ? "#0f172a" : "transparent", color: mode === "signin" ? "#7dd3fc" : "#64748b", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>Sign In</button>
-            <button type="button" onClick={() => { setMode("signup"); setError(null); setMessage(null); }} style={{ flex: 1, padding: "8px", borderRadius: 6, border: "none", background: mode === "signup" ? "#0f172a" : "transparent", color: mode === "signup" ? "#7dd3fc" : "#64748b", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>Sign Up</button>
+          <div style={{ background: "#dcfce7", border: "1px solid #86efac", borderRadius: 10, padding: 14, marginBottom: 20, display: "flex", gap: 16 }}>
+            <div>
+              <div style={{ fontSize: 12, color: "#64748b" }}>Club</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: "#0f172a" }}>{invite.club}</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 12, color: "#64748b" }}>Role</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: "#0f172a" }}>{ROLE_CONFIG[invite.role]?.label || invite.role}</div>
+            </div>
           </div>
-          {mode === "signup" && (
-            <>
-            <div style={{ marginBottom: 14 }}>
-              <label style={{ fontSize: 12, fontWeight: 600, color: "#475569", marginBottom: 4, display: "block" }}>Full Name</label>
-              <input value={fullName} onChange={e => setFullName(e.target.value)} placeholder="John Smith" required
-                style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid #c1cad8", fontSize: 14, background: "#f5f7fb", outline: "none", boxSizing: "border-box" }} />
-            </div>
-            <div style={{ marginBottom: 14 }}>
-              <label style={{ fontSize: 12, fontWeight: 600, color: "#475569", marginBottom: 4, display: "block" }}>Home Club</label>
-              <ClubSearchDropdown value={selectedClub} onChange={setSelectedClub} placeholder="Search 334 GAP member clubs..." />
-              {selectedClub && <div style={{ fontSize: 11, color: "#16a34a", marginTop: 4, fontWeight: 600 }}>{selectedClub}</div>}
-            </div>
-            <div style={{ marginBottom: 14 }}>
-              <label style={{ fontSize: 12, fontWeight: 600, color: "#475569", marginBottom: 6, display: "block" }}>Role</label>
-              <div style={{ display: "flex", gap: 8 }}>
-                {[
-                  { value: "admin", label: "Admin", desc: "Full control", color: "#16a34a", bg: "#dcfce7" },
-                  { value: "captain", label: "Captain", desc: "Manage teams", color: "#1e40af", bg: "#dbeafe" },
-                  { value: "vice_captain", label: "Vice Captain", desc: "View & assist", color: "#f59e0b", bg: "#fef3c7" },
-                ].map(r => (
-                  <button key={r.value} type="button" onClick={() => setSelectedRole(r.value)}
-                    style={{ flex: 1, padding: "10px 8px", borderRadius: 8, border: selectedRole === r.value ? `2px solid ${r.color}` : "2px solid #e2e8f0", background: selectedRole === r.value ? r.bg : "#f5f7fb", cursor: "pointer", textAlign: "center", transition: "all 0.15s" }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: selectedRole === r.value ? r.color : "#475569" }}>{r.label}</div>
-                    <div style={{ fontSize: 10, color: "#64748b", marginTop: 2 }}>{r.desc}</div>
-                  </button>
-                ))}
-              </div>
-            </div>
-            </>
-          )}
+          <div style={{ marginBottom: 14 }}>
+            <label style={{ fontSize: 12, fontWeight: 600, color: "#475569", marginBottom: 4, display: "block" }}>Full Name</label>
+            <input value={fullName} onChange={e => setFullName(e.target.value)} placeholder="John Smith" required
+              style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid #c1cad8", fontSize: 14, background: "#f5f7fb", outline: "none", boxSizing: "border-box" }} />
+          </div>
           <div style={{ marginBottom: 14 }}>
             <label style={{ fontSize: 12, fontWeight: 600, color: "#475569", marginBottom: 4, display: "block" }}>Email</label>
             <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" required
-              style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid #c1cad8", fontSize: 14, background: "#f5f7fb", outline: "none", boxSizing: "border-box" }} />
+              style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid #c1cad8", fontSize: 14, background: invite.email ? "#e2e8f0" : "#f5f7fb", outline: "none", boxSizing: "border-box" }}
+              readOnly={!!invite.email} />
           </div>
-          <div style={{ marginBottom: mode === "signup" ? 14 : 20 }}>
+          <div style={{ marginBottom: 14 }}>
             <label style={{ fontSize: 12, fontWeight: 600, color: "#475569", marginBottom: 4, display: "block" }}>Password</label>
             <div style={{ position: "relative" }}>
               <input type={showPassword ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)} placeholder="Min 6 characters" required minLength={6}
                 style={{ width: "100%", padding: "10px 14px", paddingRight: 60, borderRadius: 8, border: "1px solid #c1cad8", fontSize: 14, background: "#f5f7fb", outline: "none", boxSizing: "border-box" }} />
               <button type="button" onClick={() => setShowPassword(!showPassword)}
-                style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", padding: "4px 8px", borderRadius: 4, border: "none", background: showPassword ? "#0f172a" : "#e2e8f0", color: showPassword ? "#7dd3fc" : "#64748b", fontSize: 10, fontWeight: 700, cursor: "pointer" }}>
+                style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", padding: "4px 8px", borderRadius: 4, border: "none", background: showPassword ? "#0f172a" : "#e2e8f0", color: showPassword ? "#7dd3fc" : "#64748b", fontSize: 10, fontWeight: 600, cursor: "pointer" }}>
                 {showPassword ? "HIDE" : "SHOW"}
               </button>
             </div>
           </div>
-          {mode === "signup" && (
-            <div style={{ marginBottom: 20 }}>
-              <label style={{ fontSize: 12, fontWeight: 600, color: "#475569", marginBottom: 4, display: "block" }}>Confirm Password</label>
-              <input type={showPassword ? "text" : "password"} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="Re-enter password" required minLength={6}
-                style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: `1px solid ${confirmPassword && confirmPassword !== password ? "#dc2626" : "#c1cad8"}`, fontSize: 14, background: "#f5f7fb", outline: "none", boxSizing: "border-box" }} />
-              {confirmPassword && confirmPassword !== password && (
-                <div style={{ fontSize: 11, color: "#dc2626", marginTop: 4, fontWeight: 600 }}>Passwords do not match</div>
-              )}
-            </div>
-          )}
+          <div style={{ marginBottom: 20 }}>
+            <label style={{ fontSize: 12, fontWeight: 600, color: "#475569", marginBottom: 4, display: "block" }}>Confirm Password</label>
+            <input type={showPassword ? "text" : "password"} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="Re-enter password" required minLength={6}
+              style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: `1px solid ${confirmPassword && confirmPassword !== password ? "#dc2626" : "#c1cad8"}`, fontSize: 14, background: "#f5f7fb", outline: "none", boxSizing: "border-box" }} />
+            {confirmPassword && confirmPassword !== password && (
+              <div style={{ fontSize: 11, color: "#dc2626", marginTop: 4, fontWeight: 600 }}>Passwords do not match</div>
+            )}
+          </div>
           {error && <div style={{ background: "#fee2e2", color: "#991b1b", padding: "10px 14px", borderRadius: 8, fontSize: 13, fontWeight: 600, marginBottom: 14 }}>{error}</div>}
           {message && <div style={{ background: "#dcfce7", color: "#166534", padding: "10px 14px", borderRadius: 8, fontSize: 13, fontWeight: 600, marginBottom: 14 }}>{message}</div>}
-          <button type="submit" disabled={submitting}
-            style={{ width: "100%", padding: "12px", borderRadius: 8, border: "none", background: "linear-gradient(135deg, #0f172a, #1e3a5f)", color: "#7dd3fc", fontWeight: 700, fontSize: 15, cursor: submitting ? "wait" : "pointer", opacity: submitting ? 0.7 : 1, transition: "opacity 0.2s" }}>
-            {submitting ? "..." : mode === "signin" ? "Sign In" : "Create Account"}
+          <button type="submit" disabled={submitting || !!message}
+            style={{ width: "100%", padding: "12px", borderRadius: 8, border: "none", background: "linear-gradient(135deg, #0f172a, #1e3a5f)", color: "#7dd3fc", fontWeight: 600, fontSize: 15, cursor: submitting ? "wait" : "pointer", opacity: submitting || message ? 0.7 : 1 }}>
+            {submitting ? "Creating Account..." : "Create Account"}
           </button>
+          <button type="button" onClick={onBack}
+            style={{ width: "100%", padding: "10px", borderRadius: 8, border: "1px solid #c1cad8", background: "#fff", color: "#64748b", fontWeight: 600, fontSize: 13, cursor: "pointer", marginTop: 10 }}>
+            Back to Sign In
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// LOGIN SCREEN (Sign In only — signup requires invitation)
+// ═══════════════════════════════════════════════════════════════
+function LoginScreen({ onSignIn, onSignUp, onRegisterClub }) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError(null);
+    setSubmitting(true);
+    const { error } = await onSignIn(email, password);
+    if (error) setError(error.message);
+    setSubmitting(false);
+  };
+
+  return (
+    <div style={{ fontFamily: "'Poppins', 'Segoe UI', -apple-system, sans-serif", background: "#eef2f7", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet" />
+      <div style={{ width: 420, background: "#fff", borderRadius: 16, boxShadow: "0 8px 32px rgba(0,0,0,0.12)", overflow: "hidden" }}>
+        <div style={{ background: "linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%)", padding: "32px 32px 24px", textAlign: "center", borderBottom: "3px solid #7dd3fc" }}>
+          <div style={{ width: 56, height: 56, borderRadius: "50%", background: "linear-gradient(135deg, #7dd3fc, #38bdf8)", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 28, fontWeight: 600, color: "#0f172a", marginBottom: 12 }}>M</div>
+          <div style={{ color: "#7dd3fc", fontSize: 22, fontWeight: 600, lineHeight: 1.2 }}>MatchGapper</div>
+          <div style={{ color: "#94a3b8", fontSize: 12, letterSpacing: 1, marginTop: 4 }}>BMW GAP TEAM MATCH MANAGER</div>
+        </div>
+        <form onSubmit={handleSubmit} style={{ padding: "28px 32px" }}>
+          <div style={{ marginBottom: 14 }}>
+            <label style={{ fontSize: 12, fontWeight: 600, color: "#475569", marginBottom: 4, display: "block" }}>Email</label>
+            <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" required
+              style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid #c1cad8", fontSize: 14, background: "#f5f7fb", outline: "none", boxSizing: "border-box" }} />
+          </div>
+          <div style={{ marginBottom: 20 }}>
+            <label style={{ fontSize: 12, fontWeight: 600, color: "#475569", marginBottom: 4, display: "block" }}>Password</label>
+            <div style={{ position: "relative" }}>
+              <input type={showPassword ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)} placeholder="Min 6 characters" required minLength={6}
+                style={{ width: "100%", padding: "10px 14px", paddingRight: 60, borderRadius: 8, border: "1px solid #c1cad8", fontSize: 14, background: "#f5f7fb", outline: "none", boxSizing: "border-box" }} />
+              <button type="button" onClick={() => setShowPassword(!showPassword)}
+                style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", padding: "4px 8px", borderRadius: 4, border: "none", background: showPassword ? "#0f172a" : "#e2e8f0", color: showPassword ? "#7dd3fc" : "#64748b", fontSize: 10, fontWeight: 600, cursor: "pointer" }}>
+                {showPassword ? "HIDE" : "SHOW"}
+              </button>
+            </div>
+          </div>
+          {error && <div style={{ background: "#fee2e2", color: "#991b1b", padding: "10px 14px", borderRadius: 8, fontSize: 13, fontWeight: 600, marginBottom: 14 }}>{error}</div>}
+          <button type="submit" disabled={submitting}
+            style={{ width: "100%", padding: "12px", borderRadius: 8, border: "none", background: "linear-gradient(135deg, #0f172a, #1e3a5f)", color: "#7dd3fc", fontWeight: 600, fontSize: 15, cursor: submitting ? "wait" : "pointer", opacity: submitting ? 0.7 : 1, transition: "opacity 0.2s" }}>
+            {submitting ? "Signing In..." : "Sign In"}
+          </button>
+          <div style={{ borderTop: "1px solid #e2e8f0", marginTop: 24, paddingTop: 20, textAlign: "center" }}>
+            <div style={{ fontSize: 12, color: "#94a3b8", marginBottom: 12 }}>New to MatchGapper?</div>
+            <div style={{ fontSize: 13, color: "#64748b", marginBottom: 16 }}>
+              Signup is by <strong>invitation only</strong>. Ask your club captain or admin for an invite link.
+            </div>
+            <button type="button" onClick={onRegisterClub}
+              style={{ padding: "10px 20px", borderRadius: 8, border: "1px solid #c1cad8", background: "#f8fafc", color: "#0f172a", fontWeight: 600, fontSize: 13, cursor: "pointer" }}>
+              PGA Pro? Register Your Club
+            </button>
+          </div>
         </form>
       </div>
     </div>
@@ -603,10 +803,11 @@ const SAMPLE_PLAYERS = [
 // ═══════════════════════════════════════════════════════════════
 // DEFAULTS & CONFIG
 // ═══════════════════════════════════════════════════════════════
+const EMPTY_TEAM = () => ({ opponent: "", teamNum: "#1", homeTee: "", awayTee: "", homeInterval: 10, awayInterval: 10 });
 const DEFAULT_SCHEDULE = {
-  1: { date: "2026-04-19", team1: { opponent: "White Manor Country Club", teamNum: "#1" }, team2: { opponent: "Bellewood Country Club", teamNum: "#2" }, homeTee: "8:00 AM", awayTee: "8:30 AM" },
-  2: { date: "2026-04-26", team1: { opponent: "North Hills Country Club", teamNum: "#1" }, team2: { opponent: "Northampton Valley Country Club", teamNum: "#1" }, homeTee: "8:00 AM", awayTee: "8:00 AM" },
-  3: { date: "2026-05-03", team1: { opponent: "RiverCrest Golf Club & Preserve", teamNum: "#1" }, team2: { opponent: "Philadelphia Cricket Club", teamNum: "#3" }, homeTee: "8:00 AM", awayTee: "8:30 AM" },
+  1: { date: "", teamCount: 2, teams: [EMPTY_TEAM(), EMPTY_TEAM()] },
+  2: { date: "", teamCount: 2, teams: [EMPTY_TEAM(), EMPTY_TEAM()] },
+  3: { date: "", teamCount: 2, teams: [EMPTY_TEAM(), EMPTY_TEAM()] },
 };
 
 const DEFAULT_LOCK_STATE = { 1: { locked: false, lockedAt: null, lockedBy: null, modifiedAfterLock: false, lastSentAt: null }, 2: { locked: false, lockedAt: null, lockedBy: null, modifiedAfterLock: false, lastSentAt: null }, 3: { locked: false, lockedAt: null, lockedBy: null, modifiedAfterLock: false, lastSentAt: null } };
@@ -614,7 +815,7 @@ const DEFAULT_LOCK_STATE = { 1: { locked: false, lockedAt: null, lockedBy: null,
 const STATUS_CONFIG = {
   not_contacted: { label: "Not Contacted", short: "NC", color: "#94a3b8", bg: "#f1f5f9" },
   contacted: { label: "Contacted", short: "CTD", color: "#f59e0b", bg: "#fef3c7" },
-  confirmed: { label: "Confirmed", short: "Yes", color: "#16a34a", bg: "#dcfce7" },
+  confirmed: { label: "Available", short: "Yes", color: "#16a34a", bg: "#dcfce7" },
   declined: { label: "Declined", short: "No", color: "#dc2626", bg: "#fee2e2" },
   maybe: { label: "Maybe", short: "?", color: "#8b5cf6", bg: "#ede9fe" },
 };
@@ -638,6 +839,14 @@ const addMinutes = (timeStr, mins) => {
   return `${displayH}:${nm.toString().padStart(2, "0")} ${newAmpm}`;
 };
 const ACCENT = "#7dd3fc";
+const TEAM_COLORS = [
+  { label: "TEAM 1", color: "#16a34a", bg: "#dcfce7" },
+  { label: "TEAM 2", color: "#1e40af", bg: "#dbeafe" },
+  { label: "TEAM 3", color: "#9333ea", bg: "#f3e8ff" },
+  { label: "TEAM 4", color: "#ea580c", bg: "#fff7ed" },
+  { label: "TEAM 5", color: "#0891b2", bg: "#ecfeff" },
+  { label: "TEAM 6", color: "#be123c", bg: "#fff1f2" },
+];
 
 // ═══════════════════════════════════════════════════════════════
 // SVG ICONS
@@ -653,22 +862,52 @@ const IconUnlock = () => (<svg width="14" height="14" viewBox="0 0 24 24" fill="
 // ═══════════════════════════════════════════════════════════════
 // HELPER FUNCTIONS
 // ═══════════════════════════════════════════════════════════════
-function computeTeamSplit(players, week) {
+function computeTeamSplit(players, week, teamCount = 2) {
   const confirmed = players.filter(p => p.availability[week] === "yes").sort((a, b) => a.courseHdcp - b.courseHdcp);
   const maybe = players.filter(p => p.availability[week] === "maybe").sort((a, b) => a.courseHdcp - b.courseHdcp);
-  if (confirmed.length === 0) return { t1: [], t2: [], maybe1: [], maybe2: [], threshold: null, t1Range: null, t2Range: null };
-  const t1 = confirmed.slice(0, 12);
-  const t2 = confirmed.slice(12);
-  const threshold = t1.length > 0 ? Math.max(...t1.map(p => p.courseHdcp)) : null;
-  const maybe1 = maybe.filter(p => threshold === null || p.courseHdcp <= threshold);
-  const maybe2 = maybe.filter(p => threshold !== null && p.courseHdcp > threshold);
-  const range = (arr) => arr.length > 0 ? { min: Math.min(...arr.map(p => p.courseHdcp)), max: Math.max(...arr.map(p => p.courseHdcp)) } : null;
-  return { t1, t2, maybe1, maybe2, threshold, t1Range: range(t1), t2Range: range(t2) };
+  const teams = [];
+  const thresholds = [];
+  const maybeTeams = [];
+  const ranges = [];
+  const rangeCalc = (arr) => arr.length > 0 ? { min: Math.min(...arr.map(p => p.courseHdcp)), max: Math.max(...arr.map(p => p.courseHdcp)) } : null;
+
+  for (let i = 0; i < teamCount; i++) {
+    const team = confirmed.slice(i * 12, (i + 1) * 12);
+    teams.push(team);
+    ranges.push(rangeCalc(team));
+  }
+  for (let i = 0; i < teamCount - 1; i++) {
+    thresholds.push(teams[i].length > 0 ? Math.max(...teams[i].map(p => p.courseHdcp)) : null);
+  }
+  for (let i = 0; i < teamCount; i++) {
+    const lo = i === 0 ? -Infinity : (thresholds[i-1] ?? -Infinity);
+    if (i === 0) {
+      maybeTeams.push(maybe.filter(p => thresholds.length === 0 || thresholds[0] === null || p.courseHdcp <= thresholds[0]));
+    } else if (i === teamCount - 1) {
+      maybeTeams.push(maybe.filter(p => p.courseHdcp > lo));
+    } else {
+      const hi = thresholds[i] ?? Infinity;
+      maybeTeams.push(maybe.filter(p => p.courseHdcp > lo && p.courseHdcp <= hi));
+    }
+  }
+  // Backward-compatible aliases for 2-team case
+  return { teams, thresholds, maybeTeams, ranges, confirmed, maybe,
+    t1: teams[0] || [], t2: teams[1] || [],
+    maybe1: maybeTeams[0] || [], maybe2: maybeTeams[1] || [],
+    threshold: thresholds[0] ?? null,
+    t1Range: ranges[0] || null, t2Range: ranges[1] || null,
+  };
 }
 
-function projectTeam(player, threshold) {
-  if (threshold === null) return "T1";
-  return player.courseHdcp <= threshold ? "T1" : "T2";
+function projectTeam(player, thresholds) {
+  // Support old single-value threshold for backward compat
+  if (thresholds === null || thresholds === undefined) return 0;
+  if (typeof thresholds === "number") return player.courseHdcp <= thresholds ? 0 : 1;
+  if (!Array.isArray(thresholds) || thresholds.length === 0) return 0;
+  for (let i = 0; i < thresholds.length; i++) {
+    if (thresholds[i] !== null && player.courseHdcp <= thresholds[i]) return i;
+  }
+  return thresholds.length;
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -718,15 +957,35 @@ function SeasonSetup({ schedule, setSchedule, lockState, userRole, clubName }) {
     if (!isAdmin) return;
     setSchedule(prev => ({ ...prev, [week]: { ...prev[week], [field]: value } }));
   };
-  const updateTeam = (week, team, field, value) => {
+  const updateTeam = (week, idx, field, value) => {
     if (!isAdmin) return;
-    setSchedule(prev => ({ ...prev, [week]: { ...prev[week], [team]: { ...prev[week][team], [field]: value } } }));
+    setSchedule(prev => {
+      const newTeams = [...prev[week].teams];
+      newTeams[idx] = { ...newTeams[idx], [field]: value };
+      return { ...prev, [week]: { ...prev[week], teams: newTeams } };
+    });
+  };
+  const updateTeamCount = (week, newCount) => {
+    if (!isAdmin) return;
+    setSchedule(prev => {
+      const next = { ...prev };
+      [1, 2, 3].forEach(w => {
+        const ws = next[w];
+        const oldTeams = ws.teams || [];
+        const teams = [];
+        for (let i = 0; i < newCount; i++) {
+          teams.push(oldTeams[i] || EMPTY_TEAM());
+        }
+        next[w] = { ...ws, teamCount: newCount, teams };
+      });
+      return next;
+    });
   };
   return (
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
         <div>
-          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: "#0f172a" }}>Season Setup</h2>
+          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 600, color: "#0f172a" }}>Season Setup</h2>
           <p style={{ margin: "4px 0 0", fontSize: 13, color: "#64748b" }}>Configure opponents for each week. Each matchup splits 3 pairs home, 3 pairs away. Searchable across all 334 GAP member clubs.</p>
         </div>
         {!isAdmin && <span style={{ fontSize: 11, padding: "4px 12px", borderRadius: 6, background: "#fef3c7", color: "#92400e", fontWeight: 600 }}>View Only — Admin access required to edit</span>}
@@ -736,12 +995,14 @@ function SeasonSetup({ schedule, setSchedule, lockState, userRole, clubName }) {
         const ws = schedule[week];
         const ls = lockState[week];
         const locked = ls?.locked;
+        const teamCount = ws.teamCount || 2;
+        const teams = ws.teams || [];
         return (
-          <div key={week} style={{ background: "#fff", borderRadius: 12, border: "1px solid #d1d9e6", overflow: "hidden", marginBottom: 16, opacity: locked ? 0.85 : 1 }}>
-            <div style={{ background: "linear-gradient(135deg, #0f172a 0%, #162d50 100%)", padding: "12px 16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div key={week} style={{ background: "#fff", borderRadius: 12, border: "1px solid #d1d9e6", overflow: "visible", marginBottom: 16, opacity: locked ? 0.85 : 1, position: "relative", zIndex: 10 - week }}>
+            <div style={{ background: "linear-gradient(135deg, #0f172a 0%, #162d50 100%)", padding: "12px 16px", display: "flex", justifyContent: "space-between", alignItems: "center", borderRadius: "12px 12px 0 0" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <span style={{ color: ACCENT, fontSize: 17, fontWeight: 700 }}>Week {week}</span>
-                {locked && <span style={{ fontSize: 10, padding: "3px 8px", borderRadius: 4, background: "#dc262622", color: "#fca5a5", fontWeight: 700, display: "flex", alignItems: "center", gap: 4 }}><IconLock /> LOCKED</span>}
+                <span style={{ color: ACCENT, fontSize: 17, fontWeight: 600 }}>Week {week}</span>
+                {locked && <span style={{ fontSize: 10, padding: "3px 8px", borderRadius: 4, background: "#dc262622", color: "#fca5a5", fontWeight: 600, display: "flex", alignItems: "center", gap: 4 }}><IconLock /> LOCKED</span>}
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 {ws.date && <span style={{ color: "#cbd5e1", fontSize: 13, fontWeight: 600 }}>{fmtDateLong(ws.date)}</span>}
@@ -750,49 +1011,66 @@ function SeasonSetup({ schedule, setSchedule, lockState, userRole, clubName }) {
               </div>
             </div>
             <div style={{ padding: 16 }}>
-              <div style={{ display: "flex", gap: 16, marginBottom: 12, alignItems: "center", flexWrap: "wrap" }}>
-                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                  <span style={{ fontSize: 11, fontWeight: 600, color: "#64748b" }}>Home Tee</span>
-                  <input value={ws.homeTee} onChange={e => updateWeek(week, "homeTee", e.target.value)} disabled={!isAdmin || locked} placeholder="8:00 AM"
-                    style={{ padding: "6px 12px", borderRadius: 6, border: "1px solid #c1cad8", fontSize: 13, width: 100, background: isAdmin && !locked ? "#fff" : "#f1f5f9" }} />
-                </div>
-                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                  <span style={{ fontSize: 11, fontWeight: 600, color: "#64748b" }}>Away Tee</span>
-                  <input value={ws.awayTee} onChange={e => updateWeek(week, "awayTee", e.target.value)} disabled={!isAdmin || locked} placeholder="8:30 AM"
-                    style={{ padding: "6px 12px", borderRadius: 6, border: "1px solid #c1cad8", fontSize: 13, width: 100, background: isAdmin && !locked ? "#fff" : "#f1f5f9" }} />
-                </div>
-                <span style={{ fontSize: 10, color: "#94a3b8", fontStyle: "italic" }}>First tee time listed — remaining pairs at 10-min intervals</span>
+              {/* Number of Teams selector */}
+              <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16, padding: "12px 16px", background: "#f0f9ff", borderRadius: 10, border: "1px solid #bae6fd" }}>
+                <span style={{ fontSize: 13, fontWeight: 600, color: "#0369a1" }}>Number of Teams</span>
+                <select value={teamCount} onChange={e => updateTeamCount(week, parseInt(e.target.value))} disabled={!isAdmin || locked}
+                  style={{ padding: "6px 12px", borderRadius: 6, border: "1px solid #bae6fd", background: "#fff", color: "#0f172a", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
+                  {[1,2,3,4,5,6].map(n => <option key={n} value={n}>{n}</option>)}
+                </select>
+                <span style={{ fontSize: 11, color: "#64748b" }}>Select how many team matchups for this week, then configure each below.</span>
               </div>
-              {["team1", "team2"].map(team => (
-                <div key={team} style={{ background: "#f5f7fb", borderRadius: 10, padding: 14, marginBottom: team === "team1" ? 12 : 0, border: "1px solid #e2e8f0" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
-                    <span style={{ fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 4, background: team === "team1" ? "#dcfce7" : "#dbeafe", color: team === "team1" ? "#16a34a" : "#1e40af" }}>{team === "team1" ? "TEAM 1" : "TEAM 2"}</span>
-                    <span style={{ fontSize: 12, color: "#64748b" }}>Opponent</span>
+              {teams.map((team, idx) => {
+                const tc = TEAM_COLORS[idx] || TEAM_COLORS[0];
+                return (
+                  <div key={idx} style={{ background: "#f5f7fb", borderRadius: 10, padding: 14, marginBottom: idx < teams.length - 1 ? 12 : 0, border: "1px solid #e2e8f0" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                      <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 4, background: tc.bg, color: tc.color }}>{tc.label}</span>
+                      <span style={{ fontSize: 12, color: "#64748b" }}>Opponent</span>
+                    </div>
+                    <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+                      <div style={{ flex: "1 1 250px" }}>
+                        {isAdmin && !locked ? (
+                          <ClubSearchDropdown value={team.opponent} onChange={v => updateTeam(week, idx, "opponent", v)} placeholder="Choose Opponent Club..." />
+                        ) : (
+                          <div style={{ padding: "8px 12px", borderRadius: 8, border: "1px solid #c1cad8", background: "#f1f5f9", fontSize: 13, color: "#0f172a", fontWeight: 600 }}>{team.opponent || "Not set"}</div>
+                        )}
+                      </div>
+                      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                        <select value={team.teamNum} onChange={e => updateTeam(week, idx, "teamNum", e.target.value)} disabled={!isAdmin || locked}
+                          style={{ padding: "8px 10px", borderRadius: 6, border: "1px solid #c1cad8", fontSize: 13, background: isAdmin && !locked ? "#fff" : "#f1f5f9", cursor: "pointer" }}>
+                          {["#1","#2","#3","#4","#5","#6"].map(n => <option key={n} value={n}>{n}</option>)}
+                        </select>
+                      </div>
+                      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                        <span style={{ fontSize: 11, fontWeight: 600, color: "#64748b" }}>Home Tee</span>
+                        <input value={team.homeTee || ""} onChange={e => updateTeam(week, idx, "homeTee", e.target.value)} disabled={!isAdmin || locked} placeholder="8:00 AM"
+                          style={{ padding: "6px 12px", borderRadius: 6, border: "1px solid #c1cad8", fontSize: 13, width: 90, background: isAdmin && !locked ? "#fff" : "#f1f5f9" }} />
+                        <select value={team.homeInterval || 10} onChange={e => updateTeam(week, idx, "homeInterval", parseInt(e.target.value))} disabled={!isAdmin || locked}
+                          style={{ padding: "6px 8px", borderRadius: 6, border: "1px solid #c1cad8", fontSize: 11, background: isAdmin && !locked ? "#fff" : "#f1f5f9", cursor: "pointer" }}>
+                          {[10,11,12,13,14,15,16,17,18,19,20].map(m => <option key={m} value={m}>{m}m</option>)}
+                        </select>
+                      </div>
+                      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                        <span style={{ fontSize: 11, fontWeight: 600, color: "#64748b" }}>Away Tee</span>
+                        <input value={team.awayTee || ""} onChange={e => updateTeam(week, idx, "awayTee", e.target.value)} disabled={!isAdmin || locked} placeholder="8:30 AM"
+                          style={{ padding: "6px 12px", borderRadius: 6, border: "1px solid #c1cad8", fontSize: 13, width: 90, background: isAdmin && !locked ? "#fff" : "#f1f5f9" }} />
+                        <select value={team.awayInterval || 10} onChange={e => updateTeam(week, idx, "awayInterval", parseInt(e.target.value))} disabled={!isAdmin || locked}
+                          style={{ padding: "6px 8px", borderRadius: 6, border: "1px solid #c1cad8", fontSize: 11, background: isAdmin && !locked ? "#fff" : "#f1f5f9", cursor: "pointer" }}>
+                          {[10,11,12,13,14,15,16,17,18,19,20].map(m => <option key={m} value={m}>{m}m</option>)}
+                        </select>
+                      </div>
+                    </div>
+                    {team.opponent && (
+                      <div style={{ marginTop: 8, fontSize: 11, color: "#64748b" }}>
+                        3 pairs at {clubName} · 3 pairs at {team.opponent}
+                        <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(team.opponent)}`} target="_blank" rel="noopener noreferrer"
+                          style={{ marginLeft: 8, fontSize: 10, color: "#1e40af", textDecoration: "none", background: "#dbeafe", padding: "2px 6px", borderRadius: 4, fontWeight: 600 }}>Map</a>
+                      </div>
+                    )}
                   </div>
-                  <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
-                    <div style={{ flex: "1 1 250px" }}>
-                      {isAdmin && !locked ? (
-                        <ClubSearchDropdown value={ws[team].opponent} onChange={v => updateTeam(week, team, "opponent", v)} />
-                      ) : (
-                        <div style={{ padding: "8px 12px", borderRadius: 8, border: "1px solid #c1cad8", background: "#f1f5f9", fontSize: 13, color: "#0f172a", fontWeight: 600 }}>{ws[team].opponent || "Not set"}</div>
-                      )}
-                    </div>
-                    <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                      <select value={ws[team].teamNum} onChange={e => updateTeam(week, team, "teamNum", e.target.value)} disabled={!isAdmin || locked}
-                        style={{ padding: "8px 10px", borderRadius: 6, border: "1px solid #c1cad8", fontSize: 13, background: isAdmin && !locked ? "#fff" : "#f1f5f9", cursor: "pointer" }}>
-                        {["#1","#2","#3","#4","#5"].map(n => <option key={n} value={n}>{n}</option>)}
-                      </select>
-                    </div>
-                  </div>
-                  {ws[team].opponent && (
-                    <div style={{ marginTop: 8, fontSize: 11, color: "#64748b" }}>
-                      3 pairs at {clubName} · 3 pairs at {ws[team].opponent}
-                      <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(ws[team].opponent)}`} target="_blank" rel="noopener noreferrer"
-                        style={{ marginLeft: 8, fontSize: 10, color: "#1e40af", textDecoration: "none", background: "#dbeafe", padding: "2px 6px", borderRadius: 4, fontWeight: 600 }}>Map</a>
-                    </div>
-                  )}
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         );
@@ -807,16 +1085,17 @@ function SeasonSetup({ schedule, setSchedule, lockState, userRole, clubName }) {
 function Tooltip({ player, position, threshold }) {
   if (!player) return null;
   const s = STATUS_CONFIG[player.status];
-  const proj = threshold !== null ? projectTeam(player, threshold) : null;
+  const projIdx = (threshold !== null && threshold !== undefined) ? projectTeam(player, threshold) : null;
+  const ptc = projIdx !== null ? (TEAM_COLORS[projIdx] || TEAM_COLORS[0]) : null;
   return (
     <div style={{ position: "fixed", top: position.y - 10, left: position.x + 16, zIndex: 9999, background: "#0f172a", color: "#eef2f7", borderRadius: 10, padding: "14px 18px", boxShadow: "0 8px 32px rgba(0,0,0,0.4)", maxWidth: 340, fontSize: 13, lineHeight: 1.5, pointerEvents: "none", border: "1px solid #1e2d4a" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-        <span style={{ fontSize: 16, fontWeight: 700, color: ACCENT }}>{player.name}</span>
-        {proj && <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 4, background: proj === "T1" ? "#16a34a33" : "#3b82f633", color: proj === "T1" ? "#4ade80" : "#60a5fa" }}>Proj: {proj === "T1" ? "Team 1" : "Team 2"}</span>}
+        <span style={{ fontSize: 16, fontWeight: 600, color: ACCENT }}>{player.name}</span>
+        {ptc && <span style={{ fontSize: 10, fontWeight: 600, padding: "2px 8px", borderRadius: 4, background: ptc.color + "33", color: ptc.color }}>Proj: Team {projIdx+1}</span>}
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "3px 16px" }}>
         <span style={{ color: "#94a3b8" }}>GHIN:</span><span>{player.ghin}</span>
-        <span style={{ color: "#94a3b8" }}>Course HDCP:</span><span style={{ fontWeight: 700 }}>{fmtH(player.courseHdcp)}</span>
+        <span style={{ color: "#94a3b8" }}>Course HDCP:</span><span style={{ fontWeight: 600 }}>{fmtH(player.courseHdcp)}</span>
         <span style={{ color: "#94a3b8" }}>Index:</span><span>{player.index}</span>
         <span style={{ color: "#94a3b8" }}>Status:</span><span style={{ color: s.color }}>{s.label}</span>
         {player.phone && <><span style={{ color: "#94a3b8" }}>Phone:</span><span>{player.phone}</span></>}
@@ -846,13 +1125,13 @@ function PlayerCard({ player, onDragStart, compact, week, threshold }) {
         onMouseMove={(e) => setTooltipPos({ x: e.clientX, y: e.clientY })}
         onMouseLeave={() => setHover(false)}
         style={{ background: "#fff", border: "1px solid #d1d9e6", borderRadius: 8, padding: compact ? "6px 10px" : "8px 12px", cursor: "grab", display: "flex", alignItems: "center", gap: 8, transition: "all 0.15s", boxShadow: hover ? "0 2px 8px rgba(0,0,0,0.1)" : "none", fontSize: compact ? 12 : 13 }}>
-        <div style={{ width: compact ? 28 : 32, height: compact ? 28 : 32, borderRadius: "50%", background: `linear-gradient(135deg, ${s.color}22, ${s.color}44)`, border: `2px solid ${s.color}`, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: compact ? 11 : 13, color: s.color, flexShrink: 0 }}>{fmtH(player.courseHdcp)}</div>
+        <div style={{ width: compact ? 28 : 32, height: compact ? 28 : 32, borderRadius: "50%", background: `linear-gradient(135deg, ${s.color}22, ${s.color}44)`, border: `2px solid ${s.color}`, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 600, fontSize: compact ? 11 : 13, color: s.color, flexShrink: 0 }}>{fmtH(player.courseHdcp)}</div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontWeight: 600, color: "#0f172a", fontSize: compact ? 11 : 13 }}>{player.name}</div>
           {!compact && <div style={{ fontSize: 11, color: "#64748b" }}>Idx: {player.index} · {player.ghin}</div>}
         </div>
         <div style={{ display: "flex", gap: 4, alignItems: "center", flexShrink: 0 }}>
-          {pref && <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 5px", borderRadius: 4, background: pref === "Home" ? "#dbeafe" : "#fef3c7", color: pref === "Home" ? "#1e40af" : "#92400e" }}>{pref === "Home" ? "H" : "A"}</span>}
+          {pref && <span style={{ fontSize: 9, fontWeight: 600, padding: "2px 5px", borderRadius: 4, background: pref === "Home" ? "#dbeafe" : "#fef3c7", color: pref === "Home" ? "#1e40af" : "#92400e" }}>{pref === "Home" ? "H" : "A"}</span>}
           {avail && <span style={{ width: 8, height: 8, borderRadius: "50%", background: AVAIL_COLORS[avail] }} />}
           <span style={{ fontSize: 9, padding: "2px 5px", borderRadius: 4, background: s.bg, color: s.color, fontWeight: 600 }}>{s.short}</span>
         </div>
@@ -903,25 +1182,25 @@ function PairSlot({ pair, pairNum, onDrop, onRemove, players, side, week, thresh
       style={{ background: dragOver ? "#eff6ff" : "#f5f7fb", border: `2px dashed ${dragOver ? "#16a34a" : disabled ? "#e2e8f0" : "#c1cad8"}`, borderRadius: 10, padding: 12, minHeight: 90, transition: "all 0.2s", opacity: disabled ? 0.7 : 1 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <span style={{ fontSize: 11, fontWeight: 700, color: "#64748b", letterSpacing: 1 }}>PAIR {pairNum}</span>
+          <span style={{ fontSize: 11, fontWeight: 600, color: "#64748b", letterSpacing: 1 }}>PAIR {pairNum}</span>
           {pairTee && <span style={{ fontSize: 10, fontWeight: 600, color: "#475569", background: "#e2e8f0", padding: "1px 6px", borderRadius: 4 }}>{pairTee}</span>}
         </div>
         <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
           {arch && (
             <div style={{ position: "relative", display: "inline-flex" }}>
               <span onMouseEnter={() => setShowTip(true)} onMouseLeave={() => setShowTip(false)}
-                style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 5, background: arch.bg, color: arch.color, cursor: "help", display: "flex", alignItems: "center", gap: 3, border: `1px solid ${arch.color}33` }}>
+                style={{ fontSize: 10, fontWeight: 600, padding: "2px 8px", borderRadius: 5, background: arch.bg, color: arch.color, cursor: "help", display: "flex", alignItems: "center", gap: 3, border: `1px solid ${arch.color}33` }}>
                 {arch.emoji} {arch.label}
               </span>
               {showTip && (
                 <div style={{ position: "absolute", bottom: "100%", right: 0, marginBottom: 6, background: "#0f172a", color: "#eef2f7", padding: "8px 12px", borderRadius: 8, fontSize: 11, lineHeight: 1.4, width: 220, boxShadow: "0 4px 16px rgba(0,0,0,0.3)", zIndex: 100, pointerEvents: "none" }}>
-                  <div style={{ fontWeight: 700, color: ACCENT, marginBottom: 3 }}>{arch.emoji} {arch.label} Pairing</div>
+                  <div style={{ fontWeight: 600, color: ACCENT, marginBottom: 3 }}>{arch.emoji} {arch.label} Pairing</div>
                   {arch.tip}
                 </div>
               )}
             </div>
           )}
-          <span style={{ fontSize: 12, fontWeight: 700, color: "#0f172a", background: "#dce3ed", borderRadius: 6, padding: "2px 8px" }}>Avg: {avg}</span>
+          <span style={{ fontSize: 12, fontWeight: 600, color: "#0f172a", background: "#dce3ed", borderRadius: 6, padding: "2px 8px" }}>Avg: {avg}</span>
         </div>
       </div>
       {prefWarnings.length > 0 && <div style={{ fontSize: 10, color: "#92400e", background: "#fef3c7", borderRadius: 4, padding: "3px 6px", marginBottom: 6 }}>Pref conflict: {prefWarnings.join(", ")} prefers {side === "Home" ? "Away" : "Home"}</div>}
@@ -945,49 +1224,89 @@ function PairSlot({ pair, pairNum, onDrop, onRemove, players, side, week, thresh
 // ═══════════════════════════════════════════════════════════════
 // TEAM BUILDER (with Lock/Unlock flow)
 // ═══════════════════════════════════════════════════════════════
-function TeamBuilder({ players, schedule, lockState, setLockState, userRole, clubName }) {
+function TeamBuilder({ players, schedule, lockState, setLockState, userRole, clubName, assignments, setAssignments }) {
   const isAdmin = userRole === "admin" || userRole === "captain";
   const [activeWeek, setActiveWeek] = useState(1);
-  const emptyWeek = () => ({ team1: { home: [[], [], []], away: [[], [], []] }, team2: { home: [[], [], []], away: [[], [], []] } });
-  const [assignments, setAssignments] = useState({ 1: emptyWeek(), 2: emptyWeek(), 3: emptyWeek() });
+  const emptyWeek = (teamCount) => {
+    const w = {};
+    for (let i = 0; i < teamCount; i++) {
+      w[i] = { home: [[], [], []], away: [[], [], []] };
+    }
+    return w;
+  };
   const [validationMsg, setValidationMsg] = useState(null);
   const [copyFeedback, setCopyFeedback] = useState(null);
+  const [dismissedStale, setDismissedStale] = useState(false);
   const weekSched = schedule[activeWeek];
   const weekLock = lockState[activeWeek];
   const isLocked = weekLock.locked;
-  const split = useMemo(() => computeTeamSplit(players, activeWeek), [players, activeWeek]);
+  const teamCount = weekSched.teamCount || 2;
+  const teamIndices = Array.from({length: teamCount}, (_, i) => i);
+  const split = useMemo(() => computeTeamSplit(players, activeWeek, teamCount), [players, activeWeek, teamCount]);
+
+  // Ensure assignments have entries for all teams when teamCount changes
+  useEffect(() => {
+    setAssignments(prev => {
+      const w = prev[activeWeek] || {};
+      let changed = false;
+      const next = { ...w };
+      for (let i = 0; i < teamCount; i++) {
+        if (!next[i]) { next[i] = { home: [[], [], []], away: [[], [], []] }; changed = true; }
+      }
+      if (changed) return { ...prev, [activeWeek]: next };
+      return prev;
+    });
+  }, [activeWeek, teamCount]);
+
   const assignedIds = useMemo(() => {
-    const w = assignments[activeWeek]; const ids = new Set();
-    ["team1", "team2"].forEach(t => ["home", "away"].forEach(s => w[t][s].forEach(pair => pair.forEach(id => ids.add(id)))));
+    const w = assignments[activeWeek] || {}; const ids = new Set();
+    teamIndices.forEach(t => { const tw = w[t]; if (tw) ["home", "away"].forEach(s => (tw[s] || []).forEach(pair => pair.forEach(id => ids.add(id)))); });
     return ids;
-  }, [assignments, activeWeek]);
+  }, [assignments, activeWeek, teamCount]);
   const availablePlayers = useMemo(() => players.filter(p => p.availability[activeWeek] === "yes" && !assignedIds.has(p.id)).sort((a, b) => a.courseHdcp - b.courseHdcp), [players, activeWeek, assignedIds]);
   const maybePlayers = useMemo(() => players.filter(p => p.availability[activeWeek] === "maybe").sort((a, b) => a.courseHdcp - b.courseHdcp), [players, activeWeek]);
+
   const validate = useCallback((na) => {
-    const w = na[activeWeek]; const t1P = []; const t2P = [];
-    ["home", "away"].forEach(s => { w.team1[s].forEach(pair => pair.forEach(id => { const p = players.find(pl => pl.id === id); if (p) t1P.push(p); })); w.team2[s].forEach(pair => pair.forEach(id => { const p = players.find(pl => pl.id === id); if (p) t2P.push(p); })); });
-    if (t1P.length > 0 && t2P.length > 0) {
-      const t1Max = Math.max(...t1P.map(p => p.courseHdcp)); const t2Min = Math.min(...t2P.map(p => p.courseHdcp));
-      if (t2Min < t1Max) return `VIOLATION: Team 2 has a player at ${fmtH(t2Min)} hdcp, lower than Team 1's highest (${fmtH(t1Max)}). GAP rules require Team 2 handicaps >= Team 1's highest.`;
+    const w = na[activeWeek] || {};
+    const teamPlayers = [];
+    teamIndices.forEach(t => {
+      const tp = [];
+      const tw = w[t];
+      if (tw) ["home", "away"].forEach(s => (tw[s] || []).forEach(pair => pair.forEach(id => { const p = players.find(pl => pl.id === id); if (p) tp.push(p); })));
+      teamPlayers.push(tp);
+    });
+    for (let i = 0; i < teamPlayers.length - 1; i++) {
+      if (teamPlayers[i].length > 0 && teamPlayers[i+1].length > 0) {
+        const hiMax = Math.max(...teamPlayers[i].map(p => p.courseHdcp));
+        const loMin = Math.min(...teamPlayers[i+1].map(p => p.courseHdcp));
+        if (loMin < hiMax) return `VIOLATION: Team ${i+2} has a player at ${fmtH(loMin)} hdcp, lower than Team ${i+1}'s highest (${fmtH(hiMax)}). GAP rules require Team ${i+2} handicaps >= Team ${i+1}'s highest.`;
+      }
     }
     return null;
-  }, [activeWeek, players]);
+  }, [activeWeek, players, teamCount]);
 
-  const handleDrop = (team, side, pairIdx, playerId) => {
+  const handleDrop = (teamIdx, side, pairIdx, playerId) => {
     if (isLocked) return;
     const player = players.find(p => p.id === playerId);
     if (!player) return;
-    if (split.threshold !== null) {
-      if (team === "team2" && player.courseHdcp < split.threshold) { setValidationMsg(`BLOCKED: ${player.name} (hdcp ${fmtH(player.courseHdcp)}) below threshold ${fmtH(split.threshold)} — must be Team 1.`); return; }
-      if (team === "team1" && player.courseHdcp > split.threshold) { setValidationMsg(`BLOCKED: ${player.name} (hdcp ${fmtH(player.courseHdcp)}) above threshold ${fmtH(split.threshold)} — must be Team 2.`); return; }
+    // Validate team band
+    if (split.thresholds.length > 0) {
+      const projIdx = projectTeam(player, split.thresholds);
+      if (projIdx !== teamIdx) {
+        const lo = teamIdx === 0 ? null : split.thresholds[teamIdx - 1];
+        const hi = teamIdx < split.thresholds.length ? split.thresholds[teamIdx] : null;
+        setValidationMsg(`BLOCKED: ${player.name} (hdcp ${fmtH(player.courseHdcp)}) projects to Team ${projIdx+1}, not Team ${teamIdx+1}.`);
+        return;
+      }
     }
     setAssignments(prev => {
       const next = JSON.parse(JSON.stringify(prev));
-      ["team1", "team2"].forEach(t => ["home", "away"].forEach(s => next[activeWeek][t][s].forEach(pair => { const idx = pair.indexOf(playerId); if (idx > -1) pair.splice(idx, 1); })));
-      if (next[activeWeek][team][side][pairIdx].length < 2) next[activeWeek][team][side][pairIdx].push(playerId);
+      const w = next[activeWeek] || {};
+      teamIndices.forEach(t => { const tw = w[t]; if (tw) ["home", "away"].forEach(s => (tw[s] || []).forEach(pair => { const idx = pair.indexOf(playerId); if (idx > -1) pair.splice(idx, 1); })); });
+      if (w[teamIdx] && w[teamIdx][side][pairIdx].length < 2) w[teamIdx][side][pairIdx].push(playerId);
+      next[activeWeek] = w;
       setValidationMsg(validate(next)); return next;
     });
-    // If was locked and someone modifies, mark as modified
     if (weekLock.lastSentAt) {
       setLockState(prev => ({ ...prev, [activeWeek]: { ...prev[activeWeek], modifiedAfterLock: true } }));
     }
@@ -997,7 +1316,9 @@ function TeamBuilder({ players, schedule, lockState, setLockState, userRole, clu
     if (isLocked) return;
     setAssignments(prev => {
       const next = JSON.parse(JSON.stringify(prev));
-      ["team1", "team2"].forEach(t => ["home", "away"].forEach(s => next[activeWeek][t][s].forEach(pair => { const idx = pair.indexOf(playerId); if (idx > -1) pair.splice(idx, 1); })));
+      const w = next[activeWeek] || {};
+      teamIndices.forEach(t => { const tw = w[t]; if (tw) ["home", "away"].forEach(s => (tw[s] || []).forEach(pair => { const idx = pair.indexOf(playerId); if (idx > -1) pair.splice(idx, 1); })); });
+      next[activeWeek] = w;
       setValidationMsg(validate(next)); return next;
     });
     if (weekLock.lastSentAt) {
@@ -1014,20 +1335,24 @@ function TeamBuilder({ players, schedule, lockState, setLockState, userRole, clu
 
   const buildSummary = () => {
     const ws = schedule[activeWeek];
-    const w = assignments[activeWeek];
-    let text = `${clubName.toUpperCase()} — BMW GAP TEAM MATCHES\nWeek ${activeWeek} · ${fmtDateLong(ws.date)}\nHome Tee (${clubName}): ${ws.homeTee} — Away Tee: ${ws.awayTee}\n(First tee listed, remaining pairs at 10-min intervals)\n${"═".repeat(50)}\n`;
-    ["team1", "team2"].forEach(team => {
-      const ts = ws[team];
-      text += `\n${team === "team1" ? "TEAM 1" : "TEAM 2"} vs ${ts.opponent} ${ts.teamNum}\n${"─".repeat(40)}\n`;
-      ["home", "away"].forEach(side => {
-        const loc = side === "home" ? clubName : ts.opponent;
-        const baseTee = side === "home" ? ws.homeTee : ws.awayTee;
-        w[team][side].forEach((pair, i) => {
-          const names = pair.map(id => { const p = players.find(pl => pl.id === id); return p ? `${p.name} (${fmtH(p.courseHdcp)})` : "TBD"; });
-          const pairTee = addMinutes(baseTee, i * 10);
-          if (names.length > 0) text += `  ${side.toUpperCase()} Pair ${i+1} @ ${pairTee} at ${loc}: ${names.join(" & ")}\n`;
+    const w = assignments[activeWeek] || {};
+    let text = `${clubName.toUpperCase()} — BMW GAP TEAM MATCHES\nWeek ${activeWeek} · ${fmtDateLong(ws.date)}\n${"═".repeat(50)}\n`;
+    (ws.teams || []).forEach((ts, idx) => {
+      const tc = TEAM_COLORS[idx] || TEAM_COLORS[0];
+      text += `\n${tc.label} vs ${ts.opponent} ${ts.teamNum}\nHome Tee (${clubName}): ${ts.homeTee || "TBD"} (${ts.homeInterval || 10}-min intervals) — Away Tee: ${ts.awayTee || "TBD"} (${ts.awayInterval || 10}-min intervals)\n${"─".repeat(40)}\n`;
+      const tw = w[idx];
+      if (tw) {
+        ["home", "away"].forEach(side => {
+          const loc = side === "home" ? clubName : ts.opponent;
+          const baseTee = side === "home" ? ts.homeTee : ts.awayTee;
+          (tw[side] || []).forEach((pair, i) => {
+            const names = pair.map(id => { const p = players.find(pl => pl.id === id); return p ? `${p.name} (${fmtH(p.courseHdcp)})` : "TBD"; });
+            const sideInterval = side === "home" ? (ts.homeInterval || 10) : (ts.awayInterval || 10);
+            const pairTee = addMinutes(baseTee, i * sideInterval);
+            if (names.length > 0) text += `  ${side.toUpperCase()} Pair ${i+1} @ ${pairTee} at ${loc}: ${names.join(" & ")}\n`;
+          });
         });
-      });
+      }
     });
     return text;
   };
@@ -1046,21 +1371,32 @@ function TeamBuilder({ players, schedule, lockState, setLockState, userRole, clu
     window.open(`mailto:?subject=${encodeURIComponent(`${clubName} Week ${activeWeek} Pairings — ${fmtDateLong(schedule[activeWeek].date)}`)}&body=${encodeURIComponent(text)}`);
   };
 
-  const countAssigned = (team) => { const w = assignments[activeWeek]; let c = 0; ["home", "away"].forEach(s => w[team][s].forEach(pair => c += pair.length)); return c; };
-  const t1Avail = availablePlayers.filter(p => split.threshold === null || p.courseHdcp <= split.threshold);
-  const t2Avail = availablePlayers.filter(p => split.threshold !== null && p.courseHdcp >= split.threshold);
+  const countAssigned = (teamIdx) => { const w = assignments[activeWeek] || {}; const tw = w[teamIdx]; let c = 0; if (tw) ["home", "away"].forEach(s => (tw[s] || []).forEach(pair => c += pair.length)); return c; };
+
+  // Build pool lists per team
+  const teamPools = useMemo(() => {
+    return teamIndices.map(idx => {
+      return availablePlayers.filter(p => {
+        const proj = projectTeam(p, split.thresholds);
+        return proj === idx;
+      });
+    });
+  }, [availablePlayers, split.thresholds, teamCount]);
 
   return (
     <div>
       {/* STALE COPY WARNING */}
-      {weekLock.modifiedAfterLock && (
-        <div style={{ background: "linear-gradient(90deg, #7f1d1d, #991b1b)", border: "2px solid #dc2626", borderRadius: 10, padding: "12px 18px", marginBottom: 14, display: "flex", alignItems: "center", gap: 12, color: "#fecaca" }}>
+      {weekLock.modifiedAfterLock && !dismissedStale && (
+        <div style={{ background: "linear-gradient(90deg, #7f1d1d, #991b1b)", border: "2px solid #dc2626", borderRadius: 10, padding: "12px 18px", marginBottom: 14, display: "flex", alignItems: "center", gap: 12, color: "#fecaca", position: "relative" }}>
           <span style={{ fontSize: 20 }}>⚠</span>
           <div>
-            <div style={{ fontWeight: 700, fontSize: 14, color: "#fff" }}>Pairings modified since last send — re-notify opposing club</div>
+            <div style={{ fontWeight: 600, fontSize: 14, color: "#fff" }}>Pairings modified since last send — re-notify opposing club</div>
             <div style={{ fontSize: 12, opacity: 0.8 }}>Last sent: {weekLock.lastSentAt}. Changes have been made. The opposing club has a stale copy.</div>
           </div>
-          {isAdmin && <button onClick={handleCopy} style={{ marginLeft: "auto", padding: "8px 16px", borderRadius: 6, border: "none", background: "#dc2626", color: "#fff", fontWeight: 700, cursor: "pointer", fontSize: 12, whiteSpace: "nowrap" }}>Re-Copy & Send</button>}
+          <div style={{ marginLeft: "auto", display: "flex", gap: 8, alignItems: "center" }}>
+            {isAdmin && <button onClick={handleCopy} style={{ padding: "8px 16px", borderRadius: 6, border: "none", background: "#dc2626", color: "#fff", fontWeight: 600, cursor: "pointer", fontSize: 12, whiteSpace: "nowrap" }}>Re-Copy & Send</button>}
+            <button onClick={() => setDismissedStale(true)} style={{ padding: "4px 8px", borderRadius: 4, border: "1px solid #fca5a5", background: "transparent", color: "#fca5a5", fontSize: 14, cursor: "pointer", lineHeight: 1 }} title="Dismiss">&#10005;</button>
+          </div>
         </div>
       )}
 
@@ -1068,99 +1404,125 @@ function TeamBuilder({ players, schedule, lockState, setLockState, userRole, clu
       <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
         {[1, 2, 3].map(w => {
           const ls = lockState[w];
+          const tc = schedule[w]?.teamCount || 2;
           return (
-            <button key={w} onClick={() => { setActiveWeek(w); setValidationMsg(null); }} style={{ flex: 1, padding: "10px 14px", borderRadius: 8, border: activeWeek === w ? "2px solid #0f172a" : "1px solid #c1cad8", background: activeWeek === w ? "linear-gradient(135deg, #0f172a 0%, #162d50 100%)" : "#fff", color: activeWeek === w ? ACCENT : "#0f172a", fontWeight: 700, cursor: "pointer", fontSize: 13, transition: "all 0.2s", position: "relative" }}>
-              <div style={{ fontWeight: 700, display: "flex", alignItems: "center", gap: 6, justifyContent: "center" }}>
+            <button key={w} onClick={() => { setActiveWeek(w); setValidationMsg(null); setDismissedStale(false); }} style={{ flex: 1, padding: "10px 14px", borderRadius: 8, border: activeWeek === w ? "2px solid #0f172a" : "1px solid #c1cad8", background: activeWeek === w ? "linear-gradient(135deg, #0f172a 0%, #162d50 100%)" : "#fff", color: activeWeek === w ? ACCENT : "#0f172a", fontWeight: 600, cursor: "pointer", fontSize: 13, transition: "all 0.2s", position: "relative" }}>
+              <div style={{ fontWeight: 600, display: "flex", alignItems: "center", gap: 6, justifyContent: "center" }}>
                 Week {w} — {fmtDate(schedule[w].date)}
                 {ls.locked && <IconLock />}
                 {ls.modifiedAfterLock && <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#dc2626", display: "inline-block" }} />}
               </div>
-              <div style={{ fontSize: 10, fontWeight: 400, opacity: 0.8, marginTop: 2 }}>Home: {schedule[w].homeTee} · Away: {schedule[w].awayTee}</div>
+              <div style={{ fontSize: 10, fontWeight: 400, opacity: 0.8, marginTop: 2 }}>{tc} team{tc !== 1 ? "s" : ""}</div>
             </button>
           );
         })}
       </div>
 
       {/* Threshold Bar */}
-      {split.threshold !== null && (
+      {split.thresholds.length > 0 && split.thresholds.some(t => t !== null) && (
         <div style={{ background: "#fff", border: "1px solid #d1d9e6", borderRadius: 8, padding: "10px 16px", marginBottom: 12, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
-          <div style={{ fontSize: 13 }}><span style={{ fontWeight: 700 }}>First Team Threshold: </span><span style={{ fontWeight: 800, fontSize: 18 }}>{fmtH(split.threshold)}</span><span style={{ color: "#475569", marginLeft: 8, fontWeight: 500 }}>— Team 1 hdcp ≤ {fmtH(split.threshold)}, Team 2 hdcp ≥ {fmtH(split.threshold)}</span></div>
-          <div style={{ display: "flex", gap: 12, fontSize: 12 }}>
-            <span style={{ background: "#dcfce7", padding: "3px 10px", borderRadius: 6, fontWeight: 600, color: "#16a34a" }}>T1: {fmtH(split.t1Range?.min)}–{fmtH(split.t1Range?.max)} ({split.t1.length}p)</span>
-            <span style={{ background: "#dbeafe", padding: "3px 10px", borderRadius: 6, fontWeight: 600, color: "#1e40af" }}>T2: {fmtH(split.t2Range?.min)}–{fmtH(split.t2Range?.max)} ({split.t2.length}p)</span>
+          <div style={{ fontSize: 13 }}>
+            <span style={{ fontWeight: 600 }}>Team Thresholds: </span>
+            {split.thresholds.map((t, i) => t !== null ? <span key={i} style={{ marginRight: 12 }}><span style={{ fontWeight: 600 }}>T{i+1}/T{i+2}: </span><span style={{ fontWeight: 600, fontSize: 16 }}>{fmtH(t)}</span></span> : null)}
+          </div>
+          <div style={{ display: "flex", gap: 8, fontSize: 12, flexWrap: "wrap" }}>
+            {split.teams.map((team, idx) => {
+              const tc = TEAM_COLORS[idx] || TEAM_COLORS[0];
+              const r = split.ranges[idx];
+              return <span key={idx} style={{ background: tc.bg, padding: "3px 10px", borderRadius: 6, fontWeight: 600, color: tc.color }}>T{idx+1}: {r ? `${fmtH(r.min)}–${fmtH(r.max)}` : "—"} ({team.length}p)</span>;
+            })}
           </div>
         </div>
       )}
-
-      {/* Lock Controls (Admin only) */}
-      {isAdmin && (
-        <div style={{ display: "flex", gap: 8, marginBottom: 12, alignItems: "center" }}>
-          {!isLocked ? (
-            <button onClick={handleLock} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 8, border: "2px solid #16a34a", background: "#dcfce7", color: "#16a34a", fontWeight: 700, cursor: "pointer", fontSize: 12 }}><IconLock /> Lock Pairings</button>
-          ) : (
-            <>
-              <button onClick={handleUnlock} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 8, border: "2px solid #f59e0b", background: "#fef3c7", color: "#92400e", fontWeight: 700, cursor: "pointer", fontSize: 12 }}><IconUnlock /> Unlock to Edit</button>
-              <button onClick={handleCopy} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 8, border: "none", background: "linear-gradient(135deg, #0f172a, #162d50)", color: "#fff", fontWeight: 700, cursor: "pointer", fontSize: 12 }}>Copy Summary</button>
-              <button onClick={handleMail} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 8, border: "none", background: "linear-gradient(135deg, #1e40af, #3b82f6)", color: "#fff", fontWeight: 700, cursor: "pointer", fontSize: 12 }}>Open in Mail</button>
-            </>
-          )}
-          {copyFeedback && <span style={{ fontSize: 12, color: "#16a34a", fontWeight: 600 }}>{copyFeedback}</span>}
-          {isLocked && <span style={{ marginLeft: "auto", fontSize: 11, color: "#64748b" }}>Locked {weekLock.lockedAt} by {weekLock.lockedBy}</span>}
-        </div>
-      )}
-      {!isAdmin && isLocked && <div style={{ fontSize: 12, padding: "8px 14px", background: "#fef3c7", borderRadius: 8, marginBottom: 12, color: "#92400e", fontWeight: 600 }}>Pairings locked by Admin — editing disabled</div>}
 
       {validationMsg && <div style={{ background: "#fef2f2", border: "2px solid #dc2626", borderRadius: 8, padding: "10px 14px", marginBottom: 12, color: "#991b1b", fontSize: 13, fontWeight: 600 }}>{validationMsg}</div>}
 
       {/* Main Grid */}
       <div style={{ display: "grid", gridTemplateColumns: "300px 1fr", gap: 16, minHeight: 500 }}>
         <div style={{ background: "#f5f7fb", borderRadius: 12, padding: 14, border: "1px solid #d1d9e6", maxHeight: 750, overflowY: "auto" }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "#16a34a", marginBottom: 2, letterSpacing: 0.5 }}>TEAM 1 POOL ({t1Avail.length})</div>
-          <div style={{ fontSize: 10, color: "#64748b", marginBottom: 8 }}>Hdcp ≤ {split.threshold != null ? fmtH(split.threshold) : "?"}</div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 3, marginBottom: 14 }}>{t1Avail.map(p => <PlayerCard key={p.id} player={p} compact week={activeWeek} threshold={split.threshold} />)}</div>
-          <div style={{ borderTop: "2px solid #c1cad8", paddingTop: 10, marginBottom: 2 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: "#1e40af", marginBottom: 2, letterSpacing: 0.5 }}>TEAM 2 POOL ({t2Avail.length})</div>
-            <div style={{ fontSize: 10, color: "#64748b", marginBottom: 8 }}>Hdcp ≥ {split.threshold != null ? fmtH(split.threshold) : "?"}</div>
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 3, marginBottom: 14 }}>{t2Avail.map(p => <PlayerCard key={p.id} player={p} compact week={activeWeek} threshold={split.threshold} />)}</div>
+          {teamIndices.map((idx) => {
+            const tc = TEAM_COLORS[idx] || TEAM_COLORS[0];
+            const pool = teamPools[idx] || [];
+            const r = split.ranges[idx];
+            return (
+              <div key={idx}>
+                {idx > 0 && <div style={{ borderTop: "2px solid #c1cad8", paddingTop: 10, marginTop: 10, marginBottom: 2 }} />}
+                <div style={{ fontSize: 11, fontWeight: 600, color: tc.color, marginBottom: 2, letterSpacing: 0.5 }}>{tc.label} POOL ({pool.length})</div>
+                <div style={{ fontSize: 10, color: "#64748b", marginBottom: 8 }}>
+                  {idx === 0 ? `Hdcp ≤ ${split.thresholds[0] != null ? fmtH(split.thresholds[0]) : "?"}` :
+                   idx === teamCount - 1 ? `Hdcp ≥ ${split.thresholds[idx-1] != null ? fmtH(split.thresholds[idx-1]) : "?"}` :
+                   `${fmtH(split.thresholds[idx-1] ?? 0)} < Hdcp ≤ ${fmtH(split.thresholds[idx] ?? 99)}`}
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>{pool.map(p => <PlayerCard key={p.id} player={p} compact week={activeWeek} threshold={split.thresholds} />)}</div>
+              </div>
+            );
+          })}
           {maybePlayers.length > 0 && (
             <>
-              <div style={{ borderTop: "2px solid #c1cad8", paddingTop: 10 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: "#8b5cf6", marginBottom: 2, letterSpacing: 0.5 }}>ON THE FENCE ({maybePlayers.length})</div>
+              <div style={{ borderTop: "2px solid #c1cad8", paddingTop: 10, marginTop: 10 }}>
+                <div style={{ fontSize: 11, fontWeight: 600, color: "#8b5cf6", marginBottom: 2, letterSpacing: 0.5 }}>ON THE FENCE ({maybePlayers.length})</div>
                 <div style={{ fontSize: 10, color: "#64748b", marginBottom: 8 }}>Team projection shown</div>
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-                {maybePlayers.map(p => (
-                  <div key={p.id} style={{ position: "relative" }}>
-                    <PlayerCard player={p} compact week={activeWeek} threshold={split.threshold} />
-                    <span style={{ position: "absolute", top: 2, right: 4, fontSize: 8, fontWeight: 700, padding: "1px 4px", borderRadius: 3, background: projectTeam(p, split.threshold) === "T1" ? "#dcfce7" : "#dbeafe", color: projectTeam(p, split.threshold) === "T1" ? "#16a34a" : "#1e40af" }}>→{projectTeam(p, split.threshold)}</span>
-                  </div>
-                ))}
+                {maybePlayers.map(p => {
+                  const projIdx = projectTeam(p, split.thresholds);
+                  const ptc = TEAM_COLORS[projIdx] || TEAM_COLORS[0];
+                  return (
+                    <div key={p.id} style={{ position: "relative" }}>
+                      <PlayerCard player={p} compact week={activeWeek} threshold={split.thresholds} />
+                      <span style={{ position: "absolute", top: 2, right: 4, fontSize: 8, fontWeight: 600, padding: "1px 4px", borderRadius: 3, background: ptc.bg, color: ptc.color }}>T{projIdx+1}</span>
+                    </div>
+                  );
+                })}
               </div>
             </>
           )}
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          {["team1", "team2"].map(team => {
-            const ts = weekSched[team];
+          {/* Lock Controls (Admin only) */}
+          {isAdmin && (
+            <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+              {!isLocked ? (
+                <button onClick={handleLock} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 8, border: "2px solid #16a34a", background: "#dcfce7", color: "#16a34a", fontWeight: 600, cursor: "pointer", fontSize: 12 }}><IconLock /> Lock Pairings</button>
+              ) : (
+                <>
+                  <button onClick={handleUnlock} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 8, border: "2px solid #f59e0b", background: "#fef3c7", color: "#92400e", fontWeight: 600, cursor: "pointer", fontSize: 12 }}><IconUnlock /> Unlock to Edit</button>
+                  <button onClick={handleCopy} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 8, border: "none", background: "linear-gradient(135deg, #0f172a, #162d50)", color: "#fff", fontWeight: 600, cursor: "pointer", fontSize: 12 }}>Copy Summary</button>
+                  <button onClick={handleMail} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 8, border: "none", background: "linear-gradient(135deg, #1e40af, #3b82f6)", color: "#fff", fontWeight: 600, cursor: "pointer", fontSize: 12 }}>Open in Mail</button>
+                </>
+              )}
+              {copyFeedback && <span style={{ fontSize: 12, color: "#16a34a", fontWeight: 600 }}>{copyFeedback}</span>}
+              {isLocked && <span style={{ marginLeft: "auto", fontSize: 11, color: "#64748b" }}>Locked {weekLock.lockedAt} by {weekLock.lockedBy}</span>}
+            </div>
+          )}
+          {!isAdmin && isLocked && <div style={{ fontSize: 12, padding: "8px 14px", background: "#fef3c7", borderRadius: 8, color: "#92400e", fontWeight: 600 }}>Pairings locked by Admin — editing disabled</div>}
+
+          {teamIndices.map(teamIdx => {
+            const teams = weekSched.teams || [];
+            const ts = teams[teamIdx] || { opponent: "", teamNum: "", homeTee: "", awayTee: "", homeInterval: 10, awayInterval: 10 };
+            const tc = TEAM_COLORS[teamIdx] || TEAM_COLORS[0];
             return (
-              <div key={team} style={{ background: "#fff", borderRadius: 12, border: "1px solid #d1d9e6", overflow: "hidden" }}>
-                <div style={{ background: team === "team1" ? "linear-gradient(135deg, #0f172a 0%, #162d50 100%)" : "linear-gradient(135deg, #0c1a3d 0%, #1a2f54 100%)", padding: "10px 16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <div><span style={{ color: ACCENT, fontSize: 16, fontWeight: 700 }}>{team === "team1" ? "Team 1" : "Team 2"}</span><span style={{ color: "#94a3b8", fontSize: 12, marginLeft: 12 }}>{countAssigned(team)}/12 · vs {ts.opponent}</span>{ts.teamNum && <span style={{ color: "#fff", fontSize: 11, fontWeight: 800, marginLeft: 6, background: ACCENT + "33", padding: "2px 8px", borderRadius: 4, letterSpacing: 0.5 }}>{ts.teamNum}</span>}</div>
-                  <span style={{ fontSize: 11, color: "#94a3b8" }}>{team === "team1" ? `Hdcp ≤ ${split.threshold != null ? fmtH(split.threshold) : "?"}` : `Hdcp ≥ ${split.threshold != null ? fmtH(split.threshold) : "?"}`}</span>
+              <div key={teamIdx} style={{ background: "#fff", borderRadius: 12, border: "1px solid #d1d9e6", overflow: "hidden" }}>
+                <div style={{ background: "linear-gradient(135deg, #0f172a 0%, #162d50 100%)", padding: "10px 16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div><span style={{ color: tc.color, fontSize: 16, fontWeight: 600 }}>Team {teamIdx+1}</span><span style={{ color: "#94a3b8", fontSize: 12, marginLeft: 12 }}>{countAssigned(teamIdx)}/12 · vs {ts.opponent}</span>{ts.teamNum && <span style={{ color: "#fff", fontSize: 11, fontWeight: 600, marginLeft: 6, background: tc.color + "33", padding: "2px 8px", borderRadius: 4, letterSpacing: 0.5 }}>{ts.teamNum}</span>}</div>
+                  <span style={{ fontSize: 11, color: "#94a3b8" }}>
+                    {teamIdx === 0 ? `Hdcp ≤ ${split.thresholds[0] != null ? fmtH(split.thresholds[0]) : "?"}` :
+                     teamIdx === teamCount - 1 && teamCount > 1 ? `Hdcp ≥ ${split.thresholds[teamIdx-1] != null ? fmtH(split.thresholds[teamIdx-1]) : "?"}` :
+                     teamCount === 1 ? "All handicaps" : `${fmtH(split.thresholds[teamIdx-1] ?? 0)} < Hdcp ≤ ${fmtH(split.thresholds[teamIdx] ?? 99)}`}
+                  </span>
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 0 }}>
                   {["Home", "Away"].map(side => {
-                    const baseTee = side === "Home" ? weekSched.homeTee : weekSched.awayTee;
+                    const baseTee = side === "Home" ? ts.homeTee : ts.awayTee;
                     return (
                     <div key={side} style={{ padding: 12, borderRight: side === "Home" ? "1px solid #d1d9e6" : "none" }}>
-                      <div style={{ fontSize: 11, fontWeight: 700, color: side === "Home" ? "#1e40af" : "#92400e", marginBottom: 4, display: "flex", alignItems: "center", gap: 6 }}>
+                      <div style={{ fontSize: 11, fontWeight: 600, color: side === "Home" ? "#1e40af" : "#92400e", marginBottom: 4, display: "flex", alignItems: "center", gap: 6 }}>
                         <span style={{ width: 14, height: 14, borderRadius: 3, background: side === "Home" ? "#dbeafe" : "#fef3c7", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9 }}>{side === "Home" ? "H" : "A"}</span>
                         {side.toUpperCase()} — {side === "Home" ? clubName : ts.opponent}
                       </div>
-                      <div style={{ fontSize: 10, color: "#64748b", marginBottom: 8 }}>First tee: {baseTee} · 10-min intervals</div>
+                      <div style={{ fontSize: 10, color: "#64748b", marginBottom: 8 }}>First tee: {baseTee || "TBD"} · {(side === "Home" ? (ts.homeInterval || 10) : (ts.awayInterval || 10))}-min intervals</div>
                       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                        {[0, 1, 2].map(i => (<PairSlot key={i} pair={assignments[activeWeek][team][side.toLowerCase()][i]} pairNum={i + 1} onDrop={(id) => handleDrop(team, side.toLowerCase(), i, id)} onRemove={handleRemove} players={players} side={side} week={activeWeek} threshold={split.threshold} disabled={isLocked} teeOffset={i * 10} baseTee={baseTee} />))}
+                        {[0, 1, 2].map(i => (<PairSlot key={i} pair={(assignments[activeWeek]?.[teamIdx]?.[side.toLowerCase()] || [[],[],[]])[i] || []} pairNum={i + 1} onDrop={(id) => handleDrop(teamIdx, side.toLowerCase(), i, id)} onRemove={handleRemove} players={players} side={side} week={activeWeek} threshold={split.thresholds} disabled={isLocked} teeOffset={i * (side === "Home" ? (ts.homeInterval || 10) : (ts.awayInterval || 10))} baseTee={baseTee} />))}
                       </div>
                     </div>
                     );
@@ -1178,69 +1540,81 @@ function TeamBuilder({ players, schedule, lockState, setLockState, userRole, clu
 // ═══════════════════════════════════════════════════════════════
 // DASHBOARD
 // ═══════════════════════════════════════════════════════════════
-function Dashboard({ players, schedule, lockState, clubName }) {
+function Dashboard({ players, schedule, lockState, clubName, assignments }) {
   const weekAnalysis = [1, 2, 3].map(w => {
-    const split = computeTeamSplit(players, w);
+    const tc = schedule[w].teamCount || 2;
+    const split = computeTeamSplit(players, w, tc);
     const maybe = players.filter(p => p.availability[w] === "maybe");
-    return { week: w, ...split, maybeAll: maybe, date: schedule[w].date, homeTee: schedule[w].homeTee, awayTee: schedule[w].awayTee, t1Opp: schedule[w].team1.opponent, t2Opp: schedule[w].team2.opponent, t1Num: schedule[w].team1.teamNum, t2Num: schedule[w].team2.teamNum, ls: lockState[w] };
+    return { week: w, ...split, teamCount: tc, maybeAll: maybe, date: schedule[w].date, teams: schedule[w].teams || [], ls: lockState[w] };
   });
   const totalPlayers = players.length;
+  const maxTeamCount = Math.max(...[1,2,3].map(w => schedule[w]?.teamCount || 2));
+  const playersNeeded = maxTeamCount * 12;
+  const rosterGap = Math.max(0, playersNeeded - totalPlayers);
   const confirmed = players.filter(p => p.status === "confirmed").length;
   const declined = players.filter(p => p.status === "declined").length;
   const maybeP = players.filter(p => p.status === "maybe").length;
   const contacted = players.filter(p => p.status === "contacted").length;
   const notContacted = players.filter(p => p.status === "not_contacted").length;
-  const overallSplit = computeTeamSplit(players, 1);
+  const overallTC = schedule[1]?.teamCount || 2;
+  const overallSplit = computeTeamSplit(players, 1, overallTC);
 
   // Compute average handicap for all players who said yes to ANY week
   const anyYes = players.filter(p => [1,2,3].some(w => p.availability[w] === "yes"));
   const overallAvgHdcp = anyYes.length > 0 ? (anyYes.reduce((s, p) => s + p.courseHdcp, 0) / anyYes.length).toFixed(1) : "—";
-  const t1AvgHdcp = overallSplit.t1.length > 0 ? (overallSplit.t1.reduce((s, p) => s + p.courseHdcp, 0) / overallSplit.t1.length).toFixed(1) : "—";
-  const t2AvgHdcp = overallSplit.t2.length > 0 ? (overallSplit.t2.reduce((s, p) => s + p.courseHdcp, 0) / overallSplit.t2.length).toFixed(1) : "—";
 
   return (
     <div>
-      <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a", marginBottom: 8, letterSpacing: 0.3 }}>Roster Recruitment</div>
+      <div style={{ fontSize: 14, fontWeight: 600, color: "#0f172a", marginBottom: 8, letterSpacing: 0.3 }}>Roster Recruitment</div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 10, marginBottom: 16 }}>
         {[
-          { label: "Full Roster", val: totalPlayers, color: "#0f172a", sub: "All eligible" },
-          { label: "Confirmed", val: confirmed, color: "#16a34a", sub: "Signed up" },
+          { label: "Rostered", val: totalPlayers, color: rosterGap > 0 ? "#dc2626" : "#0f172a", sub: `${playersNeeded} needed (${maxTeamCount} teams)` },
+          { label: "Available", val: confirmed, color: "#16a34a", sub: "Signed up" },
           { label: "Maybe", val: maybeP, color: "#8b5cf6", sub: "On the fence" },
-          { label: "Contacted", val: contacted, color: "#f59e0b", sub: "Awaiting reply" },
+          { label: "Contacted", val: contacted, color: "#f59e0b", sub: "No replies" },
           { label: "Declined", val: declined, color: "#dc2626", sub: "Not playing" },
           { label: "Not Contacted", val: notContacted, color: "#94a3b8", sub: "Need outreach" },
         ].map(({ label, val, color, sub }) => (
           <div key={label} style={{ background: "#fff", borderRadius: 10, padding: "14px 12px", border: "1px solid #d1d9e6", textAlign: "center" }}>
-            <div style={{ fontSize: 26, fontWeight: 800, color }}>{val}</div>
-            <div style={{ fontSize: 10, color: "#64748b", fontWeight: 700, letterSpacing: 0.5 }}>{label.toUpperCase()}</div>
+            <div style={{ fontSize: 26, fontWeight: 600, color }}>{val}</div>
+            <div style={{ fontSize: 10, color: "#64748b", fontWeight: 600, letterSpacing: 0.5 }}>{label.toUpperCase()}</div>
             <div style={{ fontSize: 9, color: "#94a3b8", marginTop: 1 }}>{sub}</div>
           </div>
         ))}
       </div>
 
       {/* HANDICAP DISTRIBUTION — full width */}
-      <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a", marginBottom: 8, letterSpacing: 0.3 }}>Handicap Distribution</div>
+      <div style={{ fontSize: 14, fontWeight: 600, color: "#0f172a", marginBottom: 8, letterSpacing: 0.3 }}>Handicap Distribution</div>
       <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #d1d9e6", padding: 16, marginBottom: 16 }}>
         {(() => {
-          const brackets = [
-            { label: "0–4", min: 0, max: 4 }, { label: "5–7", min: 5, max: 7 },
-            { label: "8–10", min: 8, max: 10 }, { label: "11–13", min: 11, max: 13 },
-            { label: "14–18", min: 14, max: 18 }, { label: "19+", min: 19, max: 99 },
-          ];
+          const hdcps = players.map(p => Math.floor(p.courseHdcp));
+          const minH = hdcps.length > 0 ? Math.min(...hdcps) : 0;
+          const maxH = hdcps.length > 0 ? Math.max(...hdcps) : 12;
+          const range = maxH - minH;
+          const numBuckets = Math.min(6, Math.max(3, Math.ceil(range / 3)));
+          const bucketSize = Math.max(1, Math.ceil((range + 1) / numBuckets));
+          const brackets = [];
+          for (let i = 0; i < numBuckets; i++) {
+            const bMin = minH + i * bucketSize;
+            const bMax = i === numBuckets - 1 ? maxH : minH + (i + 1) * bucketSize - 1;
+            if (bMin > maxH) break;
+            brackets.push({ label: bMin === bMax ? `${bMin}` : `${bMin}–${bMax}`, min: bMin, max: bMax });
+          }
           const maxCount = Math.max(...brackets.map(b => players.filter(p => p.courseHdcp >= b.min && p.courseHdcp <= b.max).length), 1);
           return (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 12 }}>
+            <div style={{ display: "grid", gridTemplateColumns: `repeat(${brackets.length}, 1fr)`, gap: 12 }}>
               {brackets.map(b => {
                 const all = players.filter(p => p.courseHdcp >= b.min && p.courseHdcp <= b.max);
                 const conf = all.filter(p => p.status === "confirmed");
                 const may = all.filter(p => p.status === "maybe");
                 const nc = all.filter(p => p.status === "not_contacted" || p.status === "contacted");
-                const teamProj = overallSplit.threshold !== null ? (b.max <= overallSplit.threshold ? "T1" : b.min > overallSplit.threshold ? "T2" : "T1/T2") : "T1";
+                const projIdx = projectTeam({ courseHdcp: (b.min + b.max) / 2 }, overallSplit.thresholds);
+                const ptc = TEAM_COLORS[projIdx] || TEAM_COLORS[0];
                 return (
                   <div key={b.label}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-                      <div style={{ fontSize: 12, fontWeight: 700, color: "#0f172a" }}>Hdcp {b.label}</div>
-                      <span style={{ fontSize: 9, padding: "1px 5px", borderRadius: 3, background: teamProj === "T1" ? "#dcfce7" : teamProj === "T2" ? "#dbeafe" : "#eef2f7", color: teamProj === "T1" ? "#16a34a" : teamProj === "T2" ? "#1e40af" : "#64748b", fontWeight: 700 }}>→ {teamProj}</span>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: "#0f172a" }}>Hdcp {b.label}</div>
+                      <span style={{ fontSize: 9, padding: "1px 5px", borderRadius: 3, background: ptc.bg, color: ptc.color, fontWeight: 600 }}>T{projIdx+1}</span>
                     </div>
                     <div style={{ display: "flex", flexDirection: "column", height: 80, justifyContent: "flex-end", borderRadius: 5, overflow: "hidden", background: "#f1f5f9", position: "relative" }}>
                       <div style={{ display: "flex", flexDirection: "column", justifyContent: "flex-end", height: "100%" }}>
@@ -1251,7 +1625,7 @@ function Dashboard({ players, schedule, lockState, clubName }) {
                         </div>
                       </div>
                     </div>
-                    <div style={{ fontSize: 10, color: "#64748b", textAlign: "center", marginTop: 4 }}>{all.length} total · {conf.length} conf</div>
+                    <div style={{ fontSize: 10, color: "#64748b", textAlign: "center", marginTop: 4 }}>{all.length} total · {conf.length} avail</div>
                   </div>
                 );
               })}
@@ -1267,66 +1641,75 @@ function Dashboard({ players, schedule, lockState, clubName }) {
       </div>
 
       {/* OVERALL TEAM POOLS */}
-      <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a", marginBottom: 8, letterSpacing: 0.3 }}>Overall Team Pools</div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 20 }}>
-        <div style={{ background: "#fff", borderRadius: 10, padding: "16px 14px", textAlign: "center", border: "2px solid #0f172a" }}>
-          <div style={{ fontSize: 28, fontWeight: 800, color: "#0f172a" }}>{overallSplit.t1.length}</div>
-          <div style={{ fontSize: 11, color: "#0f172a", fontWeight: 700, letterSpacing: 0.5 }}>TEAM 1 POOL</div>
-          <div style={{ fontSize: 11, color: "#64748b", marginTop: 3 }}>{overallSplit.t1Range ? `Hdcp ${fmtH(overallSplit.t1Range.min)} – ${fmtH(overallSplit.t1Range.max)}` : "—"}</div>
-          <div style={{ fontSize: 12, color: "#0f172a", fontWeight: 700, marginTop: 4 }}>Avg: {t1AvgHdcp}</div>
-        </div>
-        <div style={{ background: "#fff", borderRadius: 10, padding: "16px 14px", textAlign: "center", border: "2px solid #3b82f6" }}>
-          <div style={{ fontSize: 28, fontWeight: 800, color: "#3b82f6" }}>{overallSplit.t2.length}</div>
-          <div style={{ fontSize: 11, color: "#3b82f6", fontWeight: 700, letterSpacing: 0.5 }}>TEAM 2 POOL</div>
-          <div style={{ fontSize: 11, color: "#64748b", marginTop: 3 }}>{overallSplit.t2Range ? `Hdcp ${fmtH(overallSplit.t2Range.min)} – ${fmtH(overallSplit.t2Range.max)}` : "—"}</div>
-          <div style={{ fontSize: 12, color: "#3b82f6", fontWeight: 700, marginTop: 4 }}>Avg: {t2AvgHdcp}</div>
-        </div>
+      <div style={{ fontSize: 14, fontWeight: 600, color: "#0f172a", marginBottom: 8, letterSpacing: 0.3 }}>Overall Team Pools</div>
+      <div style={{ display: "grid", gridTemplateColumns: `repeat(${overallSplit.teams.length}, 1fr)`, gap: 10, marginBottom: 20 }}>
+        {overallSplit.teams.map((team, idx) => {
+          const tc = TEAM_COLORS[idx] || TEAM_COLORS[0];
+          const r = overallSplit.ranges[idx];
+          const avgHdcp = team.length > 0 ? (team.reduce((s, p) => s + p.courseHdcp, 0) / team.length).toFixed(1) : "—";
+          return (
+            <div key={idx} style={{ background: "#fff", borderRadius: 10, padding: "16px 14px", textAlign: "center", border: `2px solid ${tc.color}` }}>
+              <div style={{ fontSize: 28, fontWeight: 600, color: tc.color }}>{team.length}</div>
+              <div style={{ fontSize: 11, color: tc.color, fontWeight: 600, letterSpacing: 0.5 }}>{tc.label} POOL</div>
+              <div style={{ fontSize: 11, color: "#64748b", marginTop: 3 }}>{r ? `Hdcp ${fmtH(r.min)} – ${fmtH(r.max)}` : "—"}</div>
+              <div style={{ fontSize: 12, color: tc.color, fontWeight: 600, marginTop: 4 }}>Avg: {avgHdcp}</div>
+            </div>
+          );
+        })}
       </div>
 
       {weekAnalysis.map(wa => (
         <div key={wa.week} style={{ background: "#fff", borderRadius: 12, border: "1px solid #d1d9e6", overflow: "hidden", marginBottom: 16 }}>
           <div style={{ background: "linear-gradient(135deg, #0f172a 0%, #162d50 100%)", padding: "10px 16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <span style={{ color: ACCENT, fontSize: 17, fontWeight: 700 }}>Week {wa.week}</span>
+              <span style={{ color: ACCENT, fontSize: 17, fontWeight: 600 }}>Week {wa.week}</span>
               <span style={{ color: "#cbd5e1", fontSize: 13, fontWeight: 600 }}>{fmtDateLong(wa.date)}</span>
-              <span style={{ color: "#94a3b8", fontSize: 11, marginLeft: 10 }}>Home: {wa.homeTee} · Away: {wa.awayTee}</span>
-              {wa.ls.locked && <span style={{ fontSize: 9, padding: "2px 8px", borderRadius: 4, background: "#16a34a33", color: "#4ade80", fontWeight: 700 }}>LOCKED</span>}
-              {wa.ls.modifiedAfterLock && <span style={{ fontSize: 9, padding: "2px 8px", borderRadius: 4, background: "#dc262633", color: "#fca5a5", fontWeight: 700 }}>STALE</span>}
+              <span style={{ color: "#94a3b8", fontSize: 11, marginLeft: 10 }}>{wa.teamCount} team{wa.teamCount !== 1 ? "s" : ""}</span>
+              {wa.ls.locked && <span style={{ fontSize: 9, padding: "2px 8px", borderRadius: 4, background: "#16a34a33", color: "#4ade80", fontWeight: 600 }}>LOCKED</span>}
+              {wa.ls.modifiedAfterLock && <span style={{ fontSize: 9, padding: "2px 8px", borderRadius: 4, background: "#dc262633", color: "#fca5a5", fontWeight: 600 }}>STALE</span>}
             </div>
-            {wa.threshold !== null && <div style={{ display: "flex", gap: 8, alignItems: "center" }}><span style={{ fontSize: 12, color: "#cbd5e1", fontWeight: 600 }}>First Team Threshold:</span><span style={{ fontSize: 18, fontWeight: 800, color: ACCENT }}>{fmtH(wa.threshold)}</span></div>}
+            {wa.thresholds.length > 0 && wa.thresholds.some(t => t !== null) && (
+              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                {wa.thresholds.map((t, i) => t !== null ? <span key={i} style={{ fontSize: 12, color: "#cbd5e1" }}><span style={{ fontWeight: 600 }}>T{i+1}/T{i+2}:</span> <span style={{ fontSize: 16, fontWeight: 600, color: ACCENT }}>{fmtH(t)}</span></span> : null)}
+              </div>
+            )}
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 0 }}>
-            {["team1", "team2"].map(team => {
-              const tp = team === "team1" ? wa.t1 : wa.t2;
-              const tm = team === "team1" ? wa.maybe1 : wa.maybe2;
-              const opp = team === "team1" ? wa.t1Opp : wa.t2Opp;
-              const num = team === "team1" ? wa.t1Num : wa.t2Num;
-              const range = team === "team1" ? wa.t1Range : wa.t2Range;
-              const have = tp.length; const gap = Math.max(0, 12 - have);
-              const avgHdcp = tp.length > 0 ? (tp.reduce((s, p) => s + p.courseHdcp, 0) / tp.length).toFixed(1) : "—";
+          <div style={{ display: "grid", gridTemplateColumns: `repeat(${wa.teamCount}, 1fr)`, gap: 0 }}>
+            {wa.teams.map((teamSched, idx) => {
+              // Get actually assigned players from assignments state
+              const weekAssign = assignments[wa.week] || {};
+              const teamAssign = weekAssign[idx] || { home: [[], [], []], away: [[], [], []] };
+              const assignedIds = new Set();
+              ["home", "away"].forEach(s => (teamAssign[s] || []).forEach(pair => (pair || []).forEach(id => assignedIds.add(id))));
+              const teamPlayers = players.filter(p => assignedIds.has(p.id)).sort((a, b) => a.courseHdcp - b.courseHdcp);
+              const opp = teamSched.opponent || "";
+              const num = teamSched.teamNum || "";
+              const rangeData = teamPlayers.length > 0 ? { min: Math.min(...teamPlayers.map(p => p.courseHdcp)), max: Math.max(...teamPlayers.map(p => p.courseHdcp)) } : null;
+              const have = teamPlayers.length;
+              const gap = Math.max(0, 12 - have);
+              const avgHdcp = teamPlayers.length > 0 ? (teamPlayers.reduce((s, p) => s + p.courseHdcp, 0) / teamPlayers.length).toFixed(1) : "—";
+              const tc = TEAM_COLORS[idx] || TEAM_COLORS[0];
               return (
-                <div key={team} style={{ padding: 16, borderRight: team === "team1" ? "1px solid #d1d9e6" : "none" }}>
+                <div key={idx} style={{ padding: 16, borderRight: idx < wa.teamCount - 1 ? "1px solid #d1d9e6" : "none" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
                     <div>
-                      <div style={{ fontWeight: 700, color: "#0f172a", fontSize: 14 }}>
-                        <span style={{ background: team === "team1" ? "#dcfce7" : "#dbeafe", color: team === "team1" ? "#16a34a" : "#1e40af", padding: "2px 8px", borderRadius: 4, fontSize: 11, fontWeight: 700, marginRight: 8 }}>{team === "team1" ? "TEAM 1" : "TEAM 2"}</span>
+                      <div style={{ fontWeight: 600, color: "#0f172a", fontSize: 14 }}>
+                        <span style={{ background: tc.bg, color: tc.color, padding: "2px 8px", borderRadius: 4, fontSize: 11, fontWeight: 600, marginRight: 8 }}>{tc.label}</span>
                         vs {opp} {num}
                       </div>
                       <div style={{ fontSize: 11, color: "#64748b", marginTop: 3 }}>3 pairs at {clubName} · 3 pairs at {opp}</div>
                     </div>
-                    <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(opp)}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 10, color: "#1e40af", textDecoration: "none", background: "#dbeafe", padding: "3px 8px", borderRadius: 5, fontWeight: 600, whiteSpace: "nowrap" }}>Map</a>
+                    {opp && <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(opp)}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 10, color: "#1e40af", textDecoration: "none", background: "#dbeafe", padding: "3px 8px", borderRadius: 5, fontWeight: 600, whiteSpace: "nowrap" }}>Map</a>}
                   </div>
                   <div style={{ display: "flex", height: 28, borderRadius: 6, overflow: "hidden", background: "#e2e8f0", marginBottom: 6 }}>
-                    <div style={{ width: `${Math.min(100, (have / 12) * 100)}%`, background: have >= 12 ? "linear-gradient(90deg, #16a34a, #22c55e)" : team === "team1" ? "linear-gradient(90deg, #16a34a, #4ade80)" : "linear-gradient(90deg, #1e40af, #60a5fa)", transition: "width 0.3s", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 11, fontWeight: 700 }}>{have}/12</div>
-                    {tm.length > 0 && <div style={{ width: `${(tm.length / 12) * 100}%`, background: "#8b5cf6", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 10, fontWeight: 700 }}>+{tm.length}?</div>}
+                    <div style={{ width: `${Math.min(100, (have / 12) * 100)}%`, minWidth: have > 0 ? 40 : 0, background: have >= 12 ? "linear-gradient(90deg, #16a34a, #22c55e)" : `linear-gradient(90deg, ${tc.color}, ${tc.color}aa)`, transition: "width 0.3s", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 11, fontWeight: 600 }}>{have}/12</div>
                   </div>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 11, marginBottom: 10 }}>
-                    <div style={{ color: "#64748b" }}>{range ? <span>Hdcp range: <b>{fmtH(range.min)}–{fmtH(range.max)}</b> <span style={{ marginLeft: 8, color: "#0f172a", fontWeight: 700 }}>Avg: {avgHdcp}</span></span> : <span>No players yet</span>}</div>
-                    <div>{gap > 0 ? <span style={{ color: "#dc2626", fontWeight: 700 }}>Need {gap} more</span> : <span style={{ color: "#16a34a", fontWeight: 700 }}>Full</span>}{tm.length > 0 && <span style={{ color: "#8b5cf6", marginLeft: 6 }}>({tm.length} maybe)</span>}</div>
+                    <div style={{ color: "#64748b" }}>{rangeData ? <span>Hdcp range: <b>{fmtH(rangeData.min)}–{fmtH(rangeData.max)}</b> <span style={{ marginLeft: 8, color: "#0f172a", fontWeight: 600 }}>Avg: {avgHdcp}</span></span> : <span>No players assigned yet</span>}</div>
+                    <div>{gap > 0 ? <span style={{ color: "#dc2626", fontWeight: 600 }}>Need {gap} more</span> : <span style={{ color: "#16a34a", fontWeight: 600 }}>Full</span>}</div>
                   </div>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 3 }}>
-                    {tp.map(p => { const parts = p.name.split(","); const last = parts[0].trim(); const first = (parts[1] || "").trim(); const display = first ? `${first.charAt(0)}. ${last}` : last; return (<span key={p.id} style={{ fontSize: 10, background: team === "team1" ? "#dcfce7" : "#dbeafe", color: team === "team1" ? "#16a34a" : "#1e40af", padding: "2px 6px", borderRadius: 4, fontWeight: 600, whiteSpace: "nowrap" }}>{display} ({fmtH(p.courseHdcp)})</span>); })}
-                    {tm.map(p => { const parts = p.name.split(","); const last = parts[0].trim(); const first = (parts[1] || "").trim(); const display = first ? `${first.charAt(0)}. ${last}` : last; return (<span key={p.id} style={{ fontSize: 10, background: "#ede9fe", color: "#8b5cf6", padding: "2px 6px", borderRadius: 4, fontWeight: 600, whiteSpace: "nowrap", fontStyle: "italic" }}>{display} ({fmtH(p.courseHdcp)})?</span>); })}
+                    {teamPlayers.map(p => { const parts = p.name.split(","); const last = parts[0].trim(); const first = (parts[1] || "").trim(); const display = first ? `${first.charAt(0)}. ${last}` : last; return (<span key={p.id} style={{ fontSize: 10, background: tc.bg, color: tc.color, padding: "2px 6px", borderRadius: 4, fontWeight: 600, whiteSpace: "nowrap" }}>{display} ({fmtH(p.courseHdcp)})</span>); })}
                   </div>
                 </div>
               );
@@ -1336,7 +1719,7 @@ function Dashboard({ players, schedule, lockState, clubName }) {
       ))}
 
       <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #d1d9e6", overflow: "hidden" }}>
-          <div style={{ background: "linear-gradient(135deg, #0f172a 0%, #162d50 100%)", color: ACCENT, padding: "10px 16px", fontSize: 15, fontWeight: 700 }}>Follow-Up Targets</div>
+          <div style={{ background: "linear-gradient(135deg, #0f172a 0%, #162d50 100%)", color: ACCENT, padding: "10px 16px", fontSize: 15, fontWeight: 600 }}>Follow-Up Targets</div>
           <div style={{ padding: 16, display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 16 }}>
             {[
               { title: "CONTACTED — Awaiting Reply", filter: p => p.status === "contacted", bg: "#fef9c3", color: "#f59e0b", extra: p => p.contactOwner ? `By: ${p.contactOwner}` : "" },
@@ -1347,14 +1730,15 @@ function Dashboard({ players, schedule, lockState, clubName }) {
               const list = players.filter(group.filter).sort((a, b) => a.courseHdcp - b.courseHdcp);
               return (
                 <div key={group.title}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: group.color, marginBottom: 6 }}>{group.title}</div>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: group.color, marginBottom: 6 }}>{group.title}</div>
                   {list.length === 0 && <div style={{ fontSize: 11, color: "#94a3b8", fontStyle: "italic" }}>None</div>}
                   {list.map(p => {
-                    const proj = projectTeam(p, overallSplit.threshold);
+                    const projIdx = projectTeam(p, overallSplit.thresholds);
+                    const ptc = TEAM_COLORS[projIdx] || TEAM_COLORS[0];
                     return (
                       <div key={p.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "4px 8px", background: group.bg, borderRadius: 6, marginBottom: 3, fontSize: 11 }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                          <span style={{ fontWeight: 700, fontSize: 9, padding: "1px 5px", borderRadius: 3, background: proj === "T1" ? "#dcfce7" : "#dbeafe", color: proj === "T1" ? "#16a34a" : "#1e40af" }}>{proj}</span>
+                          <span style={{ fontWeight: 600, fontSize: 9, padding: "1px 5px", borderRadius: 3, background: ptc.bg, color: ptc.color }}>T{projIdx+1}</span>
                           <span style={{ fontWeight: 600 }}>{p.name} ({fmtH(p.courseHdcp)})</span>
                         </div>
                         <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
@@ -1376,12 +1760,13 @@ function Dashboard({ players, schedule, lockState, clubName }) {
 // ═══════════════════════════════════════════════════════════════
 // ROSTER
 // ═══════════════════════════════════════════════════════════════
-function Roster({ players, setPlayers, addPlayerWithSync, clubName, userId }) {
+function Roster({ players, setPlayers, addPlayerWithSync, clubName, userId, schedule }) {
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [sortBy, setSortBy] = useState("handicap");
   const [editingId, setEditingId] = useState(null);
-  const overallSplit = computeTeamSplit(players, 1);
+  const overallTC = (schedule && schedule[1]) ? (schedule[1].teamCount || 2) : 2;
+  const overallSplit = computeTeamSplit(players, 1, overallTC);
   const filtered = useMemo(() => {
     let list = [...players];
     if (search) list = list.filter(p => p.name.toLowerCase().includes(search.toLowerCase()) || p.ghin.includes(search));
@@ -1422,7 +1807,8 @@ function Roster({ players, setPlayers, addPlayerWithSync, clubName, userId }) {
       }
       if (!text) { setUploadMsg("Could not read file."); return; }
       // Parse CSV
-      const lines = text.trim().split("\n").map(l => l.split(",").map(c => c.trim().replace(/^"|"$/g, "")));
+      const parseCSVLine = (line) => { const result = []; let current = ""; let inQuotes = false; for (let i = 0; i < line.length; i++) { const ch = line[i]; if (ch === '"') { if (inQuotes && line[i+1] === '"') { current += '"'; i++; } else { inQuotes = !inQuotes; } } else if (ch === ',' && !inQuotes) { result.push(current.trim()); current = ""; } else { current += ch; } } result.push(current.trim()); return result; };
+      const lines = text.trim().split("\n").map(l => parseCSVLine(l));
       if (lines.length < 2) { setUploadMsg("File appears empty."); return; }
       const header = lines[0].map(h => h.toLowerCase());
       const nameIdx = header.findIndex(h => h.includes("name") || h.includes("player"));
@@ -1476,14 +1862,14 @@ function Roster({ players, setPlayers, addPlayerWithSync, clubName, userId }) {
       {/* ROSTER UPLOAD */}
       <div style={{ background: "#fff", borderRadius: 10, border: "1px solid #d1d9e6", padding: "14px 18px", marginBottom: 14, display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>Roster Upload</span>
-          <span style={{ fontSize: 11, color: "#64748b" }}>Import players from .csv or .xlsx</span>
+          <span style={{ fontSize: 13, fontWeight: 600, color: "#0f172a" }}>Update Roster</span>
+          <span style={{ fontSize: 11, color: "#64748b" }}>Re-import from .csv or .xlsx to add or update players</span>
         </div>
         <label style={{ padding: "7px 16px", borderRadius: 6, border: "2px dashed #7dd3fc", background: "#f0f9ff", color: "#0f172a", fontWeight: 600, cursor: "pointer", fontSize: 12, display: "flex", alignItems: "center", gap: 6 }}>
           📁 Choose File
           <input type="file" accept=".csv,.xlsx,.xls" onChange={handleFileUpload} style={{ display: "none" }} />
         </label>
-        <span style={{ fontSize: 10, color: "#94a3b8" }}>Columns: Name, GHIN, Handicap/HDCP, Index, Phone, Email</span>
+        <span style={{ fontSize: 10, color: "#94a3b8" }}>Columns: First Name, Last Name, GHIN, Handicap, Index, Phone, Email</span>
         {uploadMsg && <span style={{ fontSize: 12, fontWeight: 600, color: uploadMsg.includes("Error") || uploadMsg.includes("not") ? "#dc2626" : "#16a34a", background: uploadMsg.includes("Error") || uploadMsg.includes("not") ? "#fee2e2" : "#dcfce7", padding: "4px 10px", borderRadius: 6 }}>{uploadMsg}</span>}
       </div>
 
@@ -1498,30 +1884,63 @@ function Roster({ players, setPlayers, addPlayerWithSync, clubName, userId }) {
           <option value="name">Sort: Name</option>
           <option value="status">Sort: Status</option>
         </select>
-        <button onClick={addPlayer} style={{ padding: "8px 16px", borderRadius: 8, border: "none", background: "linear-gradient(135deg, #0f172a, #1e3a5f)", color: ACCENT, fontWeight: 700, cursor: "pointer", fontSize: 13, whiteSpace: "nowrap" }}>+ Add Player</button>
+        <button onClick={addPlayer} style={{ padding: "8px 16px", borderRadius: 8, border: "none", background: "linear-gradient(135deg, #0f172a, #1e3a5f)", color: ACCENT, fontWeight: 600, cursor: "pointer", fontSize: 13, whiteSpace: "nowrap" }}>+ Add Player</button>
         <div style={{ fontSize: 13, color: "#64748b", display: "flex", alignItems: "center", fontWeight: 600 }}>{filtered.length} of {players.length}</div>
       </div>
+      {/* Summary bar */}
+      {(() => {
+        const statusCounts = {};
+        Object.keys(STATUS_CONFIG).forEach(k => statusCounts[k] = 0);
+        players.forEach(p => { if (statusCounts[p.status] !== undefined) statusCounts[p.status]++; });
+        const wkCounts = [1, 2, 3].map(w => {
+          let yes = 0, no = 0, maybe = 0;
+          players.forEach(p => { if (p.availability[w] === "yes") yes++; else if (p.availability[w] === "maybe") maybe++; else no++; });
+          return { yes, no, maybe };
+        });
+        return (
+          <div style={{ display: "flex", gap: 10, marginBottom: 16, flexWrap: "wrap" }}>
+            {/* Status summary */}
+            <div style={{ flex: "1 1 auto", background: "#fff", borderRadius: 10, border: "1px solid #d1d9e6", padding: "10px 16px", display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+              <span style={{ fontSize: 11, fontWeight: 600, color: "#64748b" }}>Status:</span>
+              {Object.entries(STATUS_CONFIG).map(([k, v]) => (
+                <span key={k} style={{ fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 6, background: v.bg, color: v.color }}>{v.label} {statusCounts[k]}</span>
+              ))}
+            </div>
+            {/* Week availability summary */}
+            {[1, 2, 3].map(w => (
+              <div key={w} style={{ background: "#fff", borderRadius: 10, border: "1px solid #d1d9e6", padding: "10px 12px", display: "flex", gap: 8, alignItems: "center" }}>
+                <span style={{ fontSize: 11, fontWeight: 600, color: "#64748b" }}>Wk{w}:</span>
+                <span style={{ fontSize: 11, fontWeight: 600, color: "#16a34a" }}>{wkCounts[w-1].yes}Y</span>
+                <span style={{ fontSize: 11, fontWeight: 600, color: "#dc2626" }}>{wkCounts[w-1].no}N</span>
+                <span style={{ fontSize: 11, fontWeight: 600, color: "#8b5cf6" }}>{wkCounts[w-1].maybe}M</span>
+              </div>
+            ))}
+          </div>
+        );
+      })()}
+
       <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #d1d9e6", overflow: "hidden" }}>
         <div style={{ overflowX: "auto" }}>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
             <thead><tr style={{ background: "linear-gradient(135deg, #0f172a 0%, #162d50 100%)", color: ACCENT }}>
-              {["Proj", "Player", "HDCP", "Index", "GHIN", "Contact", "Status", "Wk1", "Wk2", "Wk3", "Loc1", "Loc2", "Loc3", "Notes"].map(h => (
+              {["Proj", "Player", "HDCP", "Index", "GHIN", "Contact", "Status", "Wk1", "Wk2", "Wk3", "Loc1", "Loc2", "Loc3", "Notes", ""].map(h => (
                 <th key={h} style={{ padding: "10px 6px", textAlign: "left", fontWeight: 600, fontSize: 10, letterSpacing: 0.5, whiteSpace: "nowrap" }}>{h}</th>
               ))}
             </tr></thead>
             <tbody>
               {filtered.map((p, i) => {
                 const s = STATUS_CONFIG[p.status];
-                const proj = projectTeam(p, overallSplit.threshold);
+                const projIdx = projectTeam(p, overallSplit.thresholds);
+                const ptc = TEAM_COLORS[projIdx] || TEAM_COLORS[0];
                 return (
                   <tr key={p.id} style={{ background: i % 2 === 0 ? "#fff" : "#f5f7fb", borderBottom: "1px solid #e2e8f0" }}>
-                    <td style={{ padding: "6px", textAlign: "center" }}><span style={{ fontSize: 10, fontWeight: 700, padding: "2px 6px", borderRadius: 4, background: proj === "T1" ? "#dcfce7" : "#dbeafe", color: proj === "T1" ? "#16a34a" : "#1e40af" }}>{proj}</span></td>
+                    <td style={{ padding: "6px", textAlign: "center" }}><span style={{ fontSize: 10, fontWeight: 600, padding: "2px 6px", borderRadius: 4, background: ptc.bg, color: ptc.color }}>T{projIdx+1}</span></td>
                     <td style={{ padding: "6px 8px", fontWeight: 600, color: "#0f172a", whiteSpace: "nowrap" }}>
                       {editingId === p.id ? <input value={p.name} onChange={e => updatePlayer(p.id, "name", e.target.value)} style={{ fontSize: 12, padding: "2px 6px", border: "1px solid #38bdf8", borderRadius: 4, width: "100%", background: "#eff6ff", fontWeight: 600 }} />
                         : <span onClick={() => setEditingId(p.id)} style={{ cursor: "pointer" }}>{p.name}</span>}
                     </td>
-                    <td style={{ padding: "6px", fontWeight: 800, color: "#0f172a", textAlign: "center" }}>
-                      {editingId === p.id ? <input type="number" step="0.1" value={p.courseHdcp} onChange={e => updatePlayer(p.id, "courseHdcp", parseFloat(e.target.value) || 0)} style={{ fontSize: 11, padding: "2px 4px", border: "1px solid #38bdf8", borderRadius: 4, width: 45, background: "#eff6ff", fontWeight: 800, textAlign: "center" }} />
+                    <td style={{ padding: "6px", fontWeight: 600, color: "#0f172a", textAlign: "center" }}>
+                      {editingId === p.id ? <input type="number" step="0.1" value={p.courseHdcp} onChange={e => updatePlayer(p.id, "courseHdcp", parseFloat(e.target.value) || 0)} style={{ fontSize: 11, padding: "2px 4px", border: "1px solid #38bdf8", borderRadius: 4, width: 45, background: "#eff6ff", fontWeight: 600, textAlign: "center" }} />
                         : <span onClick={() => setEditingId(p.id)} style={{ cursor: "pointer" }}>{fmtH(p.courseHdcp)}</span>}
                     </td>
                     <td style={{ padding: "6px", color: "#64748b", textAlign: "center" }}>
@@ -1546,9 +1965,15 @@ function Roster({ players, setPlayers, addPlayerWithSync, clubName, userId }) {
                       {editingId === p.id ? (
                         <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
                           <input value={p.notes} onChange={e => updatePlayer(p.id, "notes", e.target.value)} placeholder="Notes..." style={{ fontSize: 10, padding: "2px 6px", border: "1px solid #38bdf8", borderRadius: 4, flex: 1, background: "#eff6ff" }} />
-                          <button onClick={() => setEditingId(null)} style={{ fontSize: 9, padding: "3px 8px", borderRadius: 4, border: "none", background: "#16a34a", color: "#fff", fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" }}>✓ Done</button>
+                          <button onClick={() => setEditingId(null)} style={{ fontSize: 9, padding: "3px 8px", borderRadius: 4, border: "none", background: "#16a34a", color: "#fff", fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}>✓ Done</button>
                         </div>
                       ) : <div onClick={() => setEditingId(p.id)} style={{ fontSize: 10, color: p.notes ? "#92400e" : "#ccc", cursor: "pointer", fontStyle: p.notes ? "italic" : "normal", minWidth: 50 }}>{p.notes || "+"}</div>}
+                    </td>
+                    <td style={{ padding: "4px 6px" }}>
+                      <button onClick={() => { if (window.confirm(`Delete ${p.name} from the roster? This cannot be undone.`)) { deletePlayerFromDb(p.id); setPlayers(prev => prev.filter(pl => pl.id !== p.id)); } }}
+                        style={{ fontSize: 9, padding: "3px 6px", borderRadius: 4, border: "1px solid #fca5a5", background: "#fff5f5", color: "#dc2626", cursor: "pointer", fontWeight: 600, whiteSpace: "nowrap" }}>
+                        Remove
+                      </button>
                     </td>
                   </tr>
                 );
@@ -1564,15 +1989,47 @@ function Roster({ players, setPlayers, addPlayerWithSync, clubName, userId }) {
 // ═══════════════════════════════════════════════════════════════
 // ADMIN PANEL (Admin-only)
 // ═══════════════════════════════════════════════════════════════
-function AdminPanel({ currentUserId }) {
+function AdminPanel({ currentUserId, clubName }) {
   const [users, setUsers] = useState([]);
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [saving, setSaving] = useState(null);
   const [feedback, setFeedback] = useState(null);
+  const [inviteTab, setInviteTab] = useState("users"); // "users" or "invites"
+  const [invites, setInvites] = useState([]);
+  const [newInviteEmail, setNewInviteEmail] = useState("");
+  const [newInviteRole, setNewInviteRole] = useState("vice_captain");
+  const [sendingInvite, setSendingInvite] = useState(false);
 
   useEffect(() => {
     loadUsers();
+    loadInvites();
   }, []);
+
+  async function loadInvites() {
+    const { data } = await supabase.from("invitations").select("*").eq("club", clubName).order("created_at", { ascending: false });
+    if (data) setInvites(data);
+  }
+
+  async function sendInvite() {
+    if (!newInviteEmail) return;
+    setSendingInvite(true);
+    setFeedback(null);
+    const { data, error } = await supabase.from("invitations").insert({
+      email: newInviteEmail.toLowerCase(),
+      club: clubName,
+      role: newInviteRole,
+      invited_by: currentUserId,
+    }).select("*").single();
+    if (error) {
+      setFeedback({ type: "error", msg: "Failed to create invite: " + error.message });
+    } else {
+      setInvites(prev => [data, ...prev]);
+      const inviteUrl = `${window.location.origin}${window.location.pathname}?invite=${data.token}`;
+      setFeedback({ type: "success", msg: `Invite created! Share this link: ${inviteUrl}` });
+      setNewInviteEmail("");
+    }
+    setSendingInvite(false);
+  }
 
   async function loadUsers() {
     setLoadingUsers(true);
@@ -1628,68 +2085,157 @@ function AdminPanel({ currentUserId }) {
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
         <div>
-          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: "#0f172a" }}>Admin Panel</h2>
-          <p style={{ margin: "4px 0 0", fontSize: 13, color: "#64748b" }}>Manage user accounts and role permissions</p>
+          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 600, color: "#0f172a" }}>Admin Panel</h2>
+          <p style={{ margin: "4px 0 0", fontSize: 13, color: "#64748b" }}>Manage users, roles, and invitations</p>
         </div>
-        <button onClick={loadUsers} style={{ padding: "8px 16px", borderRadius: 8, border: "1px solid #c1cad8", background: "#fff", color: "#0f172a", fontWeight: 600, cursor: "pointer", fontSize: 12 }}>Refresh</button>
+        <button onClick={() => { loadUsers(); loadInvites(); }} style={{ padding: "8px 16px", borderRadius: 8, border: "1px solid #c1cad8", background: "#fff", color: "#0f172a", fontWeight: 600, cursor: "pointer", fontSize: 12 }}>Refresh</button>
+      </div>
+
+      {/* Tab toggle */}
+      <div style={{ display: "flex", gap: 0, marginBottom: 16, background: "#f1f5f9", borderRadius: 8, padding: 3, maxWidth: 300 }}>
+        <button onClick={() => setInviteTab("users")} style={{ flex: 1, padding: "8px", borderRadius: 6, border: "none", background: inviteTab === "users" ? "#0f172a" : "transparent", color: inviteTab === "users" ? "#7dd3fc" : "#64748b", fontWeight: 600, fontSize: 13, cursor: "pointer" }}>Users</button>
+        <button onClick={() => setInviteTab("invites")} style={{ flex: 1, padding: "8px", borderRadius: 6, border: "none", background: inviteTab === "invites" ? "#0f172a" : "transparent", color: inviteTab === "invites" ? "#7dd3fc" : "#64748b", fontWeight: 600, fontSize: 13, cursor: "pointer" }}>Invitations</button>
       </div>
 
       {feedback && (
         <div style={{ background: feedback.type === "error" ? "#fee2e2" : "#dcfce7", color: feedback.type === "error" ? "#991b1b" : "#166534", padding: "10px 16px", borderRadius: 8, fontSize: 13, fontWeight: 600, marginBottom: 14 }}>{feedback.msg}</div>
       )}
 
-      {loadingUsers ? (
-        <div style={{ textAlign: "center", padding: 40, color: "#64748b", fontSize: 14 }}>Loading users...</div>
-      ) : (
-        <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #d1d9e6", overflow: "hidden" }}>
-          <div style={{ overflowX: "auto" }}>
+      {inviteTab === "users" && (
+        loadingUsers ? (
+          <div style={{ textAlign: "center", padding: 40, color: "#64748b", fontSize: 14 }}>Loading users...</div>
+        ) : (
+          <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #d1d9e6", overflow: "hidden" }}>
+            <div style={{ overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+                <thead>
+                  <tr style={{ background: "linear-gradient(135deg, #0f172a 0%, #162d50 100%)", color: ACCENT }}>
+                    {["Name", "Email", "Role", "Joined", "Actions"].map(h => (
+                      <th key={h} style={{ padding: "12px 16px", textAlign: "left", fontWeight: 600, fontSize: 11, letterSpacing: 0.5 }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {users.map((u, i) => {
+                    const rc = ROLE_CONFIG[u.role] || ROLE_CONFIG.vice_captain;
+                    const isCurrentUser = u.id === currentUserId;
+                    const joinDate = u.created_at ? new Date(u.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—";
+                    return (
+                      <tr key={u.id} style={{ background: i % 2 === 0 ? "#fff" : "#f5f7fb", borderBottom: "1px solid #e2e8f0" }}>
+                        <td style={{ padding: "12px 16px", fontWeight: 600, color: "#0f172a" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                            {u.full_name || "—"}
+                            {isCurrentUser && <span style={{ fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 4, background: "#e0f2fe", color: "#0369a1" }}>YOU</span>}
+                          </div>
+                        </td>
+                        <td style={{ padding: "12px 16px", color: "#64748b", fontSize: 12 }}>{u.email}</td>
+                        <td style={{ padding: "12px 16px" }}>
+                          <div style={{ display: "flex", gap: 4 }}>
+                            {roleOptions.map(r => (
+                              <button key={r.value} onClick={() => updateRole(u.id, r.value)}
+                                disabled={saving === u.id || (isCurrentUser && r.value !== "admin")}
+                                style={{
+                                  padding: "4px 10px", borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: saving === u.id ? "wait" : "pointer",
+                                  border: u.role === r.value ? `2px solid ${r.color}` : "1px solid #e2e8f0",
+                                  background: u.role === r.value ? r.bg : "#f8fafc",
+                                  color: u.role === r.value ? r.color : "#94a3b8",
+                                  opacity: (isCurrentUser && r.value !== "admin") ? 0.4 : 1,
+                                  transition: "all 0.15s",
+                                }}>
+                                {r.label}
+                              </button>
+                            ))}
+                          </div>
+                        </td>
+                        <td style={{ padding: "12px 16px", color: "#94a3b8", fontSize: 11 }}>{joinDate}</td>
+                        <td style={{ padding: "12px 16px" }}>
+                          {!isCurrentUser && (
+                            <button onClick={() => deleteUser(u.id)}
+                              disabled={saving === u.id}
+                              style={{ padding: "4px 10px", borderRadius: 6, border: "1px solid #fca5a5", background: "#fff5f5", color: "#dc2626", fontSize: 11, fontWeight: 600, cursor: "pointer" }}>
+                              Remove
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            <div style={{ padding: "12px 16px", background: "#f5f7fb", borderTop: "1px solid #e2e8f0", fontSize: 11, color: "#64748b" }}>
+              {users.length} user{users.length !== 1 ? "s" : ""} registered
+            </div>
+          </div>
+        )
+      )}
+
+      {inviteTab === "invites" && (
+        <div>
+          {/* Send invite form */}
+          <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #d1d9e6", padding: 20, marginBottom: 16 }}>
+            <div style={{ fontSize: 15, fontWeight: 600, color: "#0f172a", marginBottom: 12 }}>Send Invitation</div>
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "flex-end" }}>
+              <div style={{ flex: "1 1 200px" }}>
+                <label style={{ fontSize: 11, fontWeight: 600, color: "#64748b", display: "block", marginBottom: 4 }}>Email Address</label>
+                <input type="email" value={newInviteEmail} onChange={e => setNewInviteEmail(e.target.value)} placeholder="captain@email.com"
+                  style={{ width: "100%", padding: "8px 12px", borderRadius: 6, border: "1px solid #c1cad8", fontSize: 13, background: "#f5f7fb", outline: "none", boxSizing: "border-box" }} />
+              </div>
+              <div style={{ flex: "0 0 160px" }}>
+                <label style={{ fontSize: 11, fontWeight: 600, color: "#64748b", display: "block", marginBottom: 4 }}>Role</label>
+                <select value={newInviteRole} onChange={e => setNewInviteRole(e.target.value)}
+                  style={{ width: "100%", padding: "8px 12px", borderRadius: 6, border: "1px solid #c1cad8", fontSize: 13, background: "#f5f7fb", cursor: "pointer" }}>
+                  <option value="captain">Captain</option>
+                  <option value="vice_captain">Vice Captain</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+              <button onClick={sendInvite} disabled={sendingInvite || !newInviteEmail}
+                style={{ padding: "8px 20px", borderRadius: 6, border: "none", background: "linear-gradient(135deg, #0f172a, #1e3a5f)", color: "#7dd3fc", fontWeight: 600, fontSize: 13, cursor: sendingInvite ? "wait" : "pointer", opacity: sendingInvite || !newInviteEmail ? 0.6 : 1 }}>
+                {sendingInvite ? "Sending..." : "Send Invite"}
+              </button>
+            </div>
+            <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 8 }}>Invitations expire after 7 days. The recipient will use the link to create their account.</div>
+          </div>
+
+          {/* Invite list */}
+          <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #d1d9e6", overflow: "hidden" }}>
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
               <thead>
                 <tr style={{ background: "linear-gradient(135deg, #0f172a 0%, #162d50 100%)", color: ACCENT }}>
-                  {["Name", "Email", "Role", "Joined", "Actions"].map(h => (
+                  {["Email", "Role", "Status", "Created", "Link"].map(h => (
                     <th key={h} style={{ padding: "12px 16px", textAlign: "left", fontWeight: 600, fontSize: 11, letterSpacing: 0.5 }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {users.map((u, i) => {
-                  const rc = ROLE_CONFIG[u.role] || ROLE_CONFIG.vice_captain;
-                  const isCurrentUser = u.id === currentUserId;
-                  const joinDate = u.created_at ? new Date(u.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—";
+                {invites.length === 0 ? (
+                  <tr><td colSpan={5} style={{ padding: 30, textAlign: "center", color: "#94a3b8", fontSize: 13 }}>No invitations sent yet</td></tr>
+                ) : invites.map((inv, i) => {
+                  const expired = new Date(inv.expires_at) < new Date();
+                  const status = inv.used ? "Used" : expired ? "Expired" : "Pending";
+                  const statusColor = inv.used ? "#16a34a" : expired ? "#dc2626" : "#f59e0b";
+                  const statusBg = inv.used ? "#dcfce7" : expired ? "#fee2e2" : "#fef3c7";
+                  const inviteUrl = `${window.location.origin}${window.location.pathname}?invite=${inv.token}`;
                   return (
-                    <tr key={u.id} style={{ background: i % 2 === 0 ? "#fff" : "#f5f7fb", borderBottom: "1px solid #e2e8f0" }}>
-                      <td style={{ padding: "12px 16px", fontWeight: 600, color: "#0f172a" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                          {u.full_name || "—"}
-                          {isCurrentUser && <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 6px", borderRadius: 4, background: "#e0f2fe", color: "#0369a1" }}>YOU</span>}
-                        </div>
-                      </td>
-                      <td style={{ padding: "12px 16px", color: "#64748b", fontSize: 12 }}>{u.email}</td>
+                    <tr key={inv.id} style={{ background: i % 2 === 0 ? "#fff" : "#f5f7fb", borderBottom: "1px solid #e2e8f0" }}>
+                      <td style={{ padding: "12px 16px", fontWeight: 600 }}>{inv.email}</td>
                       <td style={{ padding: "12px 16px" }}>
-                        <div style={{ display: "flex", gap: 4 }}>
-                          {roleOptions.map(r => (
-                            <button key={r.value} onClick={() => updateRole(u.id, r.value)}
-                              disabled={saving === u.id || (isCurrentUser && r.value !== "admin")}
-                              style={{
-                                padding: "4px 10px", borderRadius: 6, fontSize: 11, fontWeight: 700, cursor: saving === u.id ? "wait" : "pointer",
-                                border: u.role === r.value ? `2px solid ${r.color}` : "1px solid #e2e8f0",
-                                background: u.role === r.value ? r.bg : "#f8fafc",
-                                color: u.role === r.value ? r.color : "#94a3b8",
-                                opacity: (isCurrentUser && r.value !== "admin") ? 0.4 : 1,
-                                transition: "all 0.15s",
-                              }}>
-                              {r.label}
-                            </button>
-                          ))}
-                        </div>
+                        <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 4, background: (ROLE_CONFIG[inv.role] || ROLE_CONFIG.vice_captain).bg, color: (ROLE_CONFIG[inv.role] || ROLE_CONFIG.vice_captain).color }}>
+                          {(ROLE_CONFIG[inv.role] || ROLE_CONFIG.vice_captain).label}
+                        </span>
                       </td>
-                      <td style={{ padding: "12px 16px", color: "#94a3b8", fontSize: 11 }}>{joinDate}</td>
                       <td style={{ padding: "12px 16px" }}>
-                        {!isCurrentUser && (
-                          <button onClick={() => deleteUser(u.id)}
-                            disabled={saving === u.id}
-                            style={{ padding: "4px 10px", borderRadius: 6, border: "1px solid #fca5a5", background: "#fff5f5", color: "#dc2626", fontSize: 11, fontWeight: 600, cursor: "pointer" }}>
-                            Remove
+                        <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 4, background: statusBg, color: statusColor }}>{status}</span>
+                      </td>
+                      <td style={{ padding: "12px 16px", color: "#94a3b8", fontSize: 11 }}>
+                        {new Date(inv.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                      </td>
+                      <td style={{ padding: "12px 16px" }}>
+                        {!inv.used && !expired && (
+                          <button onClick={() => { navigator.clipboard.writeText(inviteUrl); setFeedback({ type: "success", msg: "Invite link copied!" }); setTimeout(() => setFeedback(null), 3000); }}
+                            style={{ padding: "4px 10px", borderRadius: 6, border: "1px solid #c1cad8", background: "#f8fafc", color: "#0f172a", fontSize: 11, fontWeight: 600, cursor: "pointer" }}>
+                            Copy Link
                           </button>
                         )}
                       </td>
@@ -1698,11 +2244,176 @@ function AdminPanel({ currentUserId }) {
                 })}
               </tbody>
             </table>
-          </div>
-          <div style={{ padding: "12px 16px", background: "#f5f7fb", borderTop: "1px solid #e2e8f0", fontSize: 11, color: "#64748b" }}>
-            {users.length} user{users.length !== 1 ? "s" : ""} registered
+            <div style={{ padding: "12px 16px", background: "#f5f7fb", borderTop: "1px solid #e2e8f0", fontSize: 11, color: "#64748b" }}>
+              {invites.length} invitation{invites.length !== 1 ? "s" : ""} total
+            </div>
           </div>
         </div>
+      )}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PLATFORM ADMIN (platform_admin only — cross-club management)
+// ═══════════════════════════════════════════════════════════════
+const IconPlatform = () => (<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>);
+
+function PlatformAdmin({ currentUserId }) {
+  const [clubs, setClubs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [feedback, setFeedback] = useState(null);
+  const [processing, setProcessing] = useState(null);
+
+  useEffect(() => { loadClubs(); }, []);
+
+  async function loadClubs() {
+    setLoading(true);
+    const { data, error } = await supabase.from("clubs").select("*").order("created_at", { ascending: false });
+    if (data) setClubs(data);
+    if (error) setFeedback({ type: "error", msg: "Failed to load clubs: " + error.message });
+    setLoading(false);
+  }
+
+  async function approveClub(club) {
+    setProcessing(club.id);
+    setFeedback(null);
+    // Update club status to approved
+    const { error: updateErr } = await supabase.from("clubs").update({ status: "approved", verified: true }).eq("id", club.id);
+    if (updateErr) {
+      setFeedback({ type: "error", msg: "Failed to approve: " + updateErr.message });
+      setProcessing(null);
+      return;
+    }
+    // Auto-create admin invitation for the pro
+    const { data: inviteData, error: inviteErr } = await supabase.from("invitations").insert({
+      email: club.pro_email,
+      club: club.name,
+      role: "admin",
+      invited_by: currentUserId,
+    }).select("token").single();
+    if (inviteErr) {
+      setFeedback({ type: "error", msg: "Club approved but invite creation failed: " + inviteErr.message });
+    } else {
+      const inviteUrl = `${window.location.origin}${window.location.pathname}?invite=${inviteData.token}`;
+      setClubs(prev => prev.map(c => c.id === club.id ? { ...c, status: "approved", verified: true } : c));
+      setFeedback({ type: "success", msg: `${club.name} approved! Send this invite link to ${club.pro_email}: ${inviteUrl}` });
+    }
+    setProcessing(null);
+  }
+
+  async function rejectClub(clubId) {
+    setProcessing(clubId);
+    const { error } = await supabase.from("clubs").update({ status: "rejected" }).eq("id", clubId);
+    if (error) {
+      setFeedback({ type: "error", msg: "Failed to reject: " + error.message });
+    } else {
+      setClubs(prev => prev.map(c => c.id === clubId ? { ...c, status: "rejected" } : c));
+      setFeedback({ type: "success", msg: "Club registration rejected." });
+      setTimeout(() => setFeedback(null), 3000);
+    }
+    setProcessing(null);
+  }
+
+  const pending = clubs.filter(c => c.status === "pending");
+  const approved = clubs.filter(c => c.status === "approved");
+  const rejected = clubs.filter(c => c.status === "rejected");
+
+  return (
+    <div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+        <div>
+          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 600, color: "#0f172a" }}>Platform Administration</h2>
+          <p style={{ margin: "4px 0 0", fontSize: 13, color: "#64748b" }}>Approve club registrations and manage the MatchGapper platform</p>
+        </div>
+        <button onClick={loadClubs} style={{ padding: "8px 16px", borderRadius: 8, border: "1px solid #c1cad8", background: "#fff", color: "#0f172a", fontWeight: 600, cursor: "pointer", fontSize: 12 }}>Refresh</button>
+      </div>
+
+      {feedback && (
+        <div style={{ background: feedback.type === "error" ? "#fee2e2" : "#dcfce7", color: feedback.type === "error" ? "#991b1b" : "#166534", padding: "12px 16px", borderRadius: 8, fontSize: 13, fontWeight: 600, marginBottom: 14, wordBreak: "break-all" }}>{feedback.msg}</div>
+      )}
+
+      {loading ? (
+        <div style={{ textAlign: "center", padding: 40, color: "#64748b" }}>Loading clubs...</div>
+      ) : (
+        <>
+          {/* Pending registrations */}
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ fontSize: 15, fontWeight: 600, color: "#0f172a", marginBottom: 10, display: "flex", alignItems: "center", gap: 8 }}>
+              Pending Registrations
+              {pending.length > 0 && <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 10, background: "#fef3c7", color: "#92400e" }}>{pending.length}</span>}
+            </div>
+            {pending.length === 0 ? (
+              <div style={{ background: "#f5f7fb", borderRadius: 10, padding: 24, textAlign: "center", color: "#94a3b8", fontSize: 13 }}>No pending registrations</div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {pending.map(club => (
+                  <div key={club.id} style={{ background: "#fff", borderRadius: 12, border: "2px solid #fbbf24", padding: 20, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
+                    <div>
+                      <div style={{ fontSize: 16, fontWeight: 600, color: "#0f172a" }}>{club.name}</div>
+                      <div style={{ fontSize: 13, color: "#64748b", marginTop: 2 }}>
+                        PGA Pro: <strong>{club.pro_name}</strong> &middot; {club.pro_email}
+                      </div>
+                      <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 4 }}>
+                        Submitted {new Date(club.created_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <button onClick={() => approveClub(club)} disabled={processing === club.id}
+                        style={{ padding: "8px 20px", borderRadius: 8, border: "none", background: "#16a34a", color: "#fff", fontWeight: 600, fontSize: 13, cursor: processing === club.id ? "wait" : "pointer" }}>
+                        {processing === club.id ? "..." : "Approve & Create Invite"}
+                      </button>
+                      <button onClick={() => rejectClub(club.id)} disabled={processing === club.id}
+                        style={{ padding: "8px 16px", borderRadius: 8, border: "1px solid #fca5a5", background: "#fff5f5", color: "#dc2626", fontWeight: 600, fontSize: 13, cursor: "pointer" }}>
+                        Reject
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Approved clubs */}
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ fontSize: 15, fontWeight: 600, color: "#0f172a", marginBottom: 10 }}>
+              Active Clubs <span style={{ fontSize: 11, fontWeight: 600, color: "#64748b" }}>({approved.length})</span>
+            </div>
+            <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #d1d9e6", overflow: "hidden" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+                <thead>
+                  <tr style={{ background: "linear-gradient(135deg, #0f172a 0%, #162d50 100%)", color: ACCENT }}>
+                    {["Club", "PGA Pro", "Email", "Approved"].map(h => (
+                      <th key={h} style={{ padding: "12px 16px", textAlign: "left", fontWeight: 600, fontSize: 11, letterSpacing: 0.5 }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {approved.length === 0 ? (
+                    <tr><td colSpan={4} style={{ padding: 24, textAlign: "center", color: "#94a3b8" }}>No approved clubs yet</td></tr>
+                  ) : approved.map((club, i) => (
+                    <tr key={club.id} style={{ background: i % 2 === 0 ? "#fff" : "#f5f7fb", borderBottom: "1px solid #e2e8f0" }}>
+                      <td style={{ padding: "12px 16px", fontWeight: 600 }}>{club.name}</td>
+                      <td style={{ padding: "12px 16px" }}>{club.pro_name}</td>
+                      <td style={{ padding: "12px 16px", color: "#64748b", fontSize: 12 }}>{club.pro_email}</td>
+                      <td style={{ padding: "12px 16px", color: "#94a3b8", fontSize: 11 }}>{new Date(club.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Rejected (collapsible) */}
+          {rejected.length > 0 && (
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: "#94a3b8", marginBottom: 8 }}>Rejected ({rejected.length})</div>
+              {rejected.map(club => (
+                <div key={club.id} style={{ fontSize: 12, color: "#94a3b8", padding: "4px 0" }}>{club.name} — {club.pro_email}</div>
+              ))}
+            </div>
+          )}
+        </>
       )}
     </div>
   );
@@ -1718,11 +2429,34 @@ function GAPManager() {
   const [playersLoaded, setPlayersLoaded] = useState(false);
   const [schedule, setSchedule] = useState(DEFAULT_SCHEDULE);
   const [lockState, setLockState] = useState(DEFAULT_LOCK_STATE);
+  const emptyWeek = (teamCount) => { const w = {}; for (let i = 0; i < teamCount; i++) { w[i] = { home: [[], [], []], away: [[], [], []] }; } return w; };
+  const [assignments, setAssignments] = useState(() => {
+    const init = {}; [1, 2, 3].forEach(w => { init[w] = emptyWeek(DEFAULT_SCHEDULE[w]?.teamCount || 2); }); return init;
+  });
+  const [appScreen, setAppScreen] = useState("main"); // "main", "register_club"
+  const [inviteData, setInviteData] = useState(null); // holds validated invite info
+  const [inviteLoading, setInviteLoading] = useState(false);
+
+  // Check for invite token in URL on mount
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const inviteToken = params.get("invite");
+    if (inviteToken) {
+      setInviteLoading(true);
+      supabase.from("invitations").select("*").eq("token", inviteToken).single().then(({ data, error }) => {
+        if (data && !data.used && new Date(data.expires_at) > new Date()) {
+          setInviteData({ ...data, token: inviteToken });
+        }
+        setInviteLoading(false);
+      });
+    }
+  }, []);
 
   // Derive role from profile — default to vice_captain for safety
   const userRole = profile?.role || "vice_captain";
   const isAdmin = userRole === "admin";
   const isCaptain = userRole === "captain" || isAdmin;
+  const isPlatformAdmin = profile?.platform_admin === true;
   const rc = ROLE_CONFIG[userRole] || ROLE_CONFIG.vice_captain;
   const clubName = profile?.club || "My Club";
   const clubInitial = clubName.charAt(0).toUpperCase();
@@ -1774,7 +2508,7 @@ function GAPManager() {
     return (
       <div style={{ fontFamily: "'Poppins', sans-serif", background: "#eef2f7", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <div style={{ textAlign: "center", color: "#64748b" }}>
-          <div style={{ width: 56, height: 56, borderRadius: "50%", background: "linear-gradient(135deg, #7dd3fc, #38bdf8)", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 28, fontWeight: 800, color: "#0f172a", marginBottom: 16 }}>M</div>
+          <div style={{ width: 56, height: 56, borderRadius: "50%", background: "linear-gradient(135deg, #7dd3fc, #38bdf8)", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 28, fontWeight: 600, color: "#0f172a", marginBottom: 16 }}>M</div>
           <div style={{ fontSize: 16, fontWeight: 600 }}>Loading...</div>
         </div>
       </div>
@@ -1782,13 +2516,41 @@ function GAPManager() {
   }
 
   if (!session) {
-    return <LoginScreen onSignIn={signIn} onSignUp={signUp} />;
+    if (inviteLoading) {
+      return (
+        <div style={{ fontFamily: "'Poppins', sans-serif", background: "#eef2f7", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ textAlign: "center", color: "#64748b" }}>
+            <div style={{ width: 56, height: 56, borderRadius: "50%", background: "linear-gradient(135deg, #7dd3fc, #38bdf8)", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 28, fontWeight: 600, color: "#0f172a", marginBottom: 16 }}>M</div>
+            <div style={{ fontSize: 16, fontWeight: 600 }}>Validating invitation...</div>
+          </div>
+        </div>
+      );
+    }
+    if (inviteData) {
+      return <InviteSignup invite={inviteData} onSignUp={signUp} onBack={() => { setInviteData(null); window.history.replaceState({}, "", window.location.pathname); }} />;
+    }
+    if (appScreen === "register_club") {
+      return <ClubRegistration onBack={() => setAppScreen("main")} />;
+    }
+    return <LoginScreen onSignIn={signIn} onSignUp={signUp} onRegisterClub={() => setAppScreen("register_club")} />;
   }
 
   // Show onboarding wizard for new users
   if (profile && !profile.onboarded) {
     return <OnboardingWizard profile={profile} session={session} onComplete={() => {
       fetchProfile(session.user.id);
+    }} onSetTeamCount={(count) => {
+      setSchedule(prev => {
+        const next = { ...prev };
+        [1, 2, 3].forEach(w => {
+          const ws = next[w];
+          const oldTeams = ws.teams || [];
+          const teams = [];
+          for (let i = 0; i < count; i++) { teams.push(oldTeams[i] || EMPTY_TEAM()); }
+          next[w] = { ...ws, teamCount: count, teams };
+        });
+        return next;
+      });
     }} />;
   }
 
@@ -1798,17 +2560,18 @@ function GAPManager() {
     { id: "roster", label: "Roster", Icon: IconRoster },
     { id: "setup", label: "Season Setup", Icon: IconSetup },
     ...(isAdmin ? [{ id: "admin", label: "Admin", Icon: IconAdmin }] : []),
+    ...(isPlatformAdmin ? [{ id: "platform", label: "Platform", Icon: IconPlatform }] : []),
   ];
 
   return (
     <div style={{ fontFamily: "'Poppins', 'Segoe UI', -apple-system, sans-serif", background: "#eef2f7", minHeight: "100vh", color: "#0f172a" }}>
-      <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+      <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet" />
       <header style={{ background: "linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%)", padding: "0 24px", borderBottom: "3px solid #7dd3fc" }}>
         <div style={{ maxWidth: 1400, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-            <div style={{ width: 42, height: 42, borderRadius: "50%", background: "linear-gradient(135deg, #7dd3fc, #38bdf8)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, fontWeight: 800, color: "#0f172a" }}>{clubInitial}</div>
+            <div style={{ width: 42, height: 42, borderRadius: "50%", background: "linear-gradient(135deg, #7dd3fc, #38bdf8)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, fontWeight: 600, color: "#0f172a" }}>{clubInitial}</div>
             <div>
-              <div style={{ color: "#7dd3fc", fontSize: 20, fontWeight: 700, lineHeight: 1.1 }}>{clubName}</div>
+              <div style={{ color: "#7dd3fc", fontSize: 20, fontWeight: 600, lineHeight: 1.1 }}>{clubName}</div>
               <div style={{ color: "#94a3b8", fontSize: 11, letterSpacing: 1 }}>BMW GAP TEAM MATCHES 2026</div>
             </div>
           </div>
@@ -1824,7 +2587,7 @@ function GAPManager() {
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <div style={{ textAlign: "right" }}>
                 <div style={{ color: "#cbd5e1", fontSize: 12, fontWeight: 600 }}>{profile?.full_name || session.user.email}</div>
-                <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 8px", borderRadius: 4, background: rc.bg, color: rc.color, letterSpacing: 0.5 }}>{rc.label.toUpperCase()}</span>
+                <span style={{ fontSize: 9, fontWeight: 600, padding: "2px 8px", borderRadius: 4, background: rc.bg, color: rc.color, letterSpacing: 0.5 }}>{rc.label.toUpperCase()}</span>
               </div>
               <button onClick={signOut} style={{ padding: "6px 12px", borderRadius: 6, border: "1px solid #334155", background: "transparent", color: "#94a3b8", fontSize: 11, fontWeight: 600, cursor: "pointer" }} title="Sign out">
                 Sign Out
@@ -1834,11 +2597,12 @@ function GAPManager() {
         </div>
       </header>
       <main style={{ maxWidth: 1400, margin: "0 auto", padding: "24px" }}>
-        {activeTab === "dashboard" && <Dashboard players={players} schedule={schedule} lockState={lockState} clubName={clubName} />}
-        {activeTab === "roster" && <Roster players={players} setPlayers={setPlayersWithSync} addPlayerWithSync={addPlayerWithSync} clubName={clubName} userId={session.user.id} />}
-        {activeTab === "builder" && <TeamBuilder players={players} schedule={schedule} lockState={lockState} setLockState={setLockState} userRole={userRole} clubName={clubName} />}
+        {activeTab === "dashboard" && <Dashboard players={players} schedule={schedule} lockState={lockState} clubName={clubName} assignments={assignments} />}
+        {activeTab === "roster" && <Roster players={players} setPlayers={setPlayersWithSync} addPlayerWithSync={addPlayerWithSync} clubName={clubName} userId={session.user.id} schedule={schedule} />}
+        {activeTab === "builder" && <TeamBuilder players={players} schedule={schedule} lockState={lockState} setLockState={setLockState} userRole={userRole} clubName={clubName} assignments={assignments} setAssignments={setAssignments} />}
         {activeTab === "setup" && <SeasonSetup schedule={schedule} setSchedule={setSchedule} lockState={lockState} userRole={userRole} clubName={clubName} />}
-        {activeTab === "admin" && isAdmin && <AdminPanel currentUserId={session.user.id} />}
+        {activeTab === "admin" && isAdmin && <AdminPanel currentUserId={session.user.id} clubName={clubName} />}
+        {activeTab === "platform" && isPlatformAdmin && <PlatformAdmin currentUserId={session.user.id} />}
       </main>
       <footer style={{ textAlign: "center", padding: "16px", color: "#64748b", fontSize: 11, borderTop: "1px solid #d1d9e6" }}>MatchGapper · BMW GAP Team Match Manager · All matches scratch — no handicap strokes</footer>
     </div>
