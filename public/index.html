@@ -1236,6 +1236,7 @@ function TeamBuilder({ players, schedule, lockState, setLockState, userRole, clu
   };
   const [validationMsg, setValidationMsg] = useState(null);
   const [copyFeedback, setCopyFeedback] = useState(null);
+  const [dismissedStale, setDismissedStale] = useState(false);
   const weekSched = schedule[activeWeek];
   const weekLock = lockState[activeWeek];
   const isLocked = weekLock.locked;
@@ -1385,14 +1386,17 @@ function TeamBuilder({ players, schedule, lockState, setLockState, userRole, clu
   return (
     <div>
       {/* STALE COPY WARNING */}
-      {weekLock.modifiedAfterLock && (
-        <div style={{ background: "linear-gradient(90deg, #7f1d1d, #991b1b)", border: "2px solid #dc2626", borderRadius: 10, padding: "12px 18px", marginBottom: 14, display: "flex", alignItems: "center", gap: 12, color: "#fecaca" }}>
+      {weekLock.modifiedAfterLock && !dismissedStale && (
+        <div style={{ background: "linear-gradient(90deg, #7f1d1d, #991b1b)", border: "2px solid #dc2626", borderRadius: 10, padding: "12px 18px", marginBottom: 14, display: "flex", alignItems: "center", gap: 12, color: "#fecaca", position: "relative" }}>
           <span style={{ fontSize: 20 }}>⚠</span>
           <div>
             <div style={{ fontWeight: 600, fontSize: 14, color: "#fff" }}>Pairings modified since last send — re-notify opposing club</div>
             <div style={{ fontSize: 12, opacity: 0.8 }}>Last sent: {weekLock.lastSentAt}. Changes have been made. The opposing club has a stale copy.</div>
           </div>
-          {isAdmin && <button onClick={handleCopy} style={{ marginLeft: "auto", padding: "8px 16px", borderRadius: 6, border: "none", background: "#dc2626", color: "#fff", fontWeight: 600, cursor: "pointer", fontSize: 12, whiteSpace: "nowrap" }}>Re-Copy & Send</button>}
+          <div style={{ marginLeft: "auto", display: "flex", gap: 8, alignItems: "center" }}>
+            {isAdmin && <button onClick={handleCopy} style={{ padding: "8px 16px", borderRadius: 6, border: "none", background: "#dc2626", color: "#fff", fontWeight: 600, cursor: "pointer", fontSize: 12, whiteSpace: "nowrap" }}>Re-Copy & Send</button>}
+            <button onClick={() => setDismissedStale(true)} style={{ padding: "4px 8px", borderRadius: 4, border: "1px solid #fca5a5", background: "transparent", color: "#fca5a5", fontSize: 14, cursor: "pointer", lineHeight: 1 }} title="Dismiss">&#10005;</button>
+          </div>
         </div>
       )}
 
@@ -1402,7 +1406,7 @@ function TeamBuilder({ players, schedule, lockState, setLockState, userRole, clu
           const ls = lockState[w];
           const tc = schedule[w]?.teamCount || 2;
           return (
-            <button key={w} onClick={() => { setActiveWeek(w); setValidationMsg(null); }} style={{ flex: 1, padding: "10px 14px", borderRadius: 8, border: activeWeek === w ? "2px solid #0f172a" : "1px solid #c1cad8", background: activeWeek === w ? "linear-gradient(135deg, #0f172a 0%, #162d50 100%)" : "#fff", color: activeWeek === w ? ACCENT : "#0f172a", fontWeight: 600, cursor: "pointer", fontSize: 13, transition: "all 0.2s", position: "relative" }}>
+            <button key={w} onClick={() => { setActiveWeek(w); setValidationMsg(null); setDismissedStale(false); }} style={{ flex: 1, padding: "10px 14px", borderRadius: 8, border: activeWeek === w ? "2px solid #0f172a" : "1px solid #c1cad8", background: activeWeek === w ? "linear-gradient(135deg, #0f172a 0%, #162d50 100%)" : "#fff", color: activeWeek === w ? ACCENT : "#0f172a", fontWeight: 600, cursor: "pointer", fontSize: 13, transition: "all 0.2s", position: "relative" }}>
               <div style={{ fontWeight: 600, display: "flex", alignItems: "center", gap: 6, justifyContent: "center" }}>
                 Week {w} — {fmtDate(schedule[w].date)}
                 {ls.locked && <IconLock />}
