@@ -164,7 +164,8 @@ function OnboardingWizard({ profile, session, onComplete }) {
     try {
       const text = await file.text();
       if (!text) { setUploadMsg({ type: "error", msg: "Could not read file." }); return; }
-      const lines = text.trim().split("\n").map(l => l.split(",").map(c => c.trim().replace(/^"|"$/g, "")));
+      const parseCSVLine = (line) => { const result = []; let current = ""; let inQuotes = false; for (let i = 0; i < line.length; i++) { const ch = line[i]; if (ch === '"') { if (inQuotes && line[i+1] === '"') { current += '"'; i++; } else { inQuotes = !inQuotes; } } else if (ch === ',' && !inQuotes) { result.push(current.trim()); current = ""; } else { current += ch; } } result.push(current.trim()); return result; };
+      const lines = text.trim().split("\n").map(l => parseCSVLine(l));
       if (lines.length < 2) { setUploadMsg({ type: "error", msg: "File appears empty." }); return; }
       const header = lines[0].map(h => h.toLowerCase());
       const nameIdx = header.findIndex(h => h.includes("name") || h.includes("player"));
@@ -1580,7 +1581,8 @@ function Roster({ players, setPlayers, addPlayerWithSync, clubName, userId }) {
       }
       if (!text) { setUploadMsg("Could not read file."); return; }
       // Parse CSV
-      const lines = text.trim().split("\n").map(l => l.split(",").map(c => c.trim().replace(/^"|"$/g, "")));
+      const parseCSVLine = (line) => { const result = []; let current = ""; let inQuotes = false; for (let i = 0; i < line.length; i++) { const ch = line[i]; if (ch === '"') { if (inQuotes && line[i+1] === '"') { current += '"'; i++; } else { inQuotes = !inQuotes; } } else if (ch === ',' && !inQuotes) { result.push(current.trim()); current = ""; } else { current += ch; } } result.push(current.trim()); return result; };
+      const lines = text.trim().split("\n").map(l => parseCSVLine(l));
       if (lines.length < 2) { setUploadMsg("File appears empty."); return; }
       const header = lines[0].map(h => h.toLowerCase());
       const nameIdx = header.findIndex(h => h.includes("name") || h.includes("player"));
