@@ -790,9 +790,9 @@ const SAMPLE_PLAYERS = [
 // DEFAULTS & CONFIG
 // ═══════════════════════════════════════════════════════════════
 const DEFAULT_SCHEDULE = {
-  1: { date: "2026-04-19", team1: { opponent: "White Manor Country Club", teamNum: "#1" }, team2: { opponent: "Bellewood Country Club", teamNum: "#2" }, homeTee: "8:00 AM", awayTee: "8:30 AM" },
-  2: { date: "2026-04-26", team1: { opponent: "North Hills Country Club", teamNum: "#1" }, team2: { opponent: "Northampton Valley Country Club", teamNum: "#1" }, homeTee: "8:00 AM", awayTee: "8:00 AM" },
-  3: { date: "2026-05-03", team1: { opponent: "RiverCrest Golf Club & Preserve", teamNum: "#1" }, team2: { opponent: "Philadelphia Cricket Club", teamNum: "#3" }, homeTee: "8:00 AM", awayTee: "8:30 AM" },
+  1: { date: "2026-04-19", team1: { opponent: "White Manor Country Club", teamNum: "#1" }, team2: { opponent: "Bellewood Country Club", teamNum: "#2" }, homeTee: "8:00 AM", awayTee: "8:30 AM", interval: 10 },
+  2: { date: "2026-04-26", team1: { opponent: "North Hills Country Club", teamNum: "#1" }, team2: { opponent: "Northampton Valley Country Club", teamNum: "#1" }, homeTee: "8:00 AM", awayTee: "8:00 AM", interval: 10 },
+  3: { date: "2026-05-03", team1: { opponent: "RiverCrest Golf Club & Preserve", teamNum: "#1" }, team2: { opponent: "Philadelphia Cricket Club", teamNum: "#3" }, homeTee: "8:00 AM", awayTee: "8:30 AM", interval: 10 },
 };
 
 const DEFAULT_LOCK_STATE = { 1: { locked: false, lockedAt: null, lockedBy: null, modifiedAfterLock: false, lastSentAt: null }, 2: { locked: false, lockedAt: null, lockedBy: null, modifiedAfterLock: false, lastSentAt: null }, 3: { locked: false, lockedAt: null, lockedBy: null, modifiedAfterLock: false, lastSentAt: null } };
@@ -947,7 +947,14 @@ function SeasonSetup({ schedule, setSchedule, lockState, userRole, clubName }) {
                   <input value={ws.awayTee} onChange={e => updateWeek(week, "awayTee", e.target.value)} disabled={!isAdmin || locked} placeholder="8:30 AM"
                     style={{ padding: "6px 12px", borderRadius: 6, border: "1px solid #c1cad8", fontSize: 13, width: 100, background: isAdmin && !locked ? "#fff" : "#f1f5f9" }} />
                 </div>
-                <span style={{ fontSize: 10, color: "#94a3b8", fontStyle: "italic" }}>First tee time listed — remaining pairs at 10-min intervals</span>
+                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                  <span style={{ fontSize: 11, fontWeight: 600, color: "#64748b" }}>Interval</span>
+                  <select value={ws.interval || 10} onChange={e => updateWeek(week, "interval", parseInt(e.target.value))} disabled={!isAdmin || locked}
+                    style={{ padding: "6px 12px", borderRadius: 6, border: "1px solid #c1cad8", fontSize: 13, background: isAdmin && !locked ? "#fff" : "#f1f5f9", cursor: "pointer" }}>
+                    {[10,11,12,13,14,15,16,17,18,19,20].map(m => <option key={m} value={m}>{m} min</option>)}
+                  </select>
+                </div>
+                <span style={{ fontSize: 10, color: "#94a3b8", fontStyle: "italic" }}>First tee listed — remaining pairs at {ws.interval || 10}-min intervals</span>
               </div>
               {["team1", "team2"].map(team => (
                 <div key={team} style={{ background: "#f5f7fb", borderRadius: 10, padding: 14, marginBottom: team === "team1" ? 12 : 0, border: "1px solid #e2e8f0" }}>
@@ -1201,7 +1208,7 @@ function TeamBuilder({ players, schedule, lockState, setLockState, userRole, clu
   const buildSummary = () => {
     const ws = schedule[activeWeek];
     const w = assignments[activeWeek];
-    let text = `${clubName.toUpperCase()} — BMW GAP TEAM MATCHES\nWeek ${activeWeek} · ${fmtDateLong(ws.date)}\nHome Tee (${clubName}): ${ws.homeTee} — Away Tee: ${ws.awayTee}\n(First tee listed, remaining pairs at 10-min intervals)\n${"═".repeat(50)}\n`;
+    let text = `${clubName.toUpperCase()} — BMW GAP TEAM MATCHES\nWeek ${activeWeek} · ${fmtDateLong(ws.date)}\nHome Tee (${clubName}): ${ws.homeTee} — Away Tee: ${ws.awayTee}\n(First tee listed, remaining pairs at ${weekSched.interval || 10}-min intervals)\n${"═".repeat(50)}\n`;
     ["team1", "team2"].forEach(team => {
       const ts = ws[team];
       text += `\n${team === "team1" ? "TEAM 1" : "TEAM 2"} vs ${ts.opponent} ${ts.teamNum}\n${"─".repeat(40)}\n`;
@@ -1210,7 +1217,7 @@ function TeamBuilder({ players, schedule, lockState, setLockState, userRole, clu
         const baseTee = side === "home" ? ws.homeTee : ws.awayTee;
         w[team][side].forEach((pair, i) => {
           const names = pair.map(id => { const p = players.find(pl => pl.id === id); return p ? `${p.name} (${fmtH(p.courseHdcp)})` : "TBD"; });
-          const pairTee = addMinutes(baseTee, i * 10);
+          const pairTee = addMinutes(baseTee, i * (weekSched.interval || 10));
           if (names.length > 0) text += `  ${side.toUpperCase()} Pair ${i+1} @ ${pairTee} at ${loc}: ${names.join(" & ")}\n`;
         });
       });
@@ -1344,9 +1351,9 @@ function TeamBuilder({ players, schedule, lockState, setLockState, userRole, clu
                         <span style={{ width: 14, height: 14, borderRadius: 3, background: side === "Home" ? "#dbeafe" : "#fef3c7", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9 }}>{side === "Home" ? "H" : "A"}</span>
                         {side.toUpperCase()} — {side === "Home" ? clubName : ts.opponent}
                       </div>
-                      <div style={{ fontSize: 10, color: "#64748b", marginBottom: 8 }}>First tee: {baseTee} · 10-min intervals</div>
+                      <div style={{ fontSize: 10, color: "#64748b", marginBottom: 8 }}>First tee: {baseTee} · {(weekSched.interval || 10)}-min intervals</div>
                       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                        {[0, 1, 2].map(i => (<PairSlot key={i} pair={assignments[activeWeek][team][side.toLowerCase()][i]} pairNum={i + 1} onDrop={(id) => handleDrop(team, side.toLowerCase(), i, id)} onRemove={handleRemove} players={players} side={side} week={activeWeek} threshold={split.threshold} disabled={isLocked} teeOffset={i * 10} baseTee={baseTee} />))}
+                        {[0, 1, 2].map(i => (<PairSlot key={i} pair={assignments[activeWeek][team][side.toLowerCase()][i]} pairNum={i + 1} onDrop={(id) => handleDrop(team, side.toLowerCase(), i, id)} onRemove={handleRemove} players={players} side={side} week={activeWeek} threshold={split.threshold} disabled={isLocked} teeOffset={i * (weekSched.interval || 10)} baseTee={baseTee} />))}
                       </div>
                     </div>
                     );
