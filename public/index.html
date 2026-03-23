@@ -56,7 +56,15 @@ function useAuth() {
       .select("*")
       .eq("id", userId)
       .single();
-    if (data) setProfile(data);
+    if (data) {
+      // Auto-fix platform admin flags if email matches but flags aren't set
+      if (PLATFORM_ADMIN_EMAILS.includes(data.email?.toLowerCase()) && (!data.platform_admin || !data.onboarded)) {
+        await supabase.from("profiles").update({ platform_admin: true, onboarded: true }).eq("id", userId);
+        data.platform_admin = true;
+        data.onboarded = true;
+      }
+      setProfile(data);
+    }
     setLoading(false);
   }
 
@@ -2868,9 +2876,9 @@ function GAPManager() {
     return <LoginScreen onSignIn={signIn} onSignUp={signUp} onRegisterClub={() => setAppScreen("register_club")} onPlatformAdmin={() => setAppScreen("platform_admin_signup")} />;
   }
 
-  // Platform admins skip onboarding — they don't belong to a club
-  // Show onboarding wizard for new users (non-platform-admins)
-  if (profile && !profile.onboarded && !isPlatformAdmin) {
+  // Platform admins skip onboarding — check both flag and email as fallback
+  const isPlatformByEmail = PLATFORM_ADMIN_EMAILS.includes(profile?.email?.toLowerCase());
+  if (profile && !profile.onboarded && !isPlatformAdmin && !isPlatformByEmail) {
     return <OnboardingWizard profile={profile} session={session} onComplete={() => {
       fetchProfile(session.user.id);
     }} onSetTeamCount={(count) => {
