@@ -1278,24 +1278,6 @@ function TeamBuilder({ players, schedule, lockState, setLockState, userRole, clu
         </div>
       )}
 
-      {/* Lock Controls (Admin only) */}
-      {isAdmin && (
-        <div style={{ display: "flex", gap: 8, marginBottom: 12, alignItems: "center" }}>
-          {!isLocked ? (
-            <button onClick={handleLock} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 8, border: "2px solid #16a34a", background: "#dcfce7", color: "#16a34a", fontWeight: 700, cursor: "pointer", fontSize: 12 }}><IconLock /> Lock Pairings</button>
-          ) : (
-            <>
-              <button onClick={handleUnlock} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 8, border: "2px solid #f59e0b", background: "#fef3c7", color: "#92400e", fontWeight: 700, cursor: "pointer", fontSize: 12 }}><IconUnlock /> Unlock to Edit</button>
-              <button onClick={handleCopy} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 8, border: "none", background: "linear-gradient(135deg, #0f172a, #162d50)", color: "#fff", fontWeight: 700, cursor: "pointer", fontSize: 12 }}>Copy Summary</button>
-              <button onClick={handleMail} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 8, border: "none", background: "linear-gradient(135deg, #1e40af, #3b82f6)", color: "#fff", fontWeight: 700, cursor: "pointer", fontSize: 12 }}>Open in Mail</button>
-            </>
-          )}
-          {copyFeedback && <span style={{ fontSize: 12, color: "#16a34a", fontWeight: 600 }}>{copyFeedback}</span>}
-          {isLocked && <span style={{ marginLeft: "auto", fontSize: 11, color: "#64748b" }}>Locked {weekLock.lockedAt} by {weekLock.lockedBy}</span>}
-        </div>
-      )}
-      {!isAdmin && isLocked && <div style={{ fontSize: 12, padding: "8px 14px", background: "#fef3c7", borderRadius: 8, marginBottom: 12, color: "#92400e", fontWeight: 600 }}>Pairings locked by Admin — editing disabled</div>}
-
       {validationMsg && <div style={{ background: "#fef2f2", border: "2px solid #dc2626", borderRadius: 8, padding: "10px 14px", marginBottom: 12, color: "#991b1b", fontSize: 13, fontWeight: 600 }}>{validationMsg}</div>}
 
       {/* Main Grid */}
@@ -1327,6 +1309,24 @@ function TeamBuilder({ players, schedule, lockState, setLockState, userRole, clu
           )}
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          {/* Lock Controls (Admin only) */}
+          {isAdmin && (
+            <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+              {!isLocked ? (
+                <button onClick={handleLock} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 8, border: "2px solid #16a34a", background: "#dcfce7", color: "#16a34a", fontWeight: 700, cursor: "pointer", fontSize: 12 }}><IconLock /> Lock Pairings</button>
+              ) : (
+                <>
+                  <button onClick={handleUnlock} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 8, border: "2px solid #f59e0b", background: "#fef3c7", color: "#92400e", fontWeight: 700, cursor: "pointer", fontSize: 12 }}><IconUnlock /> Unlock to Edit</button>
+                  <button onClick={handleCopy} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 8, border: "none", background: "linear-gradient(135deg, #0f172a, #162d50)", color: "#fff", fontWeight: 700, cursor: "pointer", fontSize: 12 }}>Copy Summary</button>
+                  <button onClick={handleMail} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 8, border: "none", background: "linear-gradient(135deg, #1e40af, #3b82f6)", color: "#fff", fontWeight: 700, cursor: "pointer", fontSize: 12 }}>Open in Mail</button>
+                </>
+              )}
+              {copyFeedback && <span style={{ fontSize: 12, color: "#16a34a", fontWeight: 600 }}>{copyFeedback}</span>}
+              {isLocked && <span style={{ marginLeft: "auto", fontSize: 11, color: "#64748b" }}>Locked {weekLock.lockedAt} by {weekLock.lockedBy}</span>}
+            </div>
+          )}
+          {!isAdmin && isLocked && <div style={{ fontSize: 12, padding: "8px 14px", background: "#fef3c7", borderRadius: 8, color: "#92400e", fontWeight: 600 }}>Pairings locked by Admin — editing disabled</div>}
+
           {["team1", "team2"].map(team => {
             const ts = weekSched[team];
             return (
