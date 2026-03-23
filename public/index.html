@@ -1415,14 +1415,23 @@ function Dashboard({ players, schedule, lockState, clubName }) {
       <div style={{ fontSize: 14, fontWeight: 600, color: "#0f172a", marginBottom: 8, letterSpacing: 0.3 }}>Handicap Distribution</div>
       <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #d1d9e6", padding: 16, marginBottom: 16 }}>
         {(() => {
-          const brackets = [
-            { label: "0–4", min: 0, max: 4 }, { label: "5–7", min: 5, max: 7 },
-            { label: "8–10", min: 8, max: 10 }, { label: "11–13", min: 11, max: 13 },
-            { label: "14–18", min: 14, max: 18 }, { label: "19+", min: 19, max: 99 },
-          ];
+          // Dynamic brackets based on actual roster handicaps
+          const hdcps = players.map(p => Math.floor(p.courseHdcp));
+          const minH = hdcps.length > 0 ? Math.min(...hdcps) : 0;
+          const maxH = hdcps.length > 0 ? Math.max(...hdcps) : 12;
+          const range = maxH - minH;
+          const numBuckets = Math.min(6, Math.max(3, Math.ceil(range / 3)));
+          const bucketSize = Math.max(1, Math.ceil((range + 1) / numBuckets));
+          const brackets = [];
+          for (let i = 0; i < numBuckets; i++) {
+            const bMin = minH + i * bucketSize;
+            const bMax = i === numBuckets - 1 ? maxH : minH + (i + 1) * bucketSize - 1;
+            if (bMin > maxH) break;
+            brackets.push({ label: bMin === bMax ? `${bMin}` : `${bMin}–${bMax}`, min: bMin, max: bMax });
+          }
           const maxCount = Math.max(...brackets.map(b => players.filter(p => p.courseHdcp >= b.min && p.courseHdcp <= b.max).length), 1);
           return (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 12 }}>
+            <div style={{ display: "grid", gridTemplateColumns: `repeat(${brackets.length}, 1fr)`, gap: 12 }}>
               {brackets.map(b => {
                 const all = players.filter(p => p.courseHdcp >= b.min && p.courseHdcp <= b.max);
                 const conf = all.filter(p => p.status === "confirmed");
@@ -1444,7 +1453,7 @@ function Dashboard({ players, schedule, lockState, clubName }) {
                         </div>
                       </div>
                     </div>
-                    <div style={{ fontSize: 10, color: "#64748b", textAlign: "center", marginTop: 4 }}>{all.length} total · {conf.length} conf</div>
+                    <div style={{ fontSize: 10, color: "#64748b", textAlign: "center", marginTop: 4 }}>{all.length} total · {conf.length} avail</div>
                   </div>
                 );
               })}
