@@ -242,22 +242,22 @@ function OnboardingWizard({ profile, session, onComplete }) {
 
   return (
     <div style={{ fontFamily: "'Poppins', 'Segoe UI', -apple-system, sans-serif", background: "#eef2f7", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
-      <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+      <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet" />
       <div style={{ width: "100%", maxWidth: 800, background: "#fff", borderRadius: 16, boxShadow: "0 8px 32px rgba(0,0,0,0.12)", overflow: "hidden" }}>
         {/* Header */}
         <div style={{ background: "linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%)", padding: "24px 32px", borderBottom: "3px solid #7dd3fc" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-              <div style={{ width: 42, height: 42, borderRadius: "50%", background: "linear-gradient(135deg, #7dd3fc, #38bdf8)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, fontWeight: 800, color: "#0f172a" }}>M</div>
+              <div style={{ width: 42, height: 42, borderRadius: "50%", background: "linear-gradient(135deg, #7dd3fc, #38bdf8)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, fontWeight: 600, color: "#0f172a" }}>M</div>
               <div>
-                <div style={{ color: "#7dd3fc", fontSize: 18, fontWeight: 700 }}>MatchGapper Setup</div>
+                <div style={{ color: "#7dd3fc", fontSize: 18, fontWeight: 600 }}>MatchGapper Setup</div>
                 <div style={{ color: "#94a3b8", fontSize: 11 }}>{profile.club}</div>
               </div>
             </div>
             {/* Step indicator */}
             <div style={{ display: "flex", gap: 8 }}>
               {[1, 2, 3].map(s => (
-                <div key={s} style={{ width: 32, height: 32, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, background: step >= s ? "#7dd3fc" : "#334155", color: step >= s ? "#0f172a" : "#64748b", transition: "all 0.2s" }}>{s}</div>
+                <div key={s} style={{ width: 32, height: 32, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 600, background: step >= s ? "#7dd3fc" : "#334155", color: step >= s ? "#0f172a" : "#64748b", transition: "all 0.2s" }}>{s}</div>
               ))}
             </div>
           </div>
@@ -266,7 +266,7 @@ function OnboardingWizard({ profile, session, onComplete }) {
         {/* Step 1: Welcome */}
         {step === 1 && (
           <div style={{ padding: "40px 32px", textAlign: "center" }}>
-            <div style={{ fontSize: 28, fontWeight: 800, color: "#0f172a", marginBottom: 8 }}>Welcome, {profile.full_name?.split(" ")[0] || "Captain"}!</div>
+            <div style={{ fontSize: 28, fontWeight: 600, color: "#0f172a", marginBottom: 8 }}>Welcome, {profile.full_name?.split(" ")[0] || "Captain"}!</div>
             <div style={{ fontSize: 15, color: "#64748b", marginBottom: 32, maxWidth: 500, margin: "0 auto 32px" }}>
               Let's get your {profile.club} roster set up for the BMW GAP Team Matches. You can upload a CSV file or add players manually.
             </div>
@@ -278,7 +278,7 @@ function OnboardingWizard({ profile, session, onComplete }) {
                 <span style={{ color: "#64748b" }}>Role:</span><span style={{ fontWeight: 600 }}>{ROLE_CONFIG[profile.role]?.label}</span>
               </div>
             </div>
-            <button onClick={() => setStep(2)} style={{ marginTop: 32, padding: "14px 40px", borderRadius: 10, border: "none", background: "linear-gradient(135deg, #0f172a, #1e3a5f)", color: "#7dd3fc", fontWeight: 700, fontSize: 16, cursor: "pointer" }}>
+            <button onClick={() => setStep(2)} style={{ marginTop: 32, padding: "14px 40px", borderRadius: 10, border: "none", background: "linear-gradient(135deg, #0f172a, #1e3a5f)", color: "#7dd3fc", fontWeight: 600, fontSize: 16, cursor: "pointer" }}>
               Get Started
             </button>
           </div>
@@ -287,28 +287,28 @@ function OnboardingWizard({ profile, session, onComplete }) {
         {/* Step 2: Upload */}
         {step === 2 && (
           <div style={{ padding: "32px" }}>
-            <div style={{ fontSize: 22, fontWeight: 700, color: "#0f172a", marginBottom: 4 }}>Import Your Roster</div>
+            <div style={{ fontSize: 22, fontWeight: 600, color: "#0f172a", marginBottom: 4 }}>Import Your Roster</div>
             <div style={{ fontSize: 13, color: "#64748b", marginBottom: 24 }}>Upload a CSV or Excel file with your player list, or skip and add players manually.</div>
 
             {/* Column requirements */}
             <div style={{ background: "#f0f9ff", border: "1px solid #bae6fd", borderRadius: 10, padding: 16, marginBottom: 16 }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: "#0369a1", marginBottom: 10 }}>Column Requirements</div>
+              <div style={{ fontSize: 12, fontWeight: 600, color: "#0369a1", marginBottom: 10 }}>Column Requirements</div>
               <div style={{ fontSize: 12, color: "#0f172a", lineHeight: 1.8 }}>
                 <div>Your file should have a <strong>header row</strong> with the following column names:</div>
                 <table style={{ width: "100%", fontSize: 11, marginTop: 8, borderCollapse: "collapse" }}>
                   <thead><tr style={{ borderBottom: "1px solid #bae6fd" }}>
-                    <th style={{ textAlign: "left", padding: "4px 8px", color: "#0369a1", fontWeight: 700 }}>Column</th>
-                    <th style={{ textAlign: "left", padding: "4px 8px", color: "#0369a1", fontWeight: 700 }}>Status</th>
-                    <th style={{ textAlign: "left", padding: "4px 8px", color: "#0369a1", fontWeight: 700 }}>Format</th>
+                    <th style={{ textAlign: "left", padding: "4px 8px", color: "#0369a1", fontWeight: 600 }}>Column</th>
+                    <th style={{ textAlign: "left", padding: "4px 8px", color: "#0369a1", fontWeight: 600 }}>Status</th>
+                    <th style={{ textAlign: "left", padding: "4px 8px", color: "#0369a1", fontWeight: 600 }}>Format</th>
                   </tr></thead>
                   <tbody>
-                    <tr><td style={{ padding: "3px 8px", fontWeight: 700 }}>First Name</td><td style={{ padding: "3px 8px", color: "#dc2626", fontWeight: 700 }}>Required</td><td style={{ padding: "3px 8px", color: "#64748b" }}>e.g. James</td></tr>
-                    <tr style={{ background: "#f8fafc" }}><td style={{ padding: "3px 8px", fontWeight: 700 }}>Last Name</td><td style={{ padding: "3px 8px", color: "#dc2626", fontWeight: 700 }}>Required</td><td style={{ padding: "3px 8px", color: "#64748b" }}>e.g. Anderson</td></tr>
-                    <tr><td style={{ padding: "3px 8px", fontWeight: 700 }}>GHIN</td><td style={{ padding: "3px 8px", color: "#f59e0b", fontWeight: 600 }}>Recommended</td><td style={{ padding: "3px 8px", color: "#64748b" }}>7-digit GHIN number</td></tr>
-                    <tr style={{ background: "#f8fafc" }}><td style={{ padding: "3px 8px", fontWeight: 700 }}>Handicap</td><td style={{ padding: "3px 8px", color: "#f59e0b", fontWeight: 600 }}>Recommended</td><td style={{ padding: "3px 8px", color: "#64748b" }}>Course handicap (e.g. 8)</td></tr>
-                    <tr><td style={{ padding: "3px 8px", fontWeight: 700 }}>Index</td><td style={{ padding: "3px 8px", color: "#f59e0b", fontWeight: 600 }}>Recommended</td><td style={{ padding: "3px 8px", color: "#64748b" }}>Handicap index (e.g. 7.7)</td></tr>
-                    <tr style={{ background: "#f8fafc" }}><td style={{ padding: "3px 8px", fontWeight: 700 }}>Phone</td><td style={{ padding: "3px 8px", color: "#94a3b8" }}>Optional</td><td style={{ padding: "3px 8px", color: "#64748b" }}>e.g. 610-555-0101</td></tr>
-                    <tr><td style={{ padding: "3px 8px", fontWeight: 700 }}>Email</td><td style={{ padding: "3px 8px", color: "#94a3b8" }}>Optional</td><td style={{ padding: "3px 8px", color: "#64748b" }}>e.g. james@email.com</td></tr>
+                    <tr><td style={{ padding: "3px 8px", fontWeight: 600 }}>First Name</td><td style={{ padding: "3px 8px", color: "#dc2626", fontWeight: 600 }}>Required</td><td style={{ padding: "3px 8px", color: "#64748b" }}>e.g. James</td></tr>
+                    <tr style={{ background: "#f8fafc" }}><td style={{ padding: "3px 8px", fontWeight: 600 }}>Last Name</td><td style={{ padding: "3px 8px", color: "#dc2626", fontWeight: 600 }}>Required</td><td style={{ padding: "3px 8px", color: "#64748b" }}>e.g. Anderson</td></tr>
+                    <tr><td style={{ padding: "3px 8px", fontWeight: 600 }}>GHIN</td><td style={{ padding: "3px 8px", color: "#f59e0b", fontWeight: 600 }}>Recommended</td><td style={{ padding: "3px 8px", color: "#64748b" }}>7-digit GHIN number</td></tr>
+                    <tr style={{ background: "#f8fafc" }}><td style={{ padding: "3px 8px", fontWeight: 600 }}>Handicap</td><td style={{ padding: "3px 8px", color: "#f59e0b", fontWeight: 600 }}>Recommended</td><td style={{ padding: "3px 8px", color: "#64748b" }}>Course handicap (e.g. 8)</td></tr>
+                    <tr><td style={{ padding: "3px 8px", fontWeight: 600 }}>Index</td><td style={{ padding: "3px 8px", color: "#f59e0b", fontWeight: 600 }}>Recommended</td><td style={{ padding: "3px 8px", color: "#64748b" }}>Handicap index (e.g. 7.7)</td></tr>
+                    <tr style={{ background: "#f8fafc" }}><td style={{ padding: "3px 8px", fontWeight: 600 }}>Phone</td><td style={{ padding: "3px 8px", color: "#94a3b8" }}>Optional</td><td style={{ padding: "3px 8px", color: "#64748b" }}>e.g. 610-555-0101</td></tr>
+                    <tr><td style={{ padding: "3px 8px", fontWeight: 600 }}>Email</td><td style={{ padding: "3px 8px", color: "#94a3b8" }}>Optional</td><td style={{ padding: "3px 8px", color: "#64748b" }}>e.g. james@email.com</td></tr>
                   </tbody>
                 </table>
               </div>
@@ -320,14 +320,14 @@ function OnboardingWizard({ profile, session, onComplete }) {
               const blob = new Blob([tpl], { type: "text/csv" });
               const url = URL.createObjectURL(blob);
               const a = document.createElement("a"); a.href = url; a.download = "matchgapper_roster_template.csv"; a.click(); URL.revokeObjectURL(url);
-            }} style={{ width: "100%", padding: "10px", borderRadius: 8, border: "1px solid #bae6fd", background: "#f0f9ff", color: "#0369a1", fontWeight: 700, fontSize: 13, cursor: "pointer", marginBottom: 16, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+            }} style={{ width: "100%", padding: "10px", borderRadius: 8, border: "1px solid #bae6fd", background: "#f0f9ff", color: "#0369a1", fontWeight: 600, fontSize: 13, cursor: "pointer", marginBottom: 16, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
               Download Blank Template (.csv)
             </button>
 
             {/* Upload area */}
             <label style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 20px", border: "3px dashed #7dd3fc", borderRadius: 12, background: "#f8fafc", cursor: "pointer", transition: "all 0.2s", marginBottom: 16 }}>
               <div style={{ fontSize: 40, marginBottom: 8 }}>&#128193;</div>
-              <div style={{ fontSize: 15, fontWeight: 700, color: "#0f172a", marginBottom: 4 }}>Click to upload your roster</div>
+              <div style={{ fontSize: 15, fontWeight: 600, color: "#0f172a", marginBottom: 4 }}>Click to upload your roster</div>
               <div style={{ fontSize: 12, color: "#64748b" }}>Accepts .csv and .xlsx files</div>
               <input type="file" accept=".csv,.xlsx,.xls" onChange={handleFileUpload} style={{ display: "none" }} />
             </label>
@@ -350,10 +350,10 @@ function OnboardingWizard({ profile, session, onComplete }) {
           <div style={{ padding: "32px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
               <div>
-                <div style={{ fontSize: 22, fontWeight: 700, color: "#0f172a" }}>Review Your Roster</div>
+                <div style={{ fontSize: 22, fontWeight: 600, color: "#0f172a" }}>Review Your Roster</div>
                 <div style={{ fontSize: 13, color: "#64748b" }}>{importedPlayers.length} player{importedPlayers.length !== 1 ? "s" : ""} — edit, add, or remove before saving</div>
               </div>
-              <button onClick={addManualPlayer} style={{ padding: "8px 16px", borderRadius: 8, border: "none", background: "linear-gradient(135deg, #0f172a, #1e3a5f)", color: "#7dd3fc", fontWeight: 700, cursor: "pointer", fontSize: 12 }}>+ Add Player</button>
+              <button onClick={addManualPlayer} style={{ padding: "8px 16px", borderRadius: 8, border: "none", background: "linear-gradient(135deg, #0f172a, #1e3a5f)", color: "#7dd3fc", fontWeight: 600, cursor: "pointer", fontSize: 12 }}>+ Add Player</button>
             </div>
 
             <div style={{ background: "#fff", borderRadius: 10, border: "1px solid #d1d9e6", overflow: "hidden", maxHeight: 400, overflowY: "auto", marginBottom: 20 }}>
@@ -373,8 +373,8 @@ function OnboardingWizard({ profile, session, onComplete }) {
                           : <span onClick={() => setEditingId(p.id)} style={{ cursor: "pointer", fontWeight: 600 }}>{p.name}</span>}
                       </td>
                       <td style={{ padding: "6px 8px" }}>
-                        {editingId === p.id ? <input type="number" step="0.1" value={p.courseHdcp} onChange={e => updatePlayer(p.id, "courseHdcp", parseFloat(e.target.value) || 0)} style={{ fontSize: 11, padding: "4px", border: "1px solid #38bdf8", borderRadius: 4, width: 50, background: "#eff6ff", fontWeight: 800, textAlign: "center" }} />
-                          : <span onClick={() => setEditingId(p.id)} style={{ cursor: "pointer", fontWeight: 800 }}>{Number(p.courseHdcp).toFixed(1)}</span>}
+                        {editingId === p.id ? <input type="number" step="0.1" value={p.courseHdcp} onChange={e => updatePlayer(p.id, "courseHdcp", parseFloat(e.target.value) || 0)} style={{ fontSize: 11, padding: "4px", border: "1px solid #38bdf8", borderRadius: 4, width: 50, background: "#eff6ff", fontWeight: 600, textAlign: "center" }} />
+                          : <span onClick={() => setEditingId(p.id)} style={{ cursor: "pointer", fontWeight: 600 }}>{Number(p.courseHdcp).toFixed(1)}</span>}
                       </td>
                       <td style={{ padding: "6px 8px", color: "#64748b" }}>
                         {editingId === p.id ? <input type="number" step="0.1" value={p.index} onChange={e => updatePlayer(p.id, "index", parseFloat(e.target.value) || 0)} style={{ fontSize: 11, padding: "4px", border: "1px solid #38bdf8", borderRadius: 4, width: 50, background: "#eff6ff", textAlign: "center" }} />
@@ -394,7 +394,7 @@ function OnboardingWizard({ profile, session, onComplete }) {
                       </td>
                       <td style={{ padding: "6px 8px" }}>
                         <div style={{ display: "flex", gap: 4 }}>
-                          {editingId === p.id && <button onClick={() => setEditingId(null)} style={{ fontSize: 9, padding: "3px 8px", borderRadius: 4, border: "none", background: "#16a34a", color: "#fff", fontWeight: 700, cursor: "pointer" }}>Done</button>}
+                          {editingId === p.id && <button onClick={() => setEditingId(null)} style={{ fontSize: 9, padding: "3px 8px", borderRadius: 4, border: "none", background: "#16a34a", color: "#fff", fontWeight: 600, cursor: "pointer" }}>Done</button>}
                           <button onClick={() => removePlayer(p.id)} style={{ fontSize: 9, padding: "3px 6px", borderRadius: 4, border: "1px solid #fca5a5", background: "#fff5f5", color: "#dc2626", cursor: "pointer" }}>Remove</button>
                         </div>
                       </td>
@@ -409,7 +409,7 @@ function OnboardingWizard({ profile, session, onComplete }) {
               <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
                 {importedPlayers.length === 0 && <span style={{ fontSize: 12, color: "#94a3b8" }}>You can add players later from the Roster tab</span>}
                 <button onClick={handleFinish} disabled={saving}
-                  style={{ padding: "12px 32px", borderRadius: 10, border: "none", background: "linear-gradient(135deg, #0f172a, #1e3a5f)", color: "#7dd3fc", fontWeight: 700, fontSize: 15, cursor: saving ? "wait" : "pointer", opacity: saving ? 0.7 : 1 }}>
+                  style={{ padding: "12px 32px", borderRadius: 10, border: "none", background: "linear-gradient(135deg, #0f172a, #1e3a5f)", color: "#7dd3fc", fontWeight: 600, fontSize: 15, cursor: saving ? "wait" : "pointer", opacity: saving ? 0.7 : 1 }}>
                   {saving ? "Saving..." : importedPlayers.length > 0 ? `Save ${importedPlayers.length} Players & Continue` : "Skip & Continue"}
                 </button>
               </div>
@@ -462,18 +462,18 @@ function ClubRegistration({ onBack }) {
   if (success) {
     return (
       <div style={{ fontFamily: "'Poppins', 'Segoe UI', -apple-system, sans-serif", background: "#eef2f7", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet" />
         <div style={{ width: 460, background: "#fff", borderRadius: 16, boxShadow: "0 8px 32px rgba(0,0,0,0.12)", overflow: "hidden" }}>
           <div style={{ background: "linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%)", padding: "32px", textAlign: "center", borderBottom: "3px solid #16a34a" }}>
             <div style={{ fontSize: 48, marginBottom: 12 }}>&#9989;</div>
-            <div style={{ color: "#7dd3fc", fontSize: 22, fontWeight: 700 }}>Club Registered!</div>
+            <div style={{ color: "#7dd3fc", fontSize: 22, fontWeight: 600 }}>Club Registered!</div>
           </div>
           <div style={{ padding: "32px", textAlign: "center" }}>
             <p style={{ fontSize: 15, color: "#0f172a", fontWeight: 600, marginBottom: 8 }}>{clubName}</p>
             <p style={{ fontSize: 13, color: "#64748b", marginBottom: 24 }}>
               A verification email will be sent to <strong>{proEmail}</strong>. Once verified, you'll receive an admin invitation link to set up your account and start inviting captains.
             </p>
-            <button onClick={onBack} style={{ padding: "12px 32px", borderRadius: 8, border: "none", background: "linear-gradient(135deg, #0f172a, #1e3a5f)", color: "#7dd3fc", fontWeight: 700, fontSize: 14, cursor: "pointer" }}>
+            <button onClick={onBack} style={{ padding: "12px 32px", borderRadius: 8, border: "none", background: "linear-gradient(135deg, #0f172a, #1e3a5f)", color: "#7dd3fc", fontWeight: 600, fontSize: 14, cursor: "pointer" }}>
               Back to Sign In
             </button>
           </div>
@@ -484,16 +484,16 @@ function ClubRegistration({ onBack }) {
 
   return (
     <div style={{ fontFamily: "'Poppins', 'Segoe UI', -apple-system, sans-serif", background: "#eef2f7", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+      <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet" />
       <div style={{ width: 460, background: "#fff", borderRadius: 16, boxShadow: "0 8px 32px rgba(0,0,0,0.12)", overflow: "hidden" }}>
         <div style={{ background: "linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%)", padding: "32px 32px 24px", textAlign: "center", borderBottom: "3px solid #7dd3fc" }}>
-          <div style={{ width: 56, height: 56, borderRadius: "50%", background: "linear-gradient(135deg, #7dd3fc, #38bdf8)", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 28, fontWeight: 800, color: "#0f172a", marginBottom: 12 }}>M</div>
-          <div style={{ color: "#7dd3fc", fontSize: 22, fontWeight: 700 }}>Register Your Club</div>
+          <div style={{ width: 56, height: 56, borderRadius: "50%", background: "linear-gradient(135deg, #7dd3fc, #38bdf8)", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 28, fontWeight: 600, color: "#0f172a", marginBottom: 12 }}>M</div>
+          <div style={{ color: "#7dd3fc", fontSize: 22, fontWeight: 600 }}>Register Your Club</div>
           <div style={{ color: "#94a3b8", fontSize: 12, marginTop: 4 }}>PGA Professional verification required</div>
         </div>
         <form onSubmit={handleSubmit} style={{ padding: "28px 32px" }}>
           <div style={{ background: "#fef3c7", border: "1px solid #fbbf24", borderRadius: 10, padding: 14, marginBottom: 20, fontSize: 12, color: "#92400e" }}>
-            <div style={{ fontWeight: 700, marginBottom: 4 }}>PGA Pro Authorization Required</div>
+            <div style={{ fontWeight: 600, marginBottom: 4 }}>PGA Pro Authorization Required</div>
             Only PGA professionals with a <strong>@pga.com</strong> email address can register a club. Once registered, the pro can invite captains and vice-captains.
           </div>
           <div style={{ marginBottom: 14 }}>
@@ -516,7 +516,7 @@ function ClubRegistration({ onBack }) {
           </div>
           {error && <div style={{ background: "#fee2e2", color: "#991b1b", padding: "10px 14px", borderRadius: 8, fontSize: 13, fontWeight: 600, marginBottom: 14 }}>{error}</div>}
           <button type="submit" disabled={submitting}
-            style={{ width: "100%", padding: "12px", borderRadius: 8, border: "none", background: "linear-gradient(135deg, #0f172a, #1e3a5f)", color: "#7dd3fc", fontWeight: 700, fontSize: 15, cursor: submitting ? "wait" : "pointer", opacity: submitting ? 0.7 : 1 }}>
+            style={{ width: "100%", padding: "12px", borderRadius: 8, border: "none", background: "linear-gradient(135deg, #0f172a, #1e3a5f)", color: "#7dd3fc", fontWeight: 600, fontSize: 15, cursor: submitting ? "wait" : "pointer", opacity: submitting ? 0.7 : 1 }}>
             {submitting ? "Registering..." : "Register Club"}
           </button>
           <button type="button" onClick={onBack}
@@ -565,22 +565,22 @@ function InviteSignup({ invite, onSignUp, onBack }) {
 
   return (
     <div style={{ fontFamily: "'Poppins', 'Segoe UI', -apple-system, sans-serif", background: "#eef2f7", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+      <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet" />
       <div style={{ width: 420, background: "#fff", borderRadius: 16, boxShadow: "0 8px 32px rgba(0,0,0,0.12)", overflow: "hidden" }}>
         <div style={{ background: "linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%)", padding: "32px 32px 24px", textAlign: "center", borderBottom: "3px solid #16a34a" }}>
-          <div style={{ width: 56, height: 56, borderRadius: "50%", background: "linear-gradient(135deg, #7dd3fc, #38bdf8)", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 28, fontWeight: 800, color: "#0f172a", marginBottom: 12 }}>M</div>
-          <div style={{ color: "#7dd3fc", fontSize: 22, fontWeight: 700 }}>You're Invited!</div>
+          <div style={{ width: 56, height: 56, borderRadius: "50%", background: "linear-gradient(135deg, #7dd3fc, #38bdf8)", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 28, fontWeight: 600, color: "#0f172a", marginBottom: 12 }}>M</div>
+          <div style={{ color: "#7dd3fc", fontSize: 22, fontWeight: 600 }}>You're Invited!</div>
           <div style={{ color: "#94a3b8", fontSize: 12, marginTop: 4 }}>Join {invite.club} on MatchGapper</div>
         </div>
         <form onSubmit={handleSubmit} style={{ padding: "28px 32px" }}>
           <div style={{ background: "#dcfce7", border: "1px solid #86efac", borderRadius: 10, padding: 14, marginBottom: 20, display: "flex", gap: 16 }}>
             <div>
               <div style={{ fontSize: 12, color: "#64748b" }}>Club</div>
-              <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>{invite.club}</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: "#0f172a" }}>{invite.club}</div>
             </div>
             <div>
               <div style={{ fontSize: 12, color: "#64748b" }}>Role</div>
-              <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>{ROLE_CONFIG[invite.role]?.label || invite.role}</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: "#0f172a" }}>{ROLE_CONFIG[invite.role]?.label || invite.role}</div>
             </div>
           </div>
           <div style={{ marginBottom: 14 }}>
@@ -600,7 +600,7 @@ function InviteSignup({ invite, onSignUp, onBack }) {
               <input type={showPassword ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)} placeholder="Min 6 characters" required minLength={6}
                 style={{ width: "100%", padding: "10px 14px", paddingRight: 60, borderRadius: 8, border: "1px solid #c1cad8", fontSize: 14, background: "#f5f7fb", outline: "none", boxSizing: "border-box" }} />
               <button type="button" onClick={() => setShowPassword(!showPassword)}
-                style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", padding: "4px 8px", borderRadius: 4, border: "none", background: showPassword ? "#0f172a" : "#e2e8f0", color: showPassword ? "#7dd3fc" : "#64748b", fontSize: 10, fontWeight: 700, cursor: "pointer" }}>
+                style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", padding: "4px 8px", borderRadius: 4, border: "none", background: showPassword ? "#0f172a" : "#e2e8f0", color: showPassword ? "#7dd3fc" : "#64748b", fontSize: 10, fontWeight: 600, cursor: "pointer" }}>
                 {showPassword ? "HIDE" : "SHOW"}
               </button>
             </div>
@@ -616,7 +616,7 @@ function InviteSignup({ invite, onSignUp, onBack }) {
           {error && <div style={{ background: "#fee2e2", color: "#991b1b", padding: "10px 14px", borderRadius: 8, fontSize: 13, fontWeight: 600, marginBottom: 14 }}>{error}</div>}
           {message && <div style={{ background: "#dcfce7", color: "#166534", padding: "10px 14px", borderRadius: 8, fontSize: 13, fontWeight: 600, marginBottom: 14 }}>{message}</div>}
           <button type="submit" disabled={submitting || !!message}
-            style={{ width: "100%", padding: "12px", borderRadius: 8, border: "none", background: "linear-gradient(135deg, #0f172a, #1e3a5f)", color: "#7dd3fc", fontWeight: 700, fontSize: 15, cursor: submitting ? "wait" : "pointer", opacity: submitting || message ? 0.7 : 1 }}>
+            style={{ width: "100%", padding: "12px", borderRadius: 8, border: "none", background: "linear-gradient(135deg, #0f172a, #1e3a5f)", color: "#7dd3fc", fontWeight: 600, fontSize: 15, cursor: submitting ? "wait" : "pointer", opacity: submitting || message ? 0.7 : 1 }}>
             {submitting ? "Creating Account..." : "Create Account"}
           </button>
           <button type="button" onClick={onBack}
@@ -650,11 +650,11 @@ function LoginScreen({ onSignIn, onSignUp, onRegisterClub }) {
 
   return (
     <div style={{ fontFamily: "'Poppins', 'Segoe UI', -apple-system, sans-serif", background: "#eef2f7", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+      <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet" />
       <div style={{ width: 420, background: "#fff", borderRadius: 16, boxShadow: "0 8px 32px rgba(0,0,0,0.12)", overflow: "hidden" }}>
         <div style={{ background: "linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%)", padding: "32px 32px 24px", textAlign: "center", borderBottom: "3px solid #7dd3fc" }}>
-          <div style={{ width: 56, height: 56, borderRadius: "50%", background: "linear-gradient(135deg, #7dd3fc, #38bdf8)", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 28, fontWeight: 800, color: "#0f172a", marginBottom: 12 }}>M</div>
-          <div style={{ color: "#7dd3fc", fontSize: 22, fontWeight: 700, lineHeight: 1.2 }}>MatchGapper</div>
+          <div style={{ width: 56, height: 56, borderRadius: "50%", background: "linear-gradient(135deg, #7dd3fc, #38bdf8)", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 28, fontWeight: 600, color: "#0f172a", marginBottom: 12 }}>M</div>
+          <div style={{ color: "#7dd3fc", fontSize: 22, fontWeight: 600, lineHeight: 1.2 }}>MatchGapper</div>
           <div style={{ color: "#94a3b8", fontSize: 12, letterSpacing: 1, marginTop: 4 }}>BMW GAP TEAM MATCH MANAGER</div>
         </div>
         <form onSubmit={handleSubmit} style={{ padding: "28px 32px" }}>
@@ -669,14 +669,14 @@ function LoginScreen({ onSignIn, onSignUp, onRegisterClub }) {
               <input type={showPassword ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)} placeholder="Min 6 characters" required minLength={6}
                 style={{ width: "100%", padding: "10px 14px", paddingRight: 60, borderRadius: 8, border: "1px solid #c1cad8", fontSize: 14, background: "#f5f7fb", outline: "none", boxSizing: "border-box" }} />
               <button type="button" onClick={() => setShowPassword(!showPassword)}
-                style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", padding: "4px 8px", borderRadius: 4, border: "none", background: showPassword ? "#0f172a" : "#e2e8f0", color: showPassword ? "#7dd3fc" : "#64748b", fontSize: 10, fontWeight: 700, cursor: "pointer" }}>
+                style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", padding: "4px 8px", borderRadius: 4, border: "none", background: showPassword ? "#0f172a" : "#e2e8f0", color: showPassword ? "#7dd3fc" : "#64748b", fontSize: 10, fontWeight: 600, cursor: "pointer" }}>
                 {showPassword ? "HIDE" : "SHOW"}
               </button>
             </div>
           </div>
           {error && <div style={{ background: "#fee2e2", color: "#991b1b", padding: "10px 14px", borderRadius: 8, fontSize: 13, fontWeight: 600, marginBottom: 14 }}>{error}</div>}
           <button type="submit" disabled={submitting}
-            style={{ width: "100%", padding: "12px", borderRadius: 8, border: "none", background: "linear-gradient(135deg, #0f172a, #1e3a5f)", color: "#7dd3fc", fontWeight: 700, fontSize: 15, cursor: submitting ? "wait" : "pointer", opacity: submitting ? 0.7 : 1, transition: "opacity 0.2s" }}>
+            style={{ width: "100%", padding: "12px", borderRadius: 8, border: "none", background: "linear-gradient(135deg, #0f172a, #1e3a5f)", color: "#7dd3fc", fontWeight: 600, fontSize: 15, cursor: submitting ? "wait" : "pointer", opacity: submitting ? 0.7 : 1, transition: "opacity 0.2s" }}>
             {submitting ? "Signing In..." : "Sign In"}
           </button>
           <div style={{ borderTop: "1px solid #e2e8f0", marginTop: 24, paddingTop: 20, textAlign: "center" }}>
@@ -912,7 +912,7 @@ function SeasonSetup({ schedule, setSchedule, lockState, userRole, clubName }) {
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
         <div>
-          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: "#0f172a" }}>Season Setup</h2>
+          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 600, color: "#0f172a" }}>Season Setup</h2>
           <p style={{ margin: "4px 0 0", fontSize: 13, color: "#64748b" }}>Configure opponents for each week. Each matchup splits 3 pairs home, 3 pairs away. Searchable across all 334 GAP member clubs.</p>
         </div>
         {!isAdmin && <span style={{ fontSize: 11, padding: "4px 12px", borderRadius: 6, background: "#fef3c7", color: "#92400e", fontWeight: 600 }}>View Only — Admin access required to edit</span>}
@@ -926,8 +926,8 @@ function SeasonSetup({ schedule, setSchedule, lockState, userRole, clubName }) {
           <div key={week} style={{ background: "#fff", borderRadius: 12, border: "1px solid #d1d9e6", overflow: "hidden", marginBottom: 16, opacity: locked ? 0.85 : 1 }}>
             <div style={{ background: "linear-gradient(135deg, #0f172a 0%, #162d50 100%)", padding: "12px 16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <span style={{ color: ACCENT, fontSize: 17, fontWeight: 700 }}>Week {week}</span>
-                {locked && <span style={{ fontSize: 10, padding: "3px 8px", borderRadius: 4, background: "#dc262622", color: "#fca5a5", fontWeight: 700, display: "flex", alignItems: "center", gap: 4 }}><IconLock /> LOCKED</span>}
+                <span style={{ color: ACCENT, fontSize: 17, fontWeight: 600 }}>Week {week}</span>
+                {locked && <span style={{ fontSize: 10, padding: "3px 8px", borderRadius: 4, background: "#dc262622", color: "#fca5a5", fontWeight: 600, display: "flex", alignItems: "center", gap: 4 }}><IconLock /> LOCKED</span>}
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 {ws.date && <span style={{ color: "#cbd5e1", fontSize: 13, fontWeight: 600 }}>{fmtDateLong(ws.date)}</span>}
@@ -959,7 +959,7 @@ function SeasonSetup({ schedule, setSchedule, lockState, userRole, clubName }) {
               {["team1", "team2"].map(team => (
                 <div key={team} style={{ background: "#f5f7fb", borderRadius: 10, padding: 14, marginBottom: team === "team1" ? 12 : 0, border: "1px solid #e2e8f0" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
-                    <span style={{ fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 4, background: team === "team1" ? "#dcfce7" : "#dbeafe", color: team === "team1" ? "#16a34a" : "#1e40af" }}>{team === "team1" ? "TEAM 1" : "TEAM 2"}</span>
+                    <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 4, background: team === "team1" ? "#dcfce7" : "#dbeafe", color: team === "team1" ? "#16a34a" : "#1e40af" }}>{team === "team1" ? "TEAM 1" : "TEAM 2"}</span>
                     <span style={{ fontSize: 12, color: "#64748b" }}>Opponent</span>
                   </div>
                   <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
@@ -1004,12 +1004,12 @@ function Tooltip({ player, position, threshold }) {
   return (
     <div style={{ position: "fixed", top: position.y - 10, left: position.x + 16, zIndex: 9999, background: "#0f172a", color: "#eef2f7", borderRadius: 10, padding: "14px 18px", boxShadow: "0 8px 32px rgba(0,0,0,0.4)", maxWidth: 340, fontSize: 13, lineHeight: 1.5, pointerEvents: "none", border: "1px solid #1e2d4a" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-        <span style={{ fontSize: 16, fontWeight: 700, color: ACCENT }}>{player.name}</span>
-        {proj && <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 4, background: proj === "T1" ? "#16a34a33" : "#3b82f633", color: proj === "T1" ? "#4ade80" : "#60a5fa" }}>Proj: {proj === "T1" ? "Team 1" : "Team 2"}</span>}
+        <span style={{ fontSize: 16, fontWeight: 600, color: ACCENT }}>{player.name}</span>
+        {proj && <span style={{ fontSize: 10, fontWeight: 600, padding: "2px 8px", borderRadius: 4, background: proj === "T1" ? "#16a34a33" : "#3b82f633", color: proj === "T1" ? "#4ade80" : "#60a5fa" }}>Proj: {proj === "T1" ? "Team 1" : "Team 2"}</span>}
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "3px 16px" }}>
         <span style={{ color: "#94a3b8" }}>GHIN:</span><span>{player.ghin}</span>
-        <span style={{ color: "#94a3b8" }}>Course HDCP:</span><span style={{ fontWeight: 700 }}>{fmtH(player.courseHdcp)}</span>
+        <span style={{ color: "#94a3b8" }}>Course HDCP:</span><span style={{ fontWeight: 600 }}>{fmtH(player.courseHdcp)}</span>
         <span style={{ color: "#94a3b8" }}>Index:</span><span>{player.index}</span>
         <span style={{ color: "#94a3b8" }}>Status:</span><span style={{ color: s.color }}>{s.label}</span>
         {player.phone && <><span style={{ color: "#94a3b8" }}>Phone:</span><span>{player.phone}</span></>}
@@ -1039,13 +1039,13 @@ function PlayerCard({ player, onDragStart, compact, week, threshold }) {
         onMouseMove={(e) => setTooltipPos({ x: e.clientX, y: e.clientY })}
         onMouseLeave={() => setHover(false)}
         style={{ background: "#fff", border: "1px solid #d1d9e6", borderRadius: 8, padding: compact ? "6px 10px" : "8px 12px", cursor: "grab", display: "flex", alignItems: "center", gap: 8, transition: "all 0.15s", boxShadow: hover ? "0 2px 8px rgba(0,0,0,0.1)" : "none", fontSize: compact ? 12 : 13 }}>
-        <div style={{ width: compact ? 28 : 32, height: compact ? 28 : 32, borderRadius: "50%", background: `linear-gradient(135deg, ${s.color}22, ${s.color}44)`, border: `2px solid ${s.color}`, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: compact ? 11 : 13, color: s.color, flexShrink: 0 }}>{fmtH(player.courseHdcp)}</div>
+        <div style={{ width: compact ? 28 : 32, height: compact ? 28 : 32, borderRadius: "50%", background: `linear-gradient(135deg, ${s.color}22, ${s.color}44)`, border: `2px solid ${s.color}`, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 600, fontSize: compact ? 11 : 13, color: s.color, flexShrink: 0 }}>{fmtH(player.courseHdcp)}</div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontWeight: 600, color: "#0f172a", fontSize: compact ? 11 : 13 }}>{player.name}</div>
           {!compact && <div style={{ fontSize: 11, color: "#64748b" }}>Idx: {player.index} · {player.ghin}</div>}
         </div>
         <div style={{ display: "flex", gap: 4, alignItems: "center", flexShrink: 0 }}>
-          {pref && <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 5px", borderRadius: 4, background: pref === "Home" ? "#dbeafe" : "#fef3c7", color: pref === "Home" ? "#1e40af" : "#92400e" }}>{pref === "Home" ? "H" : "A"}</span>}
+          {pref && <span style={{ fontSize: 9, fontWeight: 600, padding: "2px 5px", borderRadius: 4, background: pref === "Home" ? "#dbeafe" : "#fef3c7", color: pref === "Home" ? "#1e40af" : "#92400e" }}>{pref === "Home" ? "H" : "A"}</span>}
           {avail && <span style={{ width: 8, height: 8, borderRadius: "50%", background: AVAIL_COLORS[avail] }} />}
           <span style={{ fontSize: 9, padding: "2px 5px", borderRadius: 4, background: s.bg, color: s.color, fontWeight: 600 }}>{s.short}</span>
         </div>
@@ -1096,25 +1096,25 @@ function PairSlot({ pair, pairNum, onDrop, onRemove, players, side, week, thresh
       style={{ background: dragOver ? "#eff6ff" : "#f5f7fb", border: `2px dashed ${dragOver ? "#16a34a" : disabled ? "#e2e8f0" : "#c1cad8"}`, borderRadius: 10, padding: 12, minHeight: 90, transition: "all 0.2s", opacity: disabled ? 0.7 : 1 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <span style={{ fontSize: 11, fontWeight: 700, color: "#64748b", letterSpacing: 1 }}>PAIR {pairNum}</span>
+          <span style={{ fontSize: 11, fontWeight: 600, color: "#64748b", letterSpacing: 1 }}>PAIR {pairNum}</span>
           {pairTee && <span style={{ fontSize: 10, fontWeight: 600, color: "#475569", background: "#e2e8f0", padding: "1px 6px", borderRadius: 4 }}>{pairTee}</span>}
         </div>
         <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
           {arch && (
             <div style={{ position: "relative", display: "inline-flex" }}>
               <span onMouseEnter={() => setShowTip(true)} onMouseLeave={() => setShowTip(false)}
-                style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 5, background: arch.bg, color: arch.color, cursor: "help", display: "flex", alignItems: "center", gap: 3, border: `1px solid ${arch.color}33` }}>
+                style={{ fontSize: 10, fontWeight: 600, padding: "2px 8px", borderRadius: 5, background: arch.bg, color: arch.color, cursor: "help", display: "flex", alignItems: "center", gap: 3, border: `1px solid ${arch.color}33` }}>
                 {arch.emoji} {arch.label}
               </span>
               {showTip && (
                 <div style={{ position: "absolute", bottom: "100%", right: 0, marginBottom: 6, background: "#0f172a", color: "#eef2f7", padding: "8px 12px", borderRadius: 8, fontSize: 11, lineHeight: 1.4, width: 220, boxShadow: "0 4px 16px rgba(0,0,0,0.3)", zIndex: 100, pointerEvents: "none" }}>
-                  <div style={{ fontWeight: 700, color: ACCENT, marginBottom: 3 }}>{arch.emoji} {arch.label} Pairing</div>
+                  <div style={{ fontWeight: 600, color: ACCENT, marginBottom: 3 }}>{arch.emoji} {arch.label} Pairing</div>
                   {arch.tip}
                 </div>
               )}
             </div>
           )}
-          <span style={{ fontSize: 12, fontWeight: 700, color: "#0f172a", background: "#dce3ed", borderRadius: 6, padding: "2px 8px" }}>Avg: {avg}</span>
+          <span style={{ fontSize: 12, fontWeight: 600, color: "#0f172a", background: "#dce3ed", borderRadius: 6, padding: "2px 8px" }}>Avg: {avg}</span>
         </div>
       </div>
       {prefWarnings.length > 0 && <div style={{ fontSize: 10, color: "#92400e", background: "#fef3c7", borderRadius: 4, padding: "3px 6px", marginBottom: 6 }}>Pref conflict: {prefWarnings.join(", ")} prefers {side === "Home" ? "Away" : "Home"}</div>}
@@ -1250,10 +1250,10 @@ function TeamBuilder({ players, schedule, lockState, setLockState, userRole, clu
         <div style={{ background: "linear-gradient(90deg, #7f1d1d, #991b1b)", border: "2px solid #dc2626", borderRadius: 10, padding: "12px 18px", marginBottom: 14, display: "flex", alignItems: "center", gap: 12, color: "#fecaca" }}>
           <span style={{ fontSize: 20 }}>⚠</span>
           <div>
-            <div style={{ fontWeight: 700, fontSize: 14, color: "#fff" }}>Pairings modified since last send — re-notify opposing club</div>
+            <div style={{ fontWeight: 600, fontSize: 14, color: "#fff" }}>Pairings modified since last send — re-notify opposing club</div>
             <div style={{ fontSize: 12, opacity: 0.8 }}>Last sent: {weekLock.lastSentAt}. Changes have been made. The opposing club has a stale copy.</div>
           </div>
-          {isAdmin && <button onClick={handleCopy} style={{ marginLeft: "auto", padding: "8px 16px", borderRadius: 6, border: "none", background: "#dc2626", color: "#fff", fontWeight: 700, cursor: "pointer", fontSize: 12, whiteSpace: "nowrap" }}>Re-Copy & Send</button>}
+          {isAdmin && <button onClick={handleCopy} style={{ marginLeft: "auto", padding: "8px 16px", borderRadius: 6, border: "none", background: "#dc2626", color: "#fff", fontWeight: 600, cursor: "pointer", fontSize: 12, whiteSpace: "nowrap" }}>Re-Copy & Send</button>}
         </div>
       )}
 
@@ -1262,8 +1262,8 @@ function TeamBuilder({ players, schedule, lockState, setLockState, userRole, clu
         {[1, 2, 3].map(w => {
           const ls = lockState[w];
           return (
-            <button key={w} onClick={() => { setActiveWeek(w); setValidationMsg(null); }} style={{ flex: 1, padding: "10px 14px", borderRadius: 8, border: activeWeek === w ? "2px solid #0f172a" : "1px solid #c1cad8", background: activeWeek === w ? "linear-gradient(135deg, #0f172a 0%, #162d50 100%)" : "#fff", color: activeWeek === w ? ACCENT : "#0f172a", fontWeight: 700, cursor: "pointer", fontSize: 13, transition: "all 0.2s", position: "relative" }}>
-              <div style={{ fontWeight: 700, display: "flex", alignItems: "center", gap: 6, justifyContent: "center" }}>
+            <button key={w} onClick={() => { setActiveWeek(w); setValidationMsg(null); }} style={{ flex: 1, padding: "10px 14px", borderRadius: 8, border: activeWeek === w ? "2px solid #0f172a" : "1px solid #c1cad8", background: activeWeek === w ? "linear-gradient(135deg, #0f172a 0%, #162d50 100%)" : "#fff", color: activeWeek === w ? ACCENT : "#0f172a", fontWeight: 600, cursor: "pointer", fontSize: 13, transition: "all 0.2s", position: "relative" }}>
+              <div style={{ fontWeight: 600, display: "flex", alignItems: "center", gap: 6, justifyContent: "center" }}>
                 Week {w} — {fmtDate(schedule[w].date)}
                 {ls.locked && <IconLock />}
                 {ls.modifiedAfterLock && <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#dc2626", display: "inline-block" }} />}
@@ -1277,7 +1277,7 @@ function TeamBuilder({ players, schedule, lockState, setLockState, userRole, clu
       {/* Threshold Bar */}
       {split.threshold !== null && (
         <div style={{ background: "#fff", border: "1px solid #d1d9e6", borderRadius: 8, padding: "10px 16px", marginBottom: 12, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
-          <div style={{ fontSize: 13 }}><span style={{ fontWeight: 700 }}>First Team Threshold: </span><span style={{ fontWeight: 800, fontSize: 18 }}>{fmtH(split.threshold)}</span><span style={{ color: "#475569", marginLeft: 8, fontWeight: 500 }}>— Team 1 hdcp ≤ {fmtH(split.threshold)}, Team 2 hdcp ≥ {fmtH(split.threshold)}</span></div>
+          <div style={{ fontSize: 13 }}><span style={{ fontWeight: 600 }}>First Team Threshold: </span><span style={{ fontWeight: 600, fontSize: 18 }}>{fmtH(split.threshold)}</span><span style={{ color: "#475569", marginLeft: 8, fontWeight: 500 }}>— Team 1 hdcp ≤ {fmtH(split.threshold)}, Team 2 hdcp ≥ {fmtH(split.threshold)}</span></div>
           <div style={{ display: "flex", gap: 12, fontSize: 12 }}>
             <span style={{ background: "#dcfce7", padding: "3px 10px", borderRadius: 6, fontWeight: 600, color: "#16a34a" }}>T1: {fmtH(split.t1Range?.min)}–{fmtH(split.t1Range?.max)} ({split.t1.length}p)</span>
             <span style={{ background: "#dbeafe", padding: "3px 10px", borderRadius: 6, fontWeight: 600, color: "#1e40af" }}>T2: {fmtH(split.t2Range?.min)}–{fmtH(split.t2Range?.max)} ({split.t2.length}p)</span>
@@ -1290,25 +1290,25 @@ function TeamBuilder({ players, schedule, lockState, setLockState, userRole, clu
       {/* Main Grid */}
       <div style={{ display: "grid", gridTemplateColumns: "300px 1fr", gap: 16, minHeight: 500 }}>
         <div style={{ background: "#f5f7fb", borderRadius: 12, padding: 14, border: "1px solid #d1d9e6", maxHeight: 750, overflowY: "auto" }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "#16a34a", marginBottom: 2, letterSpacing: 0.5 }}>TEAM 1 POOL ({t1Avail.length})</div>
+          <div style={{ fontSize: 11, fontWeight: 600, color: "#16a34a", marginBottom: 2, letterSpacing: 0.5 }}>TEAM 1 POOL ({t1Avail.length})</div>
           <div style={{ fontSize: 10, color: "#64748b", marginBottom: 8 }}>Hdcp ≤ {split.threshold != null ? fmtH(split.threshold) : "?"}</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 3, marginBottom: 14 }}>{t1Avail.map(p => <PlayerCard key={p.id} player={p} compact week={activeWeek} threshold={split.threshold} />)}</div>
           <div style={{ borderTop: "2px solid #c1cad8", paddingTop: 10, marginBottom: 2 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: "#1e40af", marginBottom: 2, letterSpacing: 0.5 }}>TEAM 2 POOL ({t2Avail.length})</div>
+            <div style={{ fontSize: 11, fontWeight: 600, color: "#1e40af", marginBottom: 2, letterSpacing: 0.5 }}>TEAM 2 POOL ({t2Avail.length})</div>
             <div style={{ fontSize: 10, color: "#64748b", marginBottom: 8 }}>Hdcp ≥ {split.threshold != null ? fmtH(split.threshold) : "?"}</div>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 3, marginBottom: 14 }}>{t2Avail.map(p => <PlayerCard key={p.id} player={p} compact week={activeWeek} threshold={split.threshold} />)}</div>
           {maybePlayers.length > 0 && (
             <>
               <div style={{ borderTop: "2px solid #c1cad8", paddingTop: 10 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: "#8b5cf6", marginBottom: 2, letterSpacing: 0.5 }}>ON THE FENCE ({maybePlayers.length})</div>
+                <div style={{ fontSize: 11, fontWeight: 600, color: "#8b5cf6", marginBottom: 2, letterSpacing: 0.5 }}>ON THE FENCE ({maybePlayers.length})</div>
                 <div style={{ fontSize: 10, color: "#64748b", marginBottom: 8 }}>Team projection shown</div>
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
                 {maybePlayers.map(p => (
                   <div key={p.id} style={{ position: "relative" }}>
                     <PlayerCard player={p} compact week={activeWeek} threshold={split.threshold} />
-                    <span style={{ position: "absolute", top: 2, right: 4, fontSize: 8, fontWeight: 700, padding: "1px 4px", borderRadius: 3, background: projectTeam(p, split.threshold) === "T1" ? "#dcfce7" : "#dbeafe", color: projectTeam(p, split.threshold) === "T1" ? "#16a34a" : "#1e40af" }}>→{projectTeam(p, split.threshold)}</span>
+                    <span style={{ position: "absolute", top: 2, right: 4, fontSize: 8, fontWeight: 600, padding: "1px 4px", borderRadius: 3, background: projectTeam(p, split.threshold) === "T1" ? "#dcfce7" : "#dbeafe", color: projectTeam(p, split.threshold) === "T1" ? "#16a34a" : "#1e40af" }}>→{projectTeam(p, split.threshold)}</span>
                   </div>
                 ))}
               </div>
@@ -1320,12 +1320,12 @@ function TeamBuilder({ players, schedule, lockState, setLockState, userRole, clu
           {isAdmin && (
             <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
               {!isLocked ? (
-                <button onClick={handleLock} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 8, border: "2px solid #16a34a", background: "#dcfce7", color: "#16a34a", fontWeight: 700, cursor: "pointer", fontSize: 12 }}><IconLock /> Lock Pairings</button>
+                <button onClick={handleLock} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 8, border: "2px solid #16a34a", background: "#dcfce7", color: "#16a34a", fontWeight: 600, cursor: "pointer", fontSize: 12 }}><IconLock /> Lock Pairings</button>
               ) : (
                 <>
-                  <button onClick={handleUnlock} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 8, border: "2px solid #f59e0b", background: "#fef3c7", color: "#92400e", fontWeight: 700, cursor: "pointer", fontSize: 12 }}><IconUnlock /> Unlock to Edit</button>
-                  <button onClick={handleCopy} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 8, border: "none", background: "linear-gradient(135deg, #0f172a, #162d50)", color: "#fff", fontWeight: 700, cursor: "pointer", fontSize: 12 }}>Copy Summary</button>
-                  <button onClick={handleMail} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 8, border: "none", background: "linear-gradient(135deg, #1e40af, #3b82f6)", color: "#fff", fontWeight: 700, cursor: "pointer", fontSize: 12 }}>Open in Mail</button>
+                  <button onClick={handleUnlock} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 8, border: "2px solid #f59e0b", background: "#fef3c7", color: "#92400e", fontWeight: 600, cursor: "pointer", fontSize: 12 }}><IconUnlock /> Unlock to Edit</button>
+                  <button onClick={handleCopy} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 8, border: "none", background: "linear-gradient(135deg, #0f172a, #162d50)", color: "#fff", fontWeight: 600, cursor: "pointer", fontSize: 12 }}>Copy Summary</button>
+                  <button onClick={handleMail} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 8, border: "none", background: "linear-gradient(135deg, #1e40af, #3b82f6)", color: "#fff", fontWeight: 600, cursor: "pointer", fontSize: 12 }}>Open in Mail</button>
                 </>
               )}
               {copyFeedback && <span style={{ fontSize: 12, color: "#16a34a", fontWeight: 600 }}>{copyFeedback}</span>}
@@ -1339,7 +1339,7 @@ function TeamBuilder({ players, schedule, lockState, setLockState, userRole, clu
             return (
               <div key={team} style={{ background: "#fff", borderRadius: 12, border: "1px solid #d1d9e6", overflow: "hidden" }}>
                 <div style={{ background: team === "team1" ? "linear-gradient(135deg, #0f172a 0%, #162d50 100%)" : "linear-gradient(135deg, #0c1a3d 0%, #1a2f54 100%)", padding: "10px 16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <div><span style={{ color: ACCENT, fontSize: 16, fontWeight: 700 }}>{team === "team1" ? "Team 1" : "Team 2"}</span><span style={{ color: "#94a3b8", fontSize: 12, marginLeft: 12 }}>{countAssigned(team)}/12 · vs {ts.opponent}</span>{ts.teamNum && <span style={{ color: "#fff", fontSize: 11, fontWeight: 800, marginLeft: 6, background: ACCENT + "33", padding: "2px 8px", borderRadius: 4, letterSpacing: 0.5 }}>{ts.teamNum}</span>}</div>
+                  <div><span style={{ color: ACCENT, fontSize: 16, fontWeight: 600 }}>{team === "team1" ? "Team 1" : "Team 2"}</span><span style={{ color: "#94a3b8", fontSize: 12, marginLeft: 12 }}>{countAssigned(team)}/12 · vs {ts.opponent}</span>{ts.teamNum && <span style={{ color: "#fff", fontSize: 11, fontWeight: 600, marginLeft: 6, background: ACCENT + "33", padding: "2px 8px", borderRadius: 4, letterSpacing: 0.5 }}>{ts.teamNum}</span>}</div>
                   <span style={{ fontSize: 11, color: "#94a3b8" }}>{team === "team1" ? `Hdcp ≤ ${split.threshold != null ? fmtH(split.threshold) : "?"}` : `Hdcp ≥ ${split.threshold != null ? fmtH(split.threshold) : "?"}`}</span>
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 0 }}>
@@ -1347,7 +1347,7 @@ function TeamBuilder({ players, schedule, lockState, setLockState, userRole, clu
                     const baseTee = side === "Home" ? weekSched.homeTee : weekSched.awayTee;
                     return (
                     <div key={side} style={{ padding: 12, borderRight: side === "Home" ? "1px solid #d1d9e6" : "none" }}>
-                      <div style={{ fontSize: 11, fontWeight: 700, color: side === "Home" ? "#1e40af" : "#92400e", marginBottom: 4, display: "flex", alignItems: "center", gap: 6 }}>
+                      <div style={{ fontSize: 11, fontWeight: 600, color: side === "Home" ? "#1e40af" : "#92400e", marginBottom: 4, display: "flex", alignItems: "center", gap: 6 }}>
                         <span style={{ width: 14, height: 14, borderRadius: 3, background: side === "Home" ? "#dbeafe" : "#fef3c7", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9 }}>{side === "Home" ? "H" : "A"}</span>
                         {side.toUpperCase()} — {side === "Home" ? clubName : ts.opponent}
                       </div>
@@ -1393,7 +1393,7 @@ function Dashboard({ players, schedule, lockState, clubName }) {
 
   return (
     <div>
-      <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a", marginBottom: 8, letterSpacing: 0.3 }}>Roster Recruitment</div>
+      <div style={{ fontSize: 14, fontWeight: 600, color: "#0f172a", marginBottom: 8, letterSpacing: 0.3 }}>Roster Recruitment</div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 10, marginBottom: 16 }}>
         {[
           { label: "Full Roster", val: totalPlayers, color: "#0f172a", sub: "All eligible" },
@@ -1404,15 +1404,15 @@ function Dashboard({ players, schedule, lockState, clubName }) {
           { label: "Not Contacted", val: notContacted, color: "#94a3b8", sub: "Need outreach" },
         ].map(({ label, val, color, sub }) => (
           <div key={label} style={{ background: "#fff", borderRadius: 10, padding: "14px 12px", border: "1px solid #d1d9e6", textAlign: "center" }}>
-            <div style={{ fontSize: 26, fontWeight: 800, color }}>{val}</div>
-            <div style={{ fontSize: 10, color: "#64748b", fontWeight: 700, letterSpacing: 0.5 }}>{label.toUpperCase()}</div>
+            <div style={{ fontSize: 26, fontWeight: 600, color }}>{val}</div>
+            <div style={{ fontSize: 10, color: "#64748b", fontWeight: 600, letterSpacing: 0.5 }}>{label.toUpperCase()}</div>
             <div style={{ fontSize: 9, color: "#94a3b8", marginTop: 1 }}>{sub}</div>
           </div>
         ))}
       </div>
 
       {/* HANDICAP DISTRIBUTION — full width */}
-      <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a", marginBottom: 8, letterSpacing: 0.3 }}>Handicap Distribution</div>
+      <div style={{ fontSize: 14, fontWeight: 600, color: "#0f172a", marginBottom: 8, letterSpacing: 0.3 }}>Handicap Distribution</div>
       <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #d1d9e6", padding: 16, marginBottom: 16 }}>
         {(() => {
           const brackets = [
@@ -1432,8 +1432,8 @@ function Dashboard({ players, schedule, lockState, clubName }) {
                 return (
                   <div key={b.label}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-                      <div style={{ fontSize: 12, fontWeight: 700, color: "#0f172a" }}>Hdcp {b.label}</div>
-                      <span style={{ fontSize: 9, padding: "1px 5px", borderRadius: 3, background: teamProj === "T1" ? "#dcfce7" : teamProj === "T2" ? "#dbeafe" : "#eef2f7", color: teamProj === "T1" ? "#16a34a" : teamProj === "T2" ? "#1e40af" : "#64748b", fontWeight: 700 }}>→ {teamProj}</span>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: "#0f172a" }}>Hdcp {b.label}</div>
+                      <span style={{ fontSize: 9, padding: "1px 5px", borderRadius: 3, background: teamProj === "T1" ? "#dcfce7" : teamProj === "T2" ? "#dbeafe" : "#eef2f7", color: teamProj === "T1" ? "#16a34a" : teamProj === "T2" ? "#1e40af" : "#64748b", fontWeight: 600 }}>→ {teamProj}</span>
                     </div>
                     <div style={{ display: "flex", flexDirection: "column", height: 80, justifyContent: "flex-end", borderRadius: 5, overflow: "hidden", background: "#f1f5f9", position: "relative" }}>
                       <div style={{ display: "flex", flexDirection: "column", justifyContent: "flex-end", height: "100%" }}>
@@ -1460,19 +1460,19 @@ function Dashboard({ players, schedule, lockState, clubName }) {
       </div>
 
       {/* OVERALL TEAM POOLS */}
-      <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a", marginBottom: 8, letterSpacing: 0.3 }}>Overall Team Pools</div>
+      <div style={{ fontSize: 14, fontWeight: 600, color: "#0f172a", marginBottom: 8, letterSpacing: 0.3 }}>Overall Team Pools</div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 20 }}>
         <div style={{ background: "#fff", borderRadius: 10, padding: "16px 14px", textAlign: "center", border: "2px solid #0f172a" }}>
-          <div style={{ fontSize: 28, fontWeight: 800, color: "#0f172a" }}>{overallSplit.t1.length}</div>
-          <div style={{ fontSize: 11, color: "#0f172a", fontWeight: 700, letterSpacing: 0.5 }}>TEAM 1 POOL</div>
+          <div style={{ fontSize: 28, fontWeight: 600, color: "#0f172a" }}>{overallSplit.t1.length}</div>
+          <div style={{ fontSize: 11, color: "#0f172a", fontWeight: 600, letterSpacing: 0.5 }}>TEAM 1 POOL</div>
           <div style={{ fontSize: 11, color: "#64748b", marginTop: 3 }}>{overallSplit.t1Range ? `Hdcp ${fmtH(overallSplit.t1Range.min)} – ${fmtH(overallSplit.t1Range.max)}` : "—"}</div>
-          <div style={{ fontSize: 12, color: "#0f172a", fontWeight: 700, marginTop: 4 }}>Avg: {t1AvgHdcp}</div>
+          <div style={{ fontSize: 12, color: "#0f172a", fontWeight: 600, marginTop: 4 }}>Avg: {t1AvgHdcp}</div>
         </div>
         <div style={{ background: "#fff", borderRadius: 10, padding: "16px 14px", textAlign: "center", border: "2px solid #3b82f6" }}>
-          <div style={{ fontSize: 28, fontWeight: 800, color: "#3b82f6" }}>{overallSplit.t2.length}</div>
-          <div style={{ fontSize: 11, color: "#3b82f6", fontWeight: 700, letterSpacing: 0.5 }}>TEAM 2 POOL</div>
+          <div style={{ fontSize: 28, fontWeight: 600, color: "#3b82f6" }}>{overallSplit.t2.length}</div>
+          <div style={{ fontSize: 11, color: "#3b82f6", fontWeight: 600, letterSpacing: 0.5 }}>TEAM 2 POOL</div>
           <div style={{ fontSize: 11, color: "#64748b", marginTop: 3 }}>{overallSplit.t2Range ? `Hdcp ${fmtH(overallSplit.t2Range.min)} – ${fmtH(overallSplit.t2Range.max)}` : "—"}</div>
-          <div style={{ fontSize: 12, color: "#3b82f6", fontWeight: 700, marginTop: 4 }}>Avg: {t2AvgHdcp}</div>
+          <div style={{ fontSize: 12, color: "#3b82f6", fontWeight: 600, marginTop: 4 }}>Avg: {t2AvgHdcp}</div>
         </div>
       </div>
 
@@ -1480,13 +1480,13 @@ function Dashboard({ players, schedule, lockState, clubName }) {
         <div key={wa.week} style={{ background: "#fff", borderRadius: 12, border: "1px solid #d1d9e6", overflow: "hidden", marginBottom: 16 }}>
           <div style={{ background: "linear-gradient(135deg, #0f172a 0%, #162d50 100%)", padding: "10px 16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <span style={{ color: ACCENT, fontSize: 17, fontWeight: 700 }}>Week {wa.week}</span>
+              <span style={{ color: ACCENT, fontSize: 17, fontWeight: 600 }}>Week {wa.week}</span>
               <span style={{ color: "#cbd5e1", fontSize: 13, fontWeight: 600 }}>{fmtDateLong(wa.date)}</span>
               <span style={{ color: "#94a3b8", fontSize: 11, marginLeft: 10 }}>Home: {wa.homeTee} · Away: {wa.awayTee}</span>
-              {wa.ls.locked && <span style={{ fontSize: 9, padding: "2px 8px", borderRadius: 4, background: "#16a34a33", color: "#4ade80", fontWeight: 700 }}>LOCKED</span>}
-              {wa.ls.modifiedAfterLock && <span style={{ fontSize: 9, padding: "2px 8px", borderRadius: 4, background: "#dc262633", color: "#fca5a5", fontWeight: 700 }}>STALE</span>}
+              {wa.ls.locked && <span style={{ fontSize: 9, padding: "2px 8px", borderRadius: 4, background: "#16a34a33", color: "#4ade80", fontWeight: 600 }}>LOCKED</span>}
+              {wa.ls.modifiedAfterLock && <span style={{ fontSize: 9, padding: "2px 8px", borderRadius: 4, background: "#dc262633", color: "#fca5a5", fontWeight: 600 }}>STALE</span>}
             </div>
-            {wa.threshold !== null && <div style={{ display: "flex", gap: 8, alignItems: "center" }}><span style={{ fontSize: 12, color: "#cbd5e1", fontWeight: 600 }}>First Team Threshold:</span><span style={{ fontSize: 18, fontWeight: 800, color: ACCENT }}>{fmtH(wa.threshold)}</span></div>}
+            {wa.threshold !== null && <div style={{ display: "flex", gap: 8, alignItems: "center" }}><span style={{ fontSize: 12, color: "#cbd5e1", fontWeight: 600 }}>First Team Threshold:</span><span style={{ fontSize: 18, fontWeight: 600, color: ACCENT }}>{fmtH(wa.threshold)}</span></div>}
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 0 }}>
             {["team1", "team2"].map(team => {
@@ -1501,8 +1501,8 @@ function Dashboard({ players, schedule, lockState, clubName }) {
                 <div key={team} style={{ padding: 16, borderRight: team === "team1" ? "1px solid #d1d9e6" : "none" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
                     <div>
-                      <div style={{ fontWeight: 700, color: "#0f172a", fontSize: 14 }}>
-                        <span style={{ background: team === "team1" ? "#dcfce7" : "#dbeafe", color: team === "team1" ? "#16a34a" : "#1e40af", padding: "2px 8px", borderRadius: 4, fontSize: 11, fontWeight: 700, marginRight: 8 }}>{team === "team1" ? "TEAM 1" : "TEAM 2"}</span>
+                      <div style={{ fontWeight: 600, color: "#0f172a", fontSize: 14 }}>
+                        <span style={{ background: team === "team1" ? "#dcfce7" : "#dbeafe", color: team === "team1" ? "#16a34a" : "#1e40af", padding: "2px 8px", borderRadius: 4, fontSize: 11, fontWeight: 600, marginRight: 8 }}>{team === "team1" ? "TEAM 1" : "TEAM 2"}</span>
                         vs {opp} {num}
                       </div>
                       <div style={{ fontSize: 11, color: "#64748b", marginTop: 3 }}>3 pairs at {clubName} · 3 pairs at {opp}</div>
@@ -1510,12 +1510,12 @@ function Dashboard({ players, schedule, lockState, clubName }) {
                     <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(opp)}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 10, color: "#1e40af", textDecoration: "none", background: "#dbeafe", padding: "3px 8px", borderRadius: 5, fontWeight: 600, whiteSpace: "nowrap" }}>Map</a>
                   </div>
                   <div style={{ display: "flex", height: 28, borderRadius: 6, overflow: "hidden", background: "#e2e8f0", marginBottom: 6 }}>
-                    <div style={{ width: `${Math.min(100, (have / 12) * 100)}%`, background: have >= 12 ? "linear-gradient(90deg, #16a34a, #22c55e)" : team === "team1" ? "linear-gradient(90deg, #16a34a, #4ade80)" : "linear-gradient(90deg, #1e40af, #60a5fa)", transition: "width 0.3s", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 11, fontWeight: 700 }}>{have}/12</div>
-                    {tm.length > 0 && <div style={{ width: `${(tm.length / 12) * 100}%`, background: "#8b5cf6", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 10, fontWeight: 700 }}>+{tm.length}?</div>}
+                    <div style={{ width: `${Math.min(100, (have / 12) * 100)}%`, background: have >= 12 ? "linear-gradient(90deg, #16a34a, #22c55e)" : team === "team1" ? "linear-gradient(90deg, #16a34a, #4ade80)" : "linear-gradient(90deg, #1e40af, #60a5fa)", transition: "width 0.3s", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 11, fontWeight: 600 }}>{have}/12</div>
+                    {tm.length > 0 && <div style={{ width: `${(tm.length / 12) * 100}%`, background: "#8b5cf6", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 10, fontWeight: 600 }}>+{tm.length}?</div>}
                   </div>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 11, marginBottom: 10 }}>
-                    <div style={{ color: "#64748b" }}>{range ? <span>Hdcp range: <b>{fmtH(range.min)}–{fmtH(range.max)}</b> <span style={{ marginLeft: 8, color: "#0f172a", fontWeight: 700 }}>Avg: {avgHdcp}</span></span> : <span>No players yet</span>}</div>
-                    <div>{gap > 0 ? <span style={{ color: "#dc2626", fontWeight: 700 }}>Need {gap} more</span> : <span style={{ color: "#16a34a", fontWeight: 700 }}>Full</span>}{tm.length > 0 && <span style={{ color: "#8b5cf6", marginLeft: 6 }}>({tm.length} maybe)</span>}</div>
+                    <div style={{ color: "#64748b" }}>{range ? <span>Hdcp range: <b>{fmtH(range.min)}–{fmtH(range.max)}</b> <span style={{ marginLeft: 8, color: "#0f172a", fontWeight: 600 }}>Avg: {avgHdcp}</span></span> : <span>No players yet</span>}</div>
+                    <div>{gap > 0 ? <span style={{ color: "#dc2626", fontWeight: 600 }}>Need {gap} more</span> : <span style={{ color: "#16a34a", fontWeight: 600 }}>Full</span>}{tm.length > 0 && <span style={{ color: "#8b5cf6", marginLeft: 6 }}>({tm.length} maybe)</span>}</div>
                   </div>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 3 }}>
                     {tp.map(p => { const parts = p.name.split(","); const last = parts[0].trim(); const first = (parts[1] || "").trim(); const display = first ? `${first.charAt(0)}. ${last}` : last; return (<span key={p.id} style={{ fontSize: 10, background: team === "team1" ? "#dcfce7" : "#dbeafe", color: team === "team1" ? "#16a34a" : "#1e40af", padding: "2px 6px", borderRadius: 4, fontWeight: 600, whiteSpace: "nowrap" }}>{display} ({fmtH(p.courseHdcp)})</span>); })}
@@ -1529,7 +1529,7 @@ function Dashboard({ players, schedule, lockState, clubName }) {
       ))}
 
       <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #d1d9e6", overflow: "hidden" }}>
-          <div style={{ background: "linear-gradient(135deg, #0f172a 0%, #162d50 100%)", color: ACCENT, padding: "10px 16px", fontSize: 15, fontWeight: 700 }}>Follow-Up Targets</div>
+          <div style={{ background: "linear-gradient(135deg, #0f172a 0%, #162d50 100%)", color: ACCENT, padding: "10px 16px", fontSize: 15, fontWeight: 600 }}>Follow-Up Targets</div>
           <div style={{ padding: 16, display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 16 }}>
             {[
               { title: "CONTACTED — Awaiting Reply", filter: p => p.status === "contacted", bg: "#fef9c3", color: "#f59e0b", extra: p => p.contactOwner ? `By: ${p.contactOwner}` : "" },
@@ -1540,14 +1540,14 @@ function Dashboard({ players, schedule, lockState, clubName }) {
               const list = players.filter(group.filter).sort((a, b) => a.courseHdcp - b.courseHdcp);
               return (
                 <div key={group.title}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: group.color, marginBottom: 6 }}>{group.title}</div>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: group.color, marginBottom: 6 }}>{group.title}</div>
                   {list.length === 0 && <div style={{ fontSize: 11, color: "#94a3b8", fontStyle: "italic" }}>None</div>}
                   {list.map(p => {
                     const proj = projectTeam(p, overallSplit.threshold);
                     return (
                       <div key={p.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "4px 8px", background: group.bg, borderRadius: 6, marginBottom: 3, fontSize: 11 }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                          <span style={{ fontWeight: 700, fontSize: 9, padding: "1px 5px", borderRadius: 3, background: proj === "T1" ? "#dcfce7" : "#dbeafe", color: proj === "T1" ? "#16a34a" : "#1e40af" }}>{proj}</span>
+                          <span style={{ fontWeight: 600, fontSize: 9, padding: "1px 5px", borderRadius: 3, background: proj === "T1" ? "#dcfce7" : "#dbeafe", color: proj === "T1" ? "#16a34a" : "#1e40af" }}>{proj}</span>
                           <span style={{ fontWeight: 600 }}>{p.name} ({fmtH(p.courseHdcp)})</span>
                         </div>
                         <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
@@ -1670,7 +1670,7 @@ function Roster({ players, setPlayers, addPlayerWithSync, clubName, userId }) {
       {/* ROSTER UPLOAD */}
       <div style={{ background: "#fff", borderRadius: 10, border: "1px solid #d1d9e6", padding: "14px 18px", marginBottom: 14, display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>Update Roster</span>
+          <span style={{ fontSize: 13, fontWeight: 600, color: "#0f172a" }}>Update Roster</span>
           <span style={{ fontSize: 11, color: "#64748b" }}>Re-import from .csv or .xlsx to add or update players</span>
         </div>
         <label style={{ padding: "7px 16px", borderRadius: 6, border: "2px dashed #7dd3fc", background: "#f0f9ff", color: "#0f172a", fontWeight: 600, cursor: "pointer", fontSize: 12, display: "flex", alignItems: "center", gap: 6 }}>
@@ -1692,7 +1692,7 @@ function Roster({ players, setPlayers, addPlayerWithSync, clubName, userId }) {
           <option value="name">Sort: Name</option>
           <option value="status">Sort: Status</option>
         </select>
-        <button onClick={addPlayer} style={{ padding: "8px 16px", borderRadius: 8, border: "none", background: "linear-gradient(135deg, #0f172a, #1e3a5f)", color: ACCENT, fontWeight: 700, cursor: "pointer", fontSize: 13, whiteSpace: "nowrap" }}>+ Add Player</button>
+        <button onClick={addPlayer} style={{ padding: "8px 16px", borderRadius: 8, border: "none", background: "linear-gradient(135deg, #0f172a, #1e3a5f)", color: ACCENT, fontWeight: 600, cursor: "pointer", fontSize: 13, whiteSpace: "nowrap" }}>+ Add Player</button>
         <div style={{ fontSize: 13, color: "#64748b", display: "flex", alignItems: "center", fontWeight: 600 }}>{filtered.length} of {players.length}</div>
       </div>
       {/* Summary bar */}
@@ -1709,18 +1709,18 @@ function Roster({ players, setPlayers, addPlayerWithSync, clubName, userId }) {
           <div style={{ display: "flex", gap: 10, marginBottom: 16, flexWrap: "wrap" }}>
             {/* Status summary */}
             <div style={{ flex: "1 1 auto", background: "#fff", borderRadius: 10, border: "1px solid #d1d9e6", padding: "10px 16px", display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
-              <span style={{ fontSize: 11, fontWeight: 700, color: "#64748b" }}>Status:</span>
+              <span style={{ fontSize: 11, fontWeight: 600, color: "#64748b" }}>Status:</span>
               {Object.entries(STATUS_CONFIG).map(([k, v]) => (
-                <span key={k} style={{ fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 6, background: v.bg, color: v.color }}>{v.label} {statusCounts[k]}</span>
+                <span key={k} style={{ fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 6, background: v.bg, color: v.color }}>{v.label} {statusCounts[k]}</span>
               ))}
             </div>
             {/* Week availability summary */}
             {[1, 2, 3].map(w => (
               <div key={w} style={{ background: "#fff", borderRadius: 10, border: "1px solid #d1d9e6", padding: "10px 12px", display: "flex", gap: 8, alignItems: "center" }}>
-                <span style={{ fontSize: 11, fontWeight: 700, color: "#64748b" }}>Wk{w}:</span>
-                <span style={{ fontSize: 11, fontWeight: 700, color: "#16a34a" }}>{wkCounts[w-1].yes}Y</span>
-                <span style={{ fontSize: 11, fontWeight: 700, color: "#dc2626" }}>{wkCounts[w-1].no}N</span>
-                <span style={{ fontSize: 11, fontWeight: 700, color: "#8b5cf6" }}>{wkCounts[w-1].maybe}M</span>
+                <span style={{ fontSize: 11, fontWeight: 600, color: "#64748b" }}>Wk{w}:</span>
+                <span style={{ fontSize: 11, fontWeight: 600, color: "#16a34a" }}>{wkCounts[w-1].yes}Y</span>
+                <span style={{ fontSize: 11, fontWeight: 600, color: "#dc2626" }}>{wkCounts[w-1].no}N</span>
+                <span style={{ fontSize: 11, fontWeight: 600, color: "#8b5cf6" }}>{wkCounts[w-1].maybe}M</span>
               </div>
             ))}
           </div>
@@ -1741,13 +1741,13 @@ function Roster({ players, setPlayers, addPlayerWithSync, clubName, userId }) {
                 const proj = projectTeam(p, overallSplit.threshold);
                 return (
                   <tr key={p.id} style={{ background: i % 2 === 0 ? "#fff" : "#f5f7fb", borderBottom: "1px solid #e2e8f0" }}>
-                    <td style={{ padding: "6px", textAlign: "center" }}><span style={{ fontSize: 10, fontWeight: 700, padding: "2px 6px", borderRadius: 4, background: proj === "T1" ? "#dcfce7" : "#dbeafe", color: proj === "T1" ? "#16a34a" : "#1e40af" }}>{proj}</span></td>
+                    <td style={{ padding: "6px", textAlign: "center" }}><span style={{ fontSize: 10, fontWeight: 600, padding: "2px 6px", borderRadius: 4, background: proj === "T1" ? "#dcfce7" : "#dbeafe", color: proj === "T1" ? "#16a34a" : "#1e40af" }}>{proj}</span></td>
                     <td style={{ padding: "6px 8px", fontWeight: 600, color: "#0f172a", whiteSpace: "nowrap" }}>
                       {editingId === p.id ? <input value={p.name} onChange={e => updatePlayer(p.id, "name", e.target.value)} style={{ fontSize: 12, padding: "2px 6px", border: "1px solid #38bdf8", borderRadius: 4, width: "100%", background: "#eff6ff", fontWeight: 600 }} />
                         : <span onClick={() => setEditingId(p.id)} style={{ cursor: "pointer" }}>{p.name}</span>}
                     </td>
-                    <td style={{ padding: "6px", fontWeight: 800, color: "#0f172a", textAlign: "center" }}>
-                      {editingId === p.id ? <input type="number" step="0.1" value={p.courseHdcp} onChange={e => updatePlayer(p.id, "courseHdcp", parseFloat(e.target.value) || 0)} style={{ fontSize: 11, padding: "2px 4px", border: "1px solid #38bdf8", borderRadius: 4, width: 45, background: "#eff6ff", fontWeight: 800, textAlign: "center" }} />
+                    <td style={{ padding: "6px", fontWeight: 600, color: "#0f172a", textAlign: "center" }}>
+                      {editingId === p.id ? <input type="number" step="0.1" value={p.courseHdcp} onChange={e => updatePlayer(p.id, "courseHdcp", parseFloat(e.target.value) || 0)} style={{ fontSize: 11, padding: "2px 4px", border: "1px solid #38bdf8", borderRadius: 4, width: 45, background: "#eff6ff", fontWeight: 600, textAlign: "center" }} />
                         : <span onClick={() => setEditingId(p.id)} style={{ cursor: "pointer" }}>{fmtH(p.courseHdcp)}</span>}
                     </td>
                     <td style={{ padding: "6px", color: "#64748b", textAlign: "center" }}>
@@ -1772,7 +1772,7 @@ function Roster({ players, setPlayers, addPlayerWithSync, clubName, userId }) {
                       {editingId === p.id ? (
                         <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
                           <input value={p.notes} onChange={e => updatePlayer(p.id, "notes", e.target.value)} placeholder="Notes..." style={{ fontSize: 10, padding: "2px 6px", border: "1px solid #38bdf8", borderRadius: 4, flex: 1, background: "#eff6ff" }} />
-                          <button onClick={() => setEditingId(null)} style={{ fontSize: 9, padding: "3px 8px", borderRadius: 4, border: "none", background: "#16a34a", color: "#fff", fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" }}>✓ Done</button>
+                          <button onClick={() => setEditingId(null)} style={{ fontSize: 9, padding: "3px 8px", borderRadius: 4, border: "none", background: "#16a34a", color: "#fff", fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}>✓ Done</button>
                         </div>
                       ) : <div onClick={() => setEditingId(p.id)} style={{ fontSize: 10, color: p.notes ? "#92400e" : "#ccc", cursor: "pointer", fontStyle: p.notes ? "italic" : "normal", minWidth: 50 }}>{p.notes || "+"}</div>}
                     </td>
@@ -1886,7 +1886,7 @@ function AdminPanel({ currentUserId, clubName }) {
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
         <div>
-          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: "#0f172a" }}>Admin Panel</h2>
+          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 600, color: "#0f172a" }}>Admin Panel</h2>
           <p style={{ margin: "4px 0 0", fontSize: 13, color: "#64748b" }}>Manage users, roles, and invitations</p>
         </div>
         <button onClick={() => { loadUsers(); loadInvites(); }} style={{ padding: "8px 16px", borderRadius: 8, border: "1px solid #c1cad8", background: "#fff", color: "#0f172a", fontWeight: 600, cursor: "pointer", fontSize: 12 }}>Refresh</button>
@@ -1894,8 +1894,8 @@ function AdminPanel({ currentUserId, clubName }) {
 
       {/* Tab toggle */}
       <div style={{ display: "flex", gap: 0, marginBottom: 16, background: "#f1f5f9", borderRadius: 8, padding: 3, maxWidth: 300 }}>
-        <button onClick={() => setInviteTab("users")} style={{ flex: 1, padding: "8px", borderRadius: 6, border: "none", background: inviteTab === "users" ? "#0f172a" : "transparent", color: inviteTab === "users" ? "#7dd3fc" : "#64748b", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>Users</button>
-        <button onClick={() => setInviteTab("invites")} style={{ flex: 1, padding: "8px", borderRadius: 6, border: "none", background: inviteTab === "invites" ? "#0f172a" : "transparent", color: inviteTab === "invites" ? "#7dd3fc" : "#64748b", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>Invitations</button>
+        <button onClick={() => setInviteTab("users")} style={{ flex: 1, padding: "8px", borderRadius: 6, border: "none", background: inviteTab === "users" ? "#0f172a" : "transparent", color: inviteTab === "users" ? "#7dd3fc" : "#64748b", fontWeight: 600, fontSize: 13, cursor: "pointer" }}>Users</button>
+        <button onClick={() => setInviteTab("invites")} style={{ flex: 1, padding: "8px", borderRadius: 6, border: "none", background: inviteTab === "invites" ? "#0f172a" : "transparent", color: inviteTab === "invites" ? "#7dd3fc" : "#64748b", fontWeight: 600, fontSize: 13, cursor: "pointer" }}>Invitations</button>
       </div>
 
       {feedback && (
@@ -1926,7 +1926,7 @@ function AdminPanel({ currentUserId, clubName }) {
                         <td style={{ padding: "12px 16px", fontWeight: 600, color: "#0f172a" }}>
                           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                             {u.full_name || "—"}
-                            {isCurrentUser && <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 6px", borderRadius: 4, background: "#e0f2fe", color: "#0369a1" }}>YOU</span>}
+                            {isCurrentUser && <span style={{ fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 4, background: "#e0f2fe", color: "#0369a1" }}>YOU</span>}
                           </div>
                         </td>
                         <td style={{ padding: "12px 16px", color: "#64748b", fontSize: 12 }}>{u.email}</td>
@@ -1936,7 +1936,7 @@ function AdminPanel({ currentUserId, clubName }) {
                               <button key={r.value} onClick={() => updateRole(u.id, r.value)}
                                 disabled={saving === u.id || (isCurrentUser && r.value !== "admin")}
                                 style={{
-                                  padding: "4px 10px", borderRadius: 6, fontSize: 11, fontWeight: 700, cursor: saving === u.id ? "wait" : "pointer",
+                                  padding: "4px 10px", borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: saving === u.id ? "wait" : "pointer",
                                   border: u.role === r.value ? `2px solid ${r.color}` : "1px solid #e2e8f0",
                                   background: u.role === r.value ? r.bg : "#f8fafc",
                                   color: u.role === r.value ? r.color : "#94a3b8",
@@ -1975,7 +1975,7 @@ function AdminPanel({ currentUserId, clubName }) {
         <div>
           {/* Send invite form */}
           <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #d1d9e6", padding: 20, marginBottom: 16 }}>
-            <div style={{ fontSize: 15, fontWeight: 700, color: "#0f172a", marginBottom: 12 }}>Send Invitation</div>
+            <div style={{ fontSize: 15, fontWeight: 600, color: "#0f172a", marginBottom: 12 }}>Send Invitation</div>
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "flex-end" }}>
               <div style={{ flex: "1 1 200px" }}>
                 <label style={{ fontSize: 11, fontWeight: 600, color: "#64748b", display: "block", marginBottom: 4 }}>Email Address</label>
@@ -1992,7 +1992,7 @@ function AdminPanel({ currentUserId, clubName }) {
                 </select>
               </div>
               <button onClick={sendInvite} disabled={sendingInvite || !newInviteEmail}
-                style={{ padding: "8px 20px", borderRadius: 6, border: "none", background: "linear-gradient(135deg, #0f172a, #1e3a5f)", color: "#7dd3fc", fontWeight: 700, fontSize: 13, cursor: sendingInvite ? "wait" : "pointer", opacity: sendingInvite || !newInviteEmail ? 0.6 : 1 }}>
+                style={{ padding: "8px 20px", borderRadius: 6, border: "none", background: "linear-gradient(135deg, #0f172a, #1e3a5f)", color: "#7dd3fc", fontWeight: 600, fontSize: 13, cursor: sendingInvite ? "wait" : "pointer", opacity: sendingInvite || !newInviteEmail ? 0.6 : 1 }}>
                 {sendingInvite ? "Sending..." : "Send Invite"}
               </button>
             </div>
@@ -2022,12 +2022,12 @@ function AdminPanel({ currentUserId, clubName }) {
                     <tr key={inv.id} style={{ background: i % 2 === 0 ? "#fff" : "#f5f7fb", borderBottom: "1px solid #e2e8f0" }}>
                       <td style={{ padding: "12px 16px", fontWeight: 600 }}>{inv.email}</td>
                       <td style={{ padding: "12px 16px" }}>
-                        <span style={{ fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 4, background: (ROLE_CONFIG[inv.role] || ROLE_CONFIG.vice_captain).bg, color: (ROLE_CONFIG[inv.role] || ROLE_CONFIG.vice_captain).color }}>
+                        <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 4, background: (ROLE_CONFIG[inv.role] || ROLE_CONFIG.vice_captain).bg, color: (ROLE_CONFIG[inv.role] || ROLE_CONFIG.vice_captain).color }}>
                           {(ROLE_CONFIG[inv.role] || ROLE_CONFIG.vice_captain).label}
                         </span>
                       </td>
                       <td style={{ padding: "12px 16px" }}>
-                        <span style={{ fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 4, background: statusBg, color: statusColor }}>{status}</span>
+                        <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 4, background: statusBg, color: statusColor }}>{status}</span>
                       </td>
                       <td style={{ padding: "12px 16px", color: "#94a3b8", fontSize: 11 }}>
                         {new Date(inv.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
@@ -2124,7 +2124,7 @@ function PlatformAdmin({ currentUserId }) {
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
         <div>
-          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: "#0f172a" }}>Platform Administration</h2>
+          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 600, color: "#0f172a" }}>Platform Administration</h2>
           <p style={{ margin: "4px 0 0", fontSize: 13, color: "#64748b" }}>Approve club registrations and manage the MatchGapper platform</p>
         </div>
         <button onClick={loadClubs} style={{ padding: "8px 16px", borderRadius: 8, border: "1px solid #c1cad8", background: "#fff", color: "#0f172a", fontWeight: 600, cursor: "pointer", fontSize: 12 }}>Refresh</button>
@@ -2140,9 +2140,9 @@ function PlatformAdmin({ currentUserId }) {
         <>
           {/* Pending registrations */}
           <div style={{ marginBottom: 24 }}>
-            <div style={{ fontSize: 15, fontWeight: 700, color: "#0f172a", marginBottom: 10, display: "flex", alignItems: "center", gap: 8 }}>
+            <div style={{ fontSize: 15, fontWeight: 600, color: "#0f172a", marginBottom: 10, display: "flex", alignItems: "center", gap: 8 }}>
               Pending Registrations
-              {pending.length > 0 && <span style={{ fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 10, background: "#fef3c7", color: "#92400e" }}>{pending.length}</span>}
+              {pending.length > 0 && <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 10, background: "#fef3c7", color: "#92400e" }}>{pending.length}</span>}
             </div>
             {pending.length === 0 ? (
               <div style={{ background: "#f5f7fb", borderRadius: 10, padding: 24, textAlign: "center", color: "#94a3b8", fontSize: 13 }}>No pending registrations</div>
@@ -2151,7 +2151,7 @@ function PlatformAdmin({ currentUserId }) {
                 {pending.map(club => (
                   <div key={club.id} style={{ background: "#fff", borderRadius: 12, border: "2px solid #fbbf24", padding: 20, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
                     <div>
-                      <div style={{ fontSize: 16, fontWeight: 700, color: "#0f172a" }}>{club.name}</div>
+                      <div style={{ fontSize: 16, fontWeight: 600, color: "#0f172a" }}>{club.name}</div>
                       <div style={{ fontSize: 13, color: "#64748b", marginTop: 2 }}>
                         PGA Pro: <strong>{club.pro_name}</strong> &middot; {club.pro_email}
                       </div>
@@ -2161,7 +2161,7 @@ function PlatformAdmin({ currentUserId }) {
                     </div>
                     <div style={{ display: "flex", gap: 8 }}>
                       <button onClick={() => approveClub(club)} disabled={processing === club.id}
-                        style={{ padding: "8px 20px", borderRadius: 8, border: "none", background: "#16a34a", color: "#fff", fontWeight: 700, fontSize: 13, cursor: processing === club.id ? "wait" : "pointer" }}>
+                        style={{ padding: "8px 20px", borderRadius: 8, border: "none", background: "#16a34a", color: "#fff", fontWeight: 600, fontSize: 13, cursor: processing === club.id ? "wait" : "pointer" }}>
                         {processing === club.id ? "..." : "Approve & Create Invite"}
                       </button>
                       <button onClick={() => rejectClub(club.id)} disabled={processing === club.id}
@@ -2177,7 +2177,7 @@ function PlatformAdmin({ currentUserId }) {
 
           {/* Approved clubs */}
           <div style={{ marginBottom: 24 }}>
-            <div style={{ fontSize: 15, fontWeight: 700, color: "#0f172a", marginBottom: 10 }}>
+            <div style={{ fontSize: 15, fontWeight: 600, color: "#0f172a", marginBottom: 10 }}>
               Active Clubs <span style={{ fontSize: 11, fontWeight: 600, color: "#64748b" }}>({approved.length})</span>
             </div>
             <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #d1d9e6", overflow: "hidden" }}>
@@ -2194,7 +2194,7 @@ function PlatformAdmin({ currentUserId }) {
                     <tr><td colSpan={4} style={{ padding: 24, textAlign: "center", color: "#94a3b8" }}>No approved clubs yet</td></tr>
                   ) : approved.map((club, i) => (
                     <tr key={club.id} style={{ background: i % 2 === 0 ? "#fff" : "#f5f7fb", borderBottom: "1px solid #e2e8f0" }}>
-                      <td style={{ padding: "12px 16px", fontWeight: 700 }}>{club.name}</td>
+                      <td style={{ padding: "12px 16px", fontWeight: 600 }}>{club.name}</td>
                       <td style={{ padding: "12px 16px" }}>{club.pro_name}</td>
                       <td style={{ padding: "12px 16px", color: "#64748b", fontSize: 12 }}>{club.pro_email}</td>
                       <td style={{ padding: "12px 16px", color: "#94a3b8", fontSize: 11 }}>{new Date(club.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</td>
@@ -2305,7 +2305,7 @@ function GAPManager() {
     return (
       <div style={{ fontFamily: "'Poppins', sans-serif", background: "#eef2f7", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <div style={{ textAlign: "center", color: "#64748b" }}>
-          <div style={{ width: 56, height: 56, borderRadius: "50%", background: "linear-gradient(135deg, #7dd3fc, #38bdf8)", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 28, fontWeight: 800, color: "#0f172a", marginBottom: 16 }}>M</div>
+          <div style={{ width: 56, height: 56, borderRadius: "50%", background: "linear-gradient(135deg, #7dd3fc, #38bdf8)", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 28, fontWeight: 600, color: "#0f172a", marginBottom: 16 }}>M</div>
           <div style={{ fontSize: 16, fontWeight: 600 }}>Loading...</div>
         </div>
       </div>
@@ -2317,7 +2317,7 @@ function GAPManager() {
       return (
         <div style={{ fontFamily: "'Poppins', sans-serif", background: "#eef2f7", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
           <div style={{ textAlign: "center", color: "#64748b" }}>
-            <div style={{ width: 56, height: 56, borderRadius: "50%", background: "linear-gradient(135deg, #7dd3fc, #38bdf8)", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 28, fontWeight: 800, color: "#0f172a", marginBottom: 16 }}>M</div>
+            <div style={{ width: 56, height: 56, borderRadius: "50%", background: "linear-gradient(135deg, #7dd3fc, #38bdf8)", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 28, fontWeight: 600, color: "#0f172a", marginBottom: 16 }}>M</div>
             <div style={{ fontSize: 16, fontWeight: 600 }}>Validating invitation...</div>
           </div>
         </div>
@@ -2350,13 +2350,13 @@ function GAPManager() {
 
   return (
     <div style={{ fontFamily: "'Poppins', 'Segoe UI', -apple-system, sans-serif", background: "#eef2f7", minHeight: "100vh", color: "#0f172a" }}>
-      <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+      <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet" />
       <header style={{ background: "linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%)", padding: "0 24px", borderBottom: "3px solid #7dd3fc" }}>
         <div style={{ maxWidth: 1400, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-            <div style={{ width: 42, height: 42, borderRadius: "50%", background: "linear-gradient(135deg, #7dd3fc, #38bdf8)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, fontWeight: 800, color: "#0f172a" }}>{clubInitial}</div>
+            <div style={{ width: 42, height: 42, borderRadius: "50%", background: "linear-gradient(135deg, #7dd3fc, #38bdf8)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, fontWeight: 600, color: "#0f172a" }}>{clubInitial}</div>
             <div>
-              <div style={{ color: "#7dd3fc", fontSize: 20, fontWeight: 700, lineHeight: 1.1 }}>{clubName}</div>
+              <div style={{ color: "#7dd3fc", fontSize: 20, fontWeight: 600, lineHeight: 1.1 }}>{clubName}</div>
               <div style={{ color: "#94a3b8", fontSize: 11, letterSpacing: 1 }}>BMW GAP TEAM MATCHES 2026</div>
             </div>
           </div>
@@ -2372,7 +2372,7 @@ function GAPManager() {
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <div style={{ textAlign: "right" }}>
                 <div style={{ color: "#cbd5e1", fontSize: 12, fontWeight: 600 }}>{profile?.full_name || session.user.email}</div>
-                <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 8px", borderRadius: 4, background: rc.bg, color: rc.color, letterSpacing: 0.5 }}>{rc.label.toUpperCase()}</span>
+                <span style={{ fontSize: 9, fontWeight: 600, padding: "2px 8px", borderRadius: 4, background: rc.bg, color: rc.color, letterSpacing: 0.5 }}>{rc.label.toUpperCase()}</span>
               </div>
               <button onClick={signOut} style={{ padding: "6px 12px", borderRadius: 6, border: "1px solid #334155", background: "transparent", color: "#94a3b8", fontSize: 11, fontWeight: 600, cursor: "pointer" }} title="Sign out">
                 Sign Out
