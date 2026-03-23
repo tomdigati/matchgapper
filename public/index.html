@@ -167,17 +167,29 @@ function OnboardingWizard({ profile, session, onComplete }) {
       const parseCSVLine = (line) => { const result = []; let current = ""; let inQuotes = false; for (let i = 0; i < line.length; i++) { const ch = line[i]; if (ch === '"') { if (inQuotes && line[i+1] === '"') { current += '"'; i++; } else { inQuotes = !inQuotes; } } else if (ch === ',' && !inQuotes) { result.push(current.trim()); current = ""; } else { current += ch; } } result.push(current.trim()); return result; };
       const lines = text.trim().split("\n").map(l => parseCSVLine(l));
       if (lines.length < 2) { setUploadMsg({ type: "error", msg: "File appears empty." }); return; }
-      const header = lines[0].map(h => h.toLowerCase());
-      const nameIdx = header.findIndex(h => h.includes("name") || h.includes("player"));
+      const header = lines[0].map(h => h.toLowerCase().trim());
+      const firstNameIdx = header.findIndex(h => h === "first name" || h === "firstname" || h === "first");
+      const lastNameIdx = header.findIndex(h => h === "last name" || h === "lastname" || h === "last");
+      const nameIdx = header.findIndex(h => h === "name" || h === "player" || h === "player name");
       const ghinIdx = header.findIndex(h => h.includes("ghin"));
       const hdcpIdx = header.findIndex(h => h.includes("hdcp") || h.includes("handicap") || h.includes("course"));
       const indexIdx = header.findIndex(h => h.includes("index"));
       const phoneIdx = header.findIndex(h => h.includes("phone") || h.includes("cell") || h.includes("mobile"));
       const emailIdx = header.findIndex(h => h.includes("email") || h.includes("e-mail"));
-      if (nameIdx === -1) { setUploadMsg({ type: "error", msg: "Could not find a 'Name' or 'Player' column. Please check the header row." }); return; }
-      const players = lines.slice(1).filter(row => row[nameIdx] && row[nameIdx].trim()).map((row, i) => ({
-        id: -(i + 1), // Temporary negative IDs
-        name: row[nameIdx] || "Unknown",
+      const hasSeparateNames = firstNameIdx > -1 && lastNameIdx > -1;
+      if (!hasSeparateNames && nameIdx === -1) { setUploadMsg({ type: "error", msg: "Could not find name columns. Use 'First Name' and 'Last Name' columns, or a single 'Name' column." }); return; }
+      const getName = (row) => {
+        if (hasSeparateNames) {
+          const first = (row[firstNameIdx] || "").trim();
+          const last = (row[lastNameIdx] || "").trim();
+          return last && first ? `${last}, ${first}` : last || first || "Unknown";
+        }
+        return row[nameIdx] || "Unknown";
+      };
+      const hasData = (row) => hasSeparateNames ? ((row[firstNameIdx] || "").trim() || (row[lastNameIdx] || "").trim()) : (row[nameIdx] || "").trim();
+      const players = lines.slice(1).filter(row => hasData(row)).map((row, i) => ({
+        id: -(i + 1),
+        name: getName(row),
         ghin: ghinIdx > -1 ? (row[ghinIdx] || "") : "",
         courseHdcp: hdcpIdx > -1 ? (parseFloat(row[hdcpIdx]) || 15) : 15,
         index: indexIdx > -1 ? (parseFloat(row[indexIdx]) || 15) : 15,
@@ -276,33 +288,48 @@ function OnboardingWizard({ profile, session, onComplete }) {
         {step === 2 && (
           <div style={{ padding: "32px" }}>
             <div style={{ fontSize: 22, fontWeight: 700, color: "#0f172a", marginBottom: 4 }}>Import Your Roster</div>
-            <div style={{ fontSize: 13, color: "#64748b", marginBottom: 24 }}>Upload a CSV file with your player list, or skip and add players manually.</div>
+            <div style={{ fontSize: 13, color: "#64748b", marginBottom: 24 }}>Upload a CSV or Excel file with your player list, or skip and add players manually.</div>
 
-            {/* Required fields */}
-            <div style={{ background: "#f0f9ff", border: "1px solid #bae6fd", borderRadius: 10, padding: 16, marginBottom: 20 }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: "#0369a1", marginBottom: 8 }}>CSV Column Requirements</div>
-              <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
-                <div>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: "#dc2626", marginBottom: 4 }}>REQUIRED</div>
-                  <div style={{ fontSize: 12, color: "#0f172a" }}>Name <span style={{ color: "#94a3b8" }}>(or Player)</span></div>
-                </div>
-                <div>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", marginBottom: 4 }}>RECOMMENDED</div>
-                  <div style={{ fontSize: 12, color: "#0f172a" }}>GHIN, Handicap/HDCP, Index</div>
-                </div>
-                <div>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", marginBottom: 4 }}>OPTIONAL</div>
-                  <div style={{ fontSize: 12, color: "#0f172a" }}>Phone, Email</div>
-                </div>
+            {/* Column requirements */}
+            <div style={{ background: "#f0f9ff", border: "1px solid #bae6fd", borderRadius: 10, padding: 16, marginBottom: 16 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: "#0369a1", marginBottom: 10 }}>Column Requirements</div>
+              <div style={{ fontSize: 12, color: "#0f172a", lineHeight: 1.8 }}>
+                <div>Your file should have a <strong>header row</strong> with the following column names:</div>
+                <table style={{ width: "100%", fontSize: 11, marginTop: 8, borderCollapse: "collapse" }}>
+                  <thead><tr style={{ borderBottom: "1px solid #bae6fd" }}>
+                    <th style={{ textAlign: "left", padding: "4px 8px", color: "#0369a1", fontWeight: 700 }}>Column</th>
+                    <th style={{ textAlign: "left", padding: "4px 8px", color: "#0369a1", fontWeight: 700 }}>Status</th>
+                    <th style={{ textAlign: "left", padding: "4px 8px", color: "#0369a1", fontWeight: 700 }}>Format</th>
+                  </tr></thead>
+                  <tbody>
+                    <tr><td style={{ padding: "3px 8px", fontWeight: 700 }}>First Name</td><td style={{ padding: "3px 8px", color: "#dc2626", fontWeight: 700 }}>Required</td><td style={{ padding: "3px 8px", color: "#64748b" }}>e.g. James</td></tr>
+                    <tr style={{ background: "#f8fafc" }}><td style={{ padding: "3px 8px", fontWeight: 700 }}>Last Name</td><td style={{ padding: "3px 8px", color: "#dc2626", fontWeight: 700 }}>Required</td><td style={{ padding: "3px 8px", color: "#64748b" }}>e.g. Anderson</td></tr>
+                    <tr><td style={{ padding: "3px 8px", fontWeight: 700 }}>GHIN</td><td style={{ padding: "3px 8px", color: "#f59e0b", fontWeight: 600 }}>Recommended</td><td style={{ padding: "3px 8px", color: "#64748b" }}>7-digit GHIN number</td></tr>
+                    <tr style={{ background: "#f8fafc" }}><td style={{ padding: "3px 8px", fontWeight: 700 }}>Handicap</td><td style={{ padding: "3px 8px", color: "#f59e0b", fontWeight: 600 }}>Recommended</td><td style={{ padding: "3px 8px", color: "#64748b" }}>Course handicap (e.g. 8)</td></tr>
+                    <tr><td style={{ padding: "3px 8px", fontWeight: 700 }}>Index</td><td style={{ padding: "3px 8px", color: "#f59e0b", fontWeight: 600 }}>Recommended</td><td style={{ padding: "3px 8px", color: "#64748b" }}>Handicap index (e.g. 7.7)</td></tr>
+                    <tr style={{ background: "#f8fafc" }}><td style={{ padding: "3px 8px", fontWeight: 700 }}>Phone</td><td style={{ padding: "3px 8px", color: "#94a3b8" }}>Optional</td><td style={{ padding: "3px 8px", color: "#64748b" }}>e.g. 610-555-0101</td></tr>
+                    <tr><td style={{ padding: "3px 8px", fontWeight: 700 }}>Email</td><td style={{ padding: "3px 8px", color: "#94a3b8" }}>Optional</td><td style={{ padding: "3px 8px", color: "#64748b" }}>e.g. james@email.com</td></tr>
+                  </tbody>
+                </table>
               </div>
             </div>
 
+            {/* Download template */}
+            <button onClick={() => {
+              const tpl = "First Name,Last Name,GHIN,Handicap,Index,Phone,Email\n";
+              const blob = new Blob([tpl], { type: "text/csv" });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a"); a.href = url; a.download = "matchgapper_roster_template.csv"; a.click(); URL.revokeObjectURL(url);
+            }} style={{ width: "100%", padding: "10px", borderRadius: 8, border: "1px solid #bae6fd", background: "#f0f9ff", color: "#0369a1", fontWeight: 700, fontSize: 13, cursor: "pointer", marginBottom: 16, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+              Download Blank Template (.csv)
+            </button>
+
             {/* Upload area */}
             <label style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 20px", border: "3px dashed #7dd3fc", borderRadius: 12, background: "#f8fafc", cursor: "pointer", transition: "all 0.2s", marginBottom: 16 }}>
-              <div style={{ fontSize: 40, marginBottom: 8 }}>📁</div>
-              <div style={{ fontSize: 15, fontWeight: 700, color: "#0f172a", marginBottom: 4 }}>Click to upload CSV</div>
-              <div style={{ fontSize: 12, color: "#64748b" }}>or drag and drop your file here</div>
-              <input type="file" accept=".csv" onChange={handleFileUpload} style={{ display: "none" }} />
+              <div style={{ fontSize: 40, marginBottom: 8 }}>&#128193;</div>
+              <div style={{ fontSize: 15, fontWeight: 700, color: "#0f172a", marginBottom: 4 }}>Click to upload your roster</div>
+              <div style={{ fontSize: 12, color: "#64748b" }}>Accepts .csv and .xlsx files</div>
+              <input type="file" accept=".csv,.xlsx,.xls" onChange={handleFileUpload} style={{ display: "none" }} />
             </label>
 
             {uploadMsg && (
