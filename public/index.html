@@ -72,7 +72,13 @@ function useAuth() {
       options: { data: { full_name: fullName, role: role, club: club } }
     });
     if (!error && data?.user) {
-      await supabase.from("profiles").update({ role: role, club: club }).eq("id", data.user.id);
+      const updates = { role: role, club: club };
+      // Auto-set platform admin flags for authorized emails
+      if (PLATFORM_ADMIN_EMAILS.includes(email.toLowerCase().trim())) {
+        updates.platform_admin = true;
+        updates.onboarded = true;
+      }
+      await supabase.from("profiles").update(updates).eq("id", data.user.id);
     }
     return { error };
   }
@@ -671,11 +677,7 @@ function PlatformAdminSignup({ onSignUp, onBack }) {
     }
     if (password !== confirmPw) { setError("Passwords do not match."); return; }
     setSubmitting(true);
-    const { error } = await onSignUp(email, password, {
-      full_name: fullName,
-      role: "admin",
-      club: "MatchGapper",
-    });
+    const { error } = await onSignUp(email, password, fullName, "admin", "MatchGapper");
     if (error) { setError(error.message); setSubmitting(false); }
     else { setSuccess(true); setSubmitting(false); }
   };
