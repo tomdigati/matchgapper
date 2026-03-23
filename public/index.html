@@ -1923,7 +1923,7 @@ function Roster({ players, setPlayers, addPlayerWithSync, clubName, userId, sche
         <div style={{ overflowX: "auto" }}>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
             <thead><tr style={{ background: "linear-gradient(135deg, #0f172a 0%, #162d50 100%)", color: ACCENT }}>
-              {["Proj", "Player", "HDCP", "Index", "GHIN", "Contact", "Status", "Wk1", "Wk2", "Wk3", "Loc1", "Loc2", "Loc3", "Notes"].map(h => (
+              {["Proj", "Player", "HDCP", "Index", "GHIN", "Contact", "Status", "Wk1", "Wk2", "Wk3", "Loc1", "Loc2", "Loc3", "Notes", ""].map(h => (
                 <th key={h} style={{ padding: "10px 6px", textAlign: "left", fontWeight: 600, fontSize: 10, letterSpacing: 0.5, whiteSpace: "nowrap" }}>{h}</th>
               ))}
             </tr></thead>
@@ -1968,6 +1968,12 @@ function Roster({ players, setPlayers, addPlayerWithSync, clubName, userId, sche
                           <button onClick={() => setEditingId(null)} style={{ fontSize: 9, padding: "3px 8px", borderRadius: 4, border: "none", background: "#16a34a", color: "#fff", fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}>✓ Done</button>
                         </div>
                       ) : <div onClick={() => setEditingId(p.id)} style={{ fontSize: 10, color: p.notes ? "#92400e" : "#ccc", cursor: "pointer", fontStyle: p.notes ? "italic" : "normal", minWidth: 50 }}>{p.notes || "+"}</div>}
+                    </td>
+                    <td style={{ padding: "4px 6px" }}>
+                      <button onClick={() => { if (window.confirm(`Delete ${p.name} from the roster? This cannot be undone.`)) { deletePlayerFromDb(p.id); setPlayers(prev => prev.filter(pl => pl.id !== p.id)); } }}
+                        style={{ fontSize: 9, padding: "3px 6px", borderRadius: 4, border: "1px solid #fca5a5", background: "#fff5f5", color: "#dc2626", cursor: "pointer", fontWeight: 600, whiteSpace: "nowrap" }}>
+                        Remove
+                      </button>
                     </td>
                   </tr>
                 );
