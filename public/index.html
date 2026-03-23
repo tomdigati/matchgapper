@@ -1218,7 +1218,7 @@ function PairSlot({ pair, pairNum, onDrop, onRemove, players, side, week, thresh
 // ═══════════════════════════════════════════════════════════════
 // TEAM BUILDER (with Lock/Unlock flow)
 // ═══════════════════════════════════════════════════════════════
-function TeamBuilder({ players, schedule, lockState, setLockState, userRole, clubName }) {
+function TeamBuilder({ players, schedule, lockState, setLockState, userRole, clubName, assignments, setAssignments }) {
   const isAdmin = userRole === "admin" || userRole === "captain";
   const [activeWeek, setActiveWeek] = useState(1);
   const emptyWeek = (teamCount) => {
@@ -1228,11 +1228,6 @@ function TeamBuilder({ players, schedule, lockState, setLockState, userRole, clu
     }
     return w;
   };
-  const [assignments, setAssignments] = useState(() => {
-    const init = {};
-    [1, 2, 3].forEach(w => { init[w] = emptyWeek(schedule[w]?.teamCount || 2); });
-    return init;
-  });
   const [validationMsg, setValidationMsg] = useState(null);
   const [copyFeedback, setCopyFeedback] = useState(null);
   const weekSched = schedule[activeWeek];
@@ -1535,7 +1530,7 @@ function TeamBuilder({ players, schedule, lockState, setLockState, userRole, clu
 // ═══════════════════════════════════════════════════════════════
 // DASHBOARD
 // ═══════════════════════════════════════════════════════════════
-function Dashboard({ players, schedule, lockState, clubName }) {
+function Dashboard({ players, schedule, lockState, clubName, assignments }) {
   const weekAnalysis = [1, 2, 3].map(w => {
     const tc = schedule[w].teamCount || 2;
     const split = computeTeamSplit(players, w, tc);
@@ -1671,13 +1666,15 @@ function Dashboard({ players, schedule, lockState, clubName }) {
           </div>
           <div style={{ display: "grid", gridTemplateColumns: `repeat(${wa.teamCount}, 1fr)`, gap: 0 }}>
             {wa.teams.map((teamSched, idx) => {
-              const tp = (wa.teams && wa.teams[idx]) ? (wa.teams[idx] || []) : [];
-              const splitTeam = wa.teams ? (wa.teams[idx] ? wa.teams[idx] : []) : [];
-              const teamPlayers = (wa.confirmed || []).slice(idx * 12, (idx + 1) * 12);
-              const maybeTeam = wa.maybeTeams ? wa.maybeTeams[idx] || [] : [];
+              // Get actually assigned players from assignments state
+              const weekAssign = assignments[wa.week] || {};
+              const teamAssign = weekAssign[idx] || { home: [[], [], []], away: [[], [], []] };
+              const assignedIds = new Set();
+              ["home", "away"].forEach(s => (teamAssign[s] || []).forEach(pair => (pair || []).forEach(id => assignedIds.add(id))));
+              const teamPlayers = players.filter(p => assignedIds.has(p.id)).sort((a, b) => a.courseHdcp - b.courseHdcp);
               const opp = teamSched.opponent || "";
               const num = teamSched.teamNum || "";
-              const rangeData = wa.ranges ? wa.ranges[idx] : null;
+              const rangeData = teamPlayers.length > 0 ? { min: Math.min(...teamPlayers.map(p => p.courseHdcp)), max: Math.max(...teamPlayers.map(p => p.courseHdcp)) } : null;
               const have = teamPlayers.length;
               const gap = Math.max(0, 12 - have);
               const avgHdcp = teamPlayers.length > 0 ? (teamPlayers.reduce((s, p) => s + p.courseHdcp, 0) / teamPlayers.length).toFixed(1) : "—";
@@ -1695,16 +1692,14 @@ function Dashboard({ players, schedule, lockState, clubName }) {
                     {opp && <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(opp)}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 10, color: "#1e40af", textDecoration: "none", background: "#dbeafe", padding: "3px 8px", borderRadius: 5, fontWeight: 600, whiteSpace: "nowrap" }}>Map</a>}
                   </div>
                   <div style={{ display: "flex", height: 28, borderRadius: 6, overflow: "hidden", background: "#e2e8f0", marginBottom: 6 }}>
-                    <div style={{ width: `${Math.min(100, (have / 12) * 100)}%`, background: have >= 12 ? "linear-gradient(90deg, #16a34a, #22c55e)" : `linear-gradient(90deg, ${tc.color}, ${tc.color}aa)`, transition: "width 0.3s", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 11, fontWeight: 600 }}>{have}/12</div>
-                    {maybeTeam.length > 0 && <div style={{ width: `${(maybeTeam.length / 12) * 100}%`, background: "#8b5cf6", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 10, fontWeight: 600 }}>+{maybeTeam.length}?</div>}
+                    <div style={{ width: `${Math.min(100, (have / 12) * 100)}%`, minWidth: have > 0 ? 40 : 0, background: have >= 12 ? "linear-gradient(90deg, #16a34a, #22c55e)" : `linear-gradient(90deg, ${tc.color}, ${tc.color}aa)`, transition: "width 0.3s", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 11, fontWeight: 600 }}>{have}/12</div>
                   </div>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 11, marginBottom: 10 }}>
-                    <div style={{ color: "#64748b" }}>{rangeData ? <span>Hdcp range: <b>{fmtH(rangeData.min)}–{fmtH(rangeData.max)}</b> <span style={{ marginLeft: 8, color: "#0f172a", fontWeight: 600 }}>Avg: {avgHdcp}</span></span> : <span>No players yet</span>}</div>
-                    <div>{gap > 0 ? <span style={{ color: "#dc2626", fontWeight: 600 }}>Need {gap} more</span> : <span style={{ color: "#16a34a", fontWeight: 600 }}>Full</span>}{maybeTeam.length > 0 && <span style={{ color: "#8b5cf6", marginLeft: 6 }}>({maybeTeam.length} maybe)</span>}</div>
+                    <div style={{ color: "#64748b" }}>{rangeData ? <span>Hdcp range: <b>{fmtH(rangeData.min)}–{fmtH(rangeData.max)}</b> <span style={{ marginLeft: 8, color: "#0f172a", fontWeight: 600 }}>Avg: {avgHdcp}</span></span> : <span>No players assigned yet</span>}</div>
+                    <div>{gap > 0 ? <span style={{ color: "#dc2626", fontWeight: 600 }}>Need {gap} more</span> : <span style={{ color: "#16a34a", fontWeight: 600 }}>Full</span>}</div>
                   </div>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 3 }}>
                     {teamPlayers.map(p => { const parts = p.name.split(","); const last = parts[0].trim(); const first = (parts[1] || "").trim(); const display = first ? `${first.charAt(0)}. ${last}` : last; return (<span key={p.id} style={{ fontSize: 10, background: tc.bg, color: tc.color, padding: "2px 6px", borderRadius: 4, fontWeight: 600, whiteSpace: "nowrap" }}>{display} ({fmtH(p.courseHdcp)})</span>); })}
-                    {maybeTeam.map(p => { const parts = p.name.split(","); const last = parts[0].trim(); const first = (parts[1] || "").trim(); const display = first ? `${first.charAt(0)}. ${last}` : last; return (<span key={p.id} style={{ fontSize: 10, background: "#ede9fe", color: "#8b5cf6", padding: "2px 6px", borderRadius: 4, fontWeight: 600, whiteSpace: "nowrap", fontStyle: "italic" }}>{display} ({fmtH(p.courseHdcp)})?</span>); })}
                   </div>
                 </div>
               );
@@ -2418,6 +2413,10 @@ function GAPManager() {
   const [playersLoaded, setPlayersLoaded] = useState(false);
   const [schedule, setSchedule] = useState(DEFAULT_SCHEDULE);
   const [lockState, setLockState] = useState(DEFAULT_LOCK_STATE);
+  const emptyWeek = (teamCount) => { const w = {}; for (let i = 0; i < teamCount; i++) { w[i] = { home: [[], [], []], away: [[], [], []] }; } return w; };
+  const [assignments, setAssignments] = useState(() => {
+    const init = {}; [1, 2, 3].forEach(w => { init[w] = emptyWeek(DEFAULT_SCHEDULE[w]?.teamCount || 2); }); return init;
+  });
   const [appScreen, setAppScreen] = useState("main"); // "main", "register_club"
   const [inviteData, setInviteData] = useState(null); // holds validated invite info
   const [inviteLoading, setInviteLoading] = useState(false);
@@ -2570,9 +2569,9 @@ function GAPManager() {
         </div>
       </header>
       <main style={{ maxWidth: 1400, margin: "0 auto", padding: "24px" }}>
-        {activeTab === "dashboard" && <Dashboard players={players} schedule={schedule} lockState={lockState} clubName={clubName} />}
+        {activeTab === "dashboard" && <Dashboard players={players} schedule={schedule} lockState={lockState} clubName={clubName} assignments={assignments} />}
         {activeTab === "roster" && <Roster players={players} setPlayers={setPlayersWithSync} addPlayerWithSync={addPlayerWithSync} clubName={clubName} userId={session.user.id} schedule={schedule} />}
-        {activeTab === "builder" && <TeamBuilder players={players} schedule={schedule} lockState={lockState} setLockState={setLockState} userRole={userRole} clubName={clubName} />}
+        {activeTab === "builder" && <TeamBuilder players={players} schedule={schedule} lockState={lockState} setLockState={setLockState} userRole={userRole} clubName={clubName} assignments={assignments} setAssignments={setAssignments} />}
         {activeTab === "setup" && <SeasonSetup schedule={schedule} setSchedule={setSchedule} lockState={lockState} userRole={userRole} clubName={clubName} />}
         {activeTab === "admin" && isAdmin && <AdminPanel currentUserId={session.user.id} clubName={clubName} />}
         {activeTab === "platform" && isPlatformAdmin && <PlatformAdmin currentUserId={session.user.id} />}
