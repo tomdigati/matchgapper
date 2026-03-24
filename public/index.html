@@ -2438,6 +2438,39 @@ function PlatformAdmin({ currentUserId, onEnterClub }) {
     setProcessing(null);
   }
 
+  async function deleteClub(clubId) {
+    const club = clubs.find(c => c.id === clubId);
+    if (!confirm(`Permanently delete ${club?.name}? This will remove the club, its invitations, and all associated players.`)) return;
+    setProcessing(clubId);
+    // Delete associated players and invitations first
+    await supabase.from("players").delete().eq("club", club.name);
+    await supabase.from("invitations").delete().eq("club", club.name);
+    const { error } = await supabase.from("clubs").delete().eq("id", clubId);
+    if (!error) {
+      setClubs(prev => prev.filter(c => c.id !== clubId));
+      setFeedback({ type: "success", msg: `${club?.name} deleted` });
+      setTimeout(() => setFeedback(null), 3000);
+    } else {
+      setFeedback({ type: "error", msg: "Failed to delete club: " + error.message });
+    }
+    setProcessing(null);
+  }
+
+  async function deleteUser(userId) {
+    const user = users.find(u => u.id === userId);
+    if (!confirm(`Permanently remove ${user?.full_name || user?.email}? This will delete their profile.`)) return;
+    setProcessing(userId);
+    const { error } = await supabase.from("profiles").delete().eq("id", userId);
+    if (!error) {
+      setUsers(prev => prev.filter(u => u.id !== userId));
+      setFeedback({ type: "success", msg: `${user?.full_name || user?.email} removed` });
+      setTimeout(() => setFeedback(null), 3000);
+    } else {
+      setFeedback({ type: "error", msg: "Failed to remove: " + error.message });
+    }
+    setProcessing(null);
+  }
+
   async function updateUserRole(userId, newRole) {
     const { error } = await supabase.from("profiles").update({ role: newRole }).eq("id", userId);
     if (!error) setUsers(prev => prev.map(u => u.id === userId ? { ...u, role: newRole } : u));
@@ -2633,6 +2666,11 @@ function PlatformAdmin({ currentUserId, onEnterClub }) {
                               Enter Club View
                             </button>
                           )}
+                          <button onClick={() => deleteClub(club.id)}
+                            disabled={processing === club.id}
+                            style={{ padding: "4px 10px", borderRadius: 6, border: "1px solid #fca5a5", background: "#fff5f5", color: "#dc2626", fontSize: 11, fontWeight: 600, cursor: "pointer" }}>
+                            Delete
+                          </button>
                         </td>
                       </tr>
                     ))}
@@ -2676,12 +2714,21 @@ function PlatformAdmin({ currentUserId, onEnterClub }) {
                           <span style={{ fontSize: 11, color: u.onboarded ? "#16a34a" : "#94a3b8" }}>{u.onboarded ? "Yes" : "No"}</span>
                         </td>
                         <td style={{ padding: "10px 14px" }}>
-                          {u.club && u.club !== "MatchGapper" && (
-                            <button onClick={() => onEnterClub(u.club)}
-                              style={{ padding: "4px 10px", borderRadius: 6, border: "1px solid #7dd3fc", background: "#eff6ff", color: "#1e40af", fontWeight: 600, fontSize: 11, cursor: "pointer" }}>
-                              View Club
-                            </button>
-                          )}
+                          <div style={{ display: "flex", gap: 6 }}>
+                            {u.club && u.club !== "MatchGapper" && (
+                              <button onClick={() => onEnterClub(u.club)}
+                                style={{ padding: "4px 10px", borderRadius: 6, border: "1px solid #7dd3fc", background: "#eff6ff", color: "#1e40af", fontWeight: 600, fontSize: 11, cursor: "pointer" }}>
+                                View Club
+                              </button>
+                            )}
+                            {u.id !== currentUserId && (
+                              <button onClick={() => deleteUser(u.id)}
+                                disabled={processing === u.id}
+                                style={{ padding: "4px 10px", borderRadius: 6, border: "1px solid #fca5a5", background: "#fff5f5", color: "#dc2626", fontSize: 11, fontWeight: 600, cursor: "pointer" }}>
+                                Delete
+                              </button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ))}
