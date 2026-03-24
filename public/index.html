@@ -2794,7 +2794,7 @@ function GAPManager() {
   const userRole = profile?.role || "vice_captain";
   const isAdmin = userRole === "admin";
   const isCaptain = userRole === "captain" || isAdmin;
-  const isPlatformAdmin = profile?.platform_admin === true;
+  const isPlatformAdmin = !!profile?.platform_admin || PLATFORM_ADMIN_EMAILS.includes(profile?.email?.toLowerCase());
   const rc = ROLE_CONFIG[userRole] || ROLE_CONFIG.vice_captain;
   const clubName = profile?.club || "My Club";
   const clubInitial = clubName.charAt(0).toUpperCase();
