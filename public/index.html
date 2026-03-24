@@ -2913,12 +2913,8 @@ function GAPManager() {
         ...(isPlatformAdmin ? [{ id: "platform", label: "Platform", Icon: IconPlatform }] : []),
       ];
 
-  // When platform admin first logs in, default to platform tab
-  useEffect(() => {
-    if (isPlatformAdmin && !viewingClub && activeTab !== "platform") {
-      setActiveTab("platform");
-    }
-  }, [isPlatformAdmin, viewingClub]);
+  // Force platform tab for platform admins not viewing a club
+  const effectiveTab = (isPlatformAdmin && !viewingClub && !["platform"].includes(activeTab)) ? "platform" : activeTab;
 
   const handleEnterClub = (club) => {
     setViewingClub(club);
@@ -2973,7 +2969,7 @@ function GAPManager() {
           <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
             <nav style={{ display: "flex", gap: 2 }}>
               {tabs.map(t => (
-                <button key={t.id} onClick={() => setActiveTab(t.id)} style={{ padding: "16px 20px", background: activeTab === t.id ? (headerAccent + "15") : "transparent", border: "none", borderBottom: activeTab === t.id ? `3px solid ${headerAccent}` : "3px solid transparent", color: activeTab === t.id ? headerAccent : "#94a3b8", cursor: "pointer", fontSize: 13, fontWeight: 600, transition: "all 0.2s", display: "flex", alignItems: "center", gap: 6 }}>
+                <button key={t.id} onClick={() => setActiveTab(t.id)} style={{ padding: "16px 20px", background: effectiveTab === t.id ? (headerAccent + "15") : "transparent", border: "none", borderBottom: effectiveTab === t.id ? `3px solid ${headerAccent}` : "3px solid transparent", color: effectiveTab === t.id ? headerAccent : "#94a3b8", cursor: "pointer", fontSize: 13, fontWeight: 600, transition: "all 0.2s", display: "flex", alignItems: "center", gap: 6 }}>
                   <t.Icon /> {t.label}
                 </button>
               ))}
@@ -2993,12 +2989,12 @@ function GAPManager() {
         </div>
       </header>
       <main style={{ maxWidth: 1400, margin: "0 auto", padding: "24px" }}>
-        {activeTab === "dashboard" && <Dashboard players={players} schedule={schedule} lockState={lockState} clubName={effectiveClubName} assignments={assignments} />}
-        {activeTab === "roster" && <Roster players={players} setPlayers={setPlayersWithSync} addPlayerWithSync={addPlayerWithSync} clubName={effectiveClubName} userId={session.user.id} schedule={schedule} />}
-        {activeTab === "builder" && <TeamBuilder players={players} schedule={schedule} lockState={lockState} setLockState={setLockState} userRole={userRole} clubName={effectiveClubName} assignments={assignments} setAssignments={setAssignments} />}
-        {activeTab === "setup" && <SeasonSetup schedule={schedule} setSchedule={setSchedule} lockState={lockState} userRole={userRole} clubName={effectiveClubName} />}
-        {activeTab === "admin" && (isAdmin || isPlatformAdmin) && <AdminPanel currentUserId={session.user.id} clubName={effectiveClubName} />}
-        {activeTab === "platform" && isPlatformAdmin && <PlatformAdmin currentUserId={session.user.id} onEnterClub={handleEnterClub} />}
+        {effectiveTab === "dashboard" && <Dashboard players={players} schedule={schedule} lockState={lockState} clubName={effectiveClubName} assignments={assignments} />}
+        {effectiveTab === "roster" && <Roster players={players} setPlayers={setPlayersWithSync} addPlayerWithSync={addPlayerWithSync} clubName={effectiveClubName} userId={session.user.id} schedule={schedule} />}
+        {effectiveTab === "builder" && <TeamBuilder players={players} schedule={schedule} lockState={lockState} setLockState={setLockState} userRole={userRole} clubName={effectiveClubName} assignments={assignments} setAssignments={setAssignments} />}
+        {effectiveTab === "setup" && <SeasonSetup schedule={schedule} setSchedule={setSchedule} lockState={lockState} userRole={userRole} clubName={effectiveClubName} />}
+        {effectiveTab === "admin" && (isAdmin || isPlatformAdmin) && <AdminPanel currentUserId={session.user.id} clubName={effectiveClubName} />}
+        {effectiveTab === "platform" && isPlatformAdmin && <PlatformAdmin currentUserId={session.user.id} onEnterClub={handleEnterClub} />}
       </main>
       <footer style={{ textAlign: "center", padding: "16px", color: "#64748b", fontSize: 11, borderTop: "1px solid #d1d9e6" }}>MatchGapper · BMW GAP Team Match Manager · All matches scratch — no handicap strokes</footer>
     </div>
