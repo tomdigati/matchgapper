@@ -57,9 +57,9 @@ function useAuth() {
       .eq("id", userId)
       .single();
     if (data) {
-      // Auto-fix platform admin flags if email matches but flags aren't set
-      if (PLATFORM_ADMIN_EMAILS.includes(data.email?.toLowerCase()) && (!data.platform_admin || !data.onboarded)) {
-        await supabase.from("profiles").update({ platform_admin: true, onboarded: true }).eq("id", userId);
+      // Override platform admin flags in memory for authorized emails
+      // (avoids RLS issues with self-referencing update policies)
+      if (PLATFORM_ADMIN_EMAILS.includes(data.email?.toLowerCase())) {
         data.platform_admin = true;
         data.onboarded = true;
       }
