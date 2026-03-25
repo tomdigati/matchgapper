@@ -2424,8 +2424,21 @@ function PlatformAdmin({ currentUserId, onEnterClub }) {
       setFeedback({ type: "error", msg: "Club approved but invite creation failed: " + inviteErr.message });
     } else {
       const inviteUrl = `${window.location.origin}${window.location.pathname}?invite=${inviteData.token}`;
+      // Send approval email to the pro
+      try {
+        await fetch("https://matchgapper-club-notify.tom-54b.workers.dev/approve", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            clubName: club.name,
+            proName: club.pro_name,
+            proEmail: club.pro_email,
+            inviteToken: inviteData.token,
+          }),
+        });
+      } catch (e) { console.error("Failed to send approval email:", e); }
       setClubs(prev => prev.map(c => c.id === club.id ? { ...c, status: "approved", verified: true } : c));
-      setFeedback({ type: "success", msg: `${club.name} approved! Invite link: ${inviteUrl}` });
+      setFeedback({ type: "success", msg: `${club.name} approved! Invite emailed to ${club.pro_email}` });
       loadAll();
     }
     setProcessing(null);
