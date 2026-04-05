@@ -62,7 +62,7 @@ async function handleRegistration(payload, env) {
           </tr>
         </table>
         <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid #e2e8f0;">
-          <a href="https://matchgapper.pages.dev" style="display: inline-block; background: #f59e0b; color: #0f172a; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px;">Review in Platform Admin</a>
+          <a href="https://matchgapper.com" style="display: inline-block; background: #f59e0b; color: #0f172a; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px;">Review in Platform Admin</a>
         </div>
       </div>
     </div>
@@ -96,7 +96,7 @@ async function handleApproval(payload, env) {
     return new Response(JSON.stringify({ error: "Missing proEmail or inviteToken" }), { status: 400, headers: { "Access-Control-Allow-Origin": "*" } });
   }
 
-  const inviteUrl = `https://matchgapper.pages.dev?invite=${inviteToken}`;
+  const inviteUrl = `https://matchgapper.com?invite=${inviteToken}`;
 
   const emailHtml = `
     <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto;">
