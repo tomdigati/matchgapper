@@ -3281,7 +3281,7 @@ function GAPManager() {
     const init = {}; [1, 2, 3].forEach(w => { init[w] = emptyWeek(DEFAULT_SCHEDULE[w]?.teamCount || 2); }); return init;
   });
   const [appScreen, setAppScreen] = useState("main"); // "main", "register_club", "platform_admin_signup"
-  const [viewingClub, setViewingClub] = useState(null); // god mode: override club context
+  const [viewingClub, setViewingClub] = useState(() => sessionStorage.getItem("viewingClub") || null); // god mode: override club context
   const [inviteData, setInviteData] = useState(null); // holds validated invite info
   const [inviteLoading, setInviteLoading] = useState(false);
 
@@ -3409,7 +3409,7 @@ function GAPManager() {
 
   // Handle new player add (needs to get DB id back)
   const addPlayerWithSync = useCallback(async (newPlayer) => {
-    const row = appPlayerToDb(newPlayer, clubName, session?.user?.id);
+    const row = appPlayerToDb(newPlayer, effectiveClubName, session?.user?.id);
     delete row.id;
     const { data, error } = await supabase.from("players").insert(row).select("*").single();
     if (data) {
@@ -3417,7 +3417,7 @@ function GAPManager() {
       return data.id;
     }
     return null;
-  }, [clubName, session?.user?.id]);
+  }, [effectiveClubName, session?.user?.id]);
 
   // Must be declared before any conditional returns (React Rules of Hooks)
   const [clubHasPlayers, setClubHasPlayers] = useState(null);
@@ -3517,6 +3517,7 @@ function GAPManager() {
   const effectiveTab = (isPlatformAdmin && !viewingClub && !["platform"].includes(activeTab)) ? "platform" : activeTab;
 
   const handleEnterClub = (club) => {
+    sessionStorage.setItem("viewingClub", club);
     setViewingClub(club);
     setActiveTab("dashboard");
     // Load that club's players
@@ -3527,6 +3528,7 @@ function GAPManager() {
   };
 
   const handleExitClub = () => {
+    sessionStorage.removeItem("viewingClub");
     setViewingClub(null);
     setActiveTab("platform");
     setPlayers([]);
