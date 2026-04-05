@@ -331,7 +331,7 @@ function OnboardingWizard({ profile, session, onComplete, onSetTeamCount }) {
       const nameIdx = header.findIndex(h => h === "name" || h === "player" || h === "player name");
       const ghinIdx = header.findIndex(h => h.includes("ghin"));
       const hdcpIdx = header.findIndex(h => h.includes("hdcp") || h.includes("handicap") || h.includes("course"));
-      const indexIdx = header.findIndex(h => h.includes("index"));
+      const indexIdx = header.findIndex(h => h.includes("index") || h.includes("low hi") || h.includes("player low"));
       const phoneIdx = header.findIndex(h => h.includes("phone") || h.includes("cell") || h.includes("mobile"));
       const emailIdx = header.findIndex(h => h.includes("email") || h.includes("e-mail"));
       const memberNumberIdx = header.findIndex(h => h.includes("member"));
@@ -2171,7 +2171,7 @@ function Roster({ players, setPlayers, addPlayerWithSync, clubName, userId, sche
       const hasSeparateNames = firstNameIdx > -1 && lastNameIdx > -1;
       const ghinIdx = header.findIndex(h => h.includes("ghin"));
       const hdcpIdx = header.findIndex(h => h.includes("hdcp") || h.includes("handicap") || h.includes("course"));
-      const indexIdx = header.findIndex(h => h.includes("index"));
+      const indexIdx = header.findIndex(h => h.includes("index") || h.includes("low hi") || h.includes("player low"));
       const phoneIdx = header.findIndex(h => h.includes("phone") || h.includes("cell") || h.includes("mobile"));
       const emailIdx = header.findIndex(h => h.includes("email") || h.includes("e-mail"));
       const memberNumberIdx = header.findIndex(h => h.includes("member"));
