@@ -334,7 +334,7 @@ function OnboardingWizard({ profile, session, onComplete, onSetTeamCount }) {
       const indexIdx = header.findIndex(h => h.includes("index"));
       const phoneIdx = header.findIndex(h => h.includes("phone") || h.includes("cell") || h.includes("mobile"));
       const emailIdx = header.findIndex(h => h.includes("email") || h.includes("e-mail"));
-      const memberNumberIdx = header.findIndex(h => h.includes("member") || h.includes("member #") || h.includes("member no") || h.includes("member number"));
+      const memberNumberIdx = header.findIndex(h => h.includes("member"));
       const hasSeparateNames = firstNameIdx > -1 && lastNameIdx > -1;
       if (!hasSeparateNames && nameIdx === -1) { setUploadMsg({ type: "error", msg: "Could not find name columns. Use 'First Name' and 'Last Name' columns, or a single 'Name' column." }); return; }
       const getName = (row) => {
@@ -1801,6 +1801,12 @@ function TeamBuilder({ players, schedule, lockState, setLockState, userRole, clu
                        teamIdx === teamCount - 1 && teamCount > 1 ? `Hdcp ≥ ${split.thresholds[teamIdx-1] != null ? fmtH(split.thresholds[teamIdx-1]) : "?"}` :
                        teamCount === 1 ? "All handicaps" : `${fmtH(split.thresholds[teamIdx-1] ?? 0)} < Hdcp ≤ ${fmtH(split.thresholds[teamIdx] ?? 99)}`}
                     </span>
+                    {(() => {
+                      const w = assignments[activeWeek] || {};
+                      const tw = w[teamIdx] || { home: [[], [], []], away: [[], [], []] };
+                      const assignedIds = new Set();
+                      ["home", "away"].forEach(s => (tw[s] || []).forEach(pair => (pair || []).forEach(id => assignedIds.add(id))));
+                    })()}
                   </div>
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 0 }}>
@@ -1825,8 +1831,6 @@ function TeamBuilder({ players, schedule, lockState, setLockState, userRole, clu
           })}
         </div>
       </div>
-
-
     </div>
   );
 }
@@ -2697,7 +2701,7 @@ function PlatformAdmin({ currentUserId, onEnterClub }) {
   const [newInviteRole, setNewInviteRole] = useState("captain");
   const [pgaRequired, setPgaRequired] = useState(true);
   const [playerCounts, setPlayerCounts] = useState({});
-  const [confirmModal, setConfirmModal] = useState(null); // { type, id, name, playerCount, typedName }
+  const [confirmModal, setConfirmModal] = useState(null);
 
   useEffect(() => { loadAll(); }, []);
 
@@ -3175,10 +3179,9 @@ function PlatformAdmin({ currentUserId, onEnterClub }) {
         </>
       )}
 
-      {/* Confirm Delete Modal */}
       {confirmModal && ReactDOM.createPortal(
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <div style={{ background: "#fff", borderRadius: 14, padding: 28, width: 380, maxWidth: "92vw", boxShadow: "0 24px 64px rgba(0,0,0,0.35)" }}>
+        <div onClick={() => setConfirmModal(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: "#fff", borderRadius: 14, padding: 28, width: 380, maxWidth: "92vw", boxShadow: "0 24px 64px rgba(0,0,0,0.35)" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
               <div style={{ width: 40, height: 40, borderRadius: "50%", background: "#fef2f2", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, flexShrink: 0 }}>⚠️</div>
               <div>
@@ -3198,24 +3201,15 @@ function PlatformAdmin({ currentUserId, onEnterClub }) {
               </div>
             )}
             <div style={{ marginBottom: 16 }}>
-              <div style={{ fontSize: 12, color: "#475569", marginBottom: 6 }}>
-                Type <strong>{confirmModal.name}</strong> to confirm:
-              </div>
-              <input
-                autoFocus
-                value={confirmModal.typedName}
+              <div style={{ fontSize: 12, color: "#475569", marginBottom: 6 }}>Type <strong>{confirmModal.name}</strong> to confirm:</div>
+              <input autoFocus value={confirmModal.typedName}
                 onChange={e => setConfirmModal(prev => ({ ...prev, typedName: e.target.value }))}
                 placeholder={confirmModal.name}
-                style={{ width: "100%", padding: "8px 12px", borderRadius: 7, border: "1px solid #cbd5e1", fontSize: 13, boxSizing: "border-box", outline: "none" }}
-              />
+                style={{ width: "100%", padding: "8px 12px", borderRadius: 7, border: "1px solid #cbd5e1", fontSize: 13, boxSizing: "border-box", outline: "none" }} />
             </div>
             <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-              <button onClick={() => setConfirmModal(null)}
-                style={{ padding: "8px 18px", borderRadius: 7, border: "1px solid #d1d5db", background: "#fff", color: "#374151", fontWeight: 600, fontSize: 13, cursor: "pointer" }}>
-                Cancel
-              </button>
-              <button
-                disabled={confirmModal.typedName !== confirmModal.name}
+              <button onClick={() => setConfirmModal(null)} style={{ padding: "8px 18px", borderRadius: 7, border: "1px solid #d1d5db", background: "#fff", color: "#374151", fontWeight: 600, fontSize: 13, cursor: "pointer" }}>Cancel</button>
+              <button disabled={confirmModal.typedName !== confirmModal.name}
                 onClick={confirmModal.type === "club" ? confirmDeleteClub : confirmDeleteUser}
                 style={{ padding: "8px 18px", borderRadius: 7, border: "none", background: confirmModal.typedName === confirmModal.name ? "#dc2626" : "#fca5a5", color: "#fff", fontWeight: 700, fontSize: 13, cursor: confirmModal.typedName === confirmModal.name ? "pointer" : "not-allowed", transition: "background 0.15s" }}>
                 Delete permanently
