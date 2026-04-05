@@ -2164,17 +2164,29 @@ function Roster({ players, setPlayers, addPlayerWithSync, clubName, userId, sche
       const parseCSVLine = (line) => { const result = []; let current = ""; let inQuotes = false; for (let i = 0; i < line.length; i++) { const ch = line[i]; if (ch === '"') { if (inQuotes && line[i+1] === '"') { current += '"'; i++; } else { inQuotes = !inQuotes; } } else if (ch === ',' && !inQuotes) { result.push(current.trim()); current = ""; } else { current += ch; } } result.push(current.trim()); return result; };
       const lines = text.trim().split("\n").map(l => parseCSVLine(l));
       if (lines.length < 2) { setUploadMsg("File appears empty."); return; }
-      const header = lines[0].map(h => h.toLowerCase());
-      const nameIdx = header.findIndex(h => h.includes("name") || h.includes("player"));
-      const ghinIdx = header.findIndex(h => h.includes("ghin") || h.includes("ghin #"));
+      const header = lines[0].map(h => h.toLowerCase().trim());
+      const firstNameIdx = header.findIndex(h => h === "first name" || h === "firstname" || h === "first");
+      const lastNameIdx = header.findIndex(h => h === "last name" || h === "lastname" || h === "last");
+      const nameIdx = header.findIndex(h => h === "name" || h === "player" || h === "player name");
+      const hasSeparateNames = firstNameIdx > -1 && lastNameIdx > -1;
+      const ghinIdx = header.findIndex(h => h.includes("ghin"));
       const hdcpIdx = header.findIndex(h => h.includes("hdcp") || h.includes("handicap") || h.includes("course"));
       const indexIdx = header.findIndex(h => h.includes("index"));
       const phoneIdx = header.findIndex(h => h.includes("phone") || h.includes("cell") || h.includes("mobile"));
       const emailIdx = header.findIndex(h => h.includes("email") || h.includes("e-mail"));
       const memberNumberIdx = header.findIndex(h => h.includes("member"));
-      if (nameIdx === -1) { setUploadMsg("Could not find a 'Name' or 'Player' column. Please check the file header row."); return; }
-      const newPlayers = lines.slice(1).filter(row => row[nameIdx] && row[nameIdx].trim()).map((row, i) => ({
-        name: row[nameIdx] || "Unknown",
+      if (!hasSeparateNames && nameIdx === -1) { setUploadMsg("Could not find name columns. Use 'First Name' and 'Last Name', or a single 'Name' column."); return; }
+      const getName = (row) => {
+        if (hasSeparateNames) {
+          const first = (row[firstNameIdx] || "").trim();
+          const last = (row[lastNameIdx] || "").trim();
+          return last && first ? `${last}, ${first}` : last || first || "Unknown";
+        }
+        return (row[nameIdx] || "Unknown").trim();
+      };
+      const hasData = (row) => hasSeparateNames ? ((row[firstNameIdx] || "").trim() || (row[lastNameIdx] || "").trim()) : (row[nameIdx] || "").trim();
+      const newPlayers = lines.slice(1).filter(row => hasData(row)).map((row, i) => ({
+        name: getName(row),
         ghin: ghinIdx > -1 ? (row[ghinIdx] || "") : "",
         courseHdcp: hdcpIdx > -1 ? (parseFloat(row[hdcpIdx]) || 15) : 15,
         index: indexIdx > -1 ? (parseFloat(row[indexIdx]) || 15) : 15,
