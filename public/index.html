@@ -1636,7 +1636,7 @@ function TeamBuilder({ players, schedule, lockState, setLockState, userRole, clu
           const loc = side === "home" ? clubName : ts.opponent;
           const baseTee = side === "home" ? ts.homeTee : ts.awayTee;
           (tw[side] || []).forEach((pair, i) => {
-            const names = pair.map(id => { const p = players.find(pl => pl.id === id); return p ? `${p.name} (${fmtH(p.courseHdcp)})` : "TBD"; });
+            const names = pair.map(id => { const p = players.find(pl => pl.id === id); return p ? `${p.name} (${fmtH(p.courseHdcp)})${p.memberNumber ? ` [${p.memberNumber}]` : ""}` : "TBD"; });
             const sideInterval = side === "home" ? (ts.homeInterval || 10) : (ts.awayInterval || 10);
             const pairTee = addMinutes(baseTee, i * sideInterval);
             if (names.length > 0) text += `  ${side.toUpperCase()} Pair ${i+1} @ ${pairTee} at ${loc}: ${names.join(" & ")}\n`;
