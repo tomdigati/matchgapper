@@ -478,8 +478,8 @@ function OnboardingWizard({ profile, session, onComplete, onSetTeamCount }) {
                     <tr><td style={{ padding: "3px 8px", fontWeight: 600 }}>First Name</td><td style={{ padding: "3px 8px", color: "#dc2626", fontWeight: 600 }}>Required</td><td style={{ padding: "3px 8px", color: "#64748b" }}>e.g. James</td></tr>
                     <tr style={{ background: "#f8fafc" }}><td style={{ padding: "3px 8px", fontWeight: 600 }}>Last Name</td><td style={{ padding: "3px 8px", color: "#dc2626", fontWeight: 600 }}>Required</td><td style={{ padding: "3px 8px", color: "#64748b" }}>e.g. Anderson</td></tr>
                     <tr><td style={{ padding: "3px 8px", fontWeight: 600 }}>GHIN</td><td style={{ padding: "3px 8px", color: "#dc2626", fontWeight: 600 }}>Required</td><td style={{ padding: "3px 8px", color: "#64748b" }}>7-digit GHIN number</td></tr>
-                    <tr style={{ background: "#f8fafc" }}><td style={{ padding: "3px 8px", fontWeight: 600 }}>Handicap</td><td style={{ padding: "3px 8px", color: "#dc2626", fontWeight: 600 }}>Required</td><td style={{ padding: "3px 8px", color: "#64748b" }}>Course handicap (e.g. 8)</td></tr>
-                    <tr><td style={{ padding: "3px 8px", fontWeight: 600 }}>Index</td><td style={{ padding: "3px 8px", color: "#f59e0b", fontWeight: 600 }}>Recommended</td><td style={{ padding: "3px 8px", color: "#64748b" }}>Handicap index (e.g. 7.7)</td></tr>
+                    <tr style={{ background: "#f8fafc" }}><td style={{ padding: "3px 8px", fontWeight: 600 }}>Home Course HDCP</td><td style={{ padding: "3px 8px", color: "#dc2626", fontWeight: 600 }}>Required</td><td style={{ padding: "3px 8px", color: "#64748b" }}>Course handicap (e.g. 8)</td></tr>
+                    <tr><td style={{ padding: "3px 8px", fontWeight: 600 }}>Player Low HI</td><td style={{ padding: "3px 8px", color: "#f59e0b", fontWeight: 600 }}>Recommended</td><td style={{ padding: "3px 8px", color: "#64748b" }}>Handicap index (e.g. 7.7)</td></tr>
                     <tr style={{ background: "#f8fafc" }}><td style={{ padding: "3px 8px", fontWeight: 600 }}>Phone</td><td style={{ padding: "3px 8px", color: "#94a3b8" }}>Optional</td><td style={{ padding: "3px 8px", color: "#64748b" }}>e.g. 610-555-0101</td></tr>
                     <tr><td style={{ padding: "3px 8px", fontWeight: 600 }}>Email</td><td style={{ padding: "3px 8px", color: "#94a3b8" }}>Optional</td><td style={{ padding: "3px 8px", color: "#64748b" }}>e.g. james@email.com</td></tr>
                   </tbody>
@@ -489,7 +489,7 @@ function OnboardingWizard({ profile, session, onComplete, onSetTeamCount }) {
 
             {/* Download template */}
             <button onClick={() => {
-              const tpl = "First Name,Last Name,GHIN,Handicap,Index,Phone,Email,Member Number\n";
+              const tpl = "First Name,Last Name,GHIN,Home Course HDCP,Player Low HI,Phone,Email,Member Number\n";
               const blob = new Blob([tpl], { type: "text/csv" });
               const url = URL.createObjectURL(blob);
               const a = document.createElement("a"); a.href = url; a.download = "matchgapper_roster_template.csv"; a.click(); URL.revokeObjectURL(url);
@@ -532,7 +532,7 @@ function OnboardingWizard({ profile, session, onComplete, onSetTeamCount }) {
             <div style={{ background: "#fff", borderRadius: 10, border: "1px solid #d1d9e6", overflow: "hidden", maxHeight: 400, overflowY: "auto", marginBottom: 20 }}>
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
                 <thead><tr style={{ background: "linear-gradient(135deg, #0f172a 0%, #162d50 100%)", color: "#7dd3fc", position: "sticky", top: 0 }}>
-                  {["Player Name*", "HDCP", "Index", "GHIN", "Phone", "Email", "Member #", ""].map(h => (
+                  {["Player Name*", "Home Course HDCP", "Player Low HI", "GHIN", "Phone", "Email", "Member #", ""].map(h => (
                     <th key={h} style={{ padding: "10px 8px", textAlign: "left", fontWeight: 600, fontSize: 10, letterSpacing: 0.5 }}>{h}</th>
                   ))}
                 </tr></thead>
@@ -1799,7 +1799,7 @@ function TeamBuilder({ players, schedule, lockState, setLockState, userRole, clu
                     <span style={{ fontSize: 11, color: "#94a3b8" }}>
                       {teamIdx === 0 ? `Hdcp ≤ ${split.thresholds[0] != null ? fmtH(split.thresholds[0]) : "?"}` :
                        teamIdx === teamCount - 1 && teamCount > 1 ? `Hdcp ≥ ${split.thresholds[teamIdx-1] != null ? fmtH(split.thresholds[teamIdx-1]) : "?"}` :
-                       teamCount === 1 ? "All handicaps" : `${fmtH(split.thresholds[teamIdx-1] ?? 0)} < Hdcp ≤ ${fmtH(split.thresholds[teamIdx] ?? 99)}`}
+                       teamCount === 1 ? "All handicaps" : `${fmtH(split.thresholds[teamIdx-1] ?? 0)} < Home Course HDCP ≤ ${fmtH(split.thresholds[teamIdx] ?? 99)}`}
                     </span>
                     {(() => {
                       const w = assignments[activeWeek] || {};
@@ -1883,7 +1883,7 @@ function Dashboard({ players, schedule, lockState, clubName, assignments }) {
       </div>
 
       {/* HANDICAP DISTRIBUTION — full width */}
-      <div style={{ fontSize: 14, fontWeight: 600, color: "#0f172a", marginBottom: 8, letterSpacing: 0.3 }}>Handicap Distribution</div>
+      <div style={{ fontSize: 14, fontWeight: 600, color: "#0f172a", marginBottom: 8, letterSpacing: 0.3 }}>Home Course HDCP Distribution</div>
       <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #d1d9e6", padding: 16, marginBottom: 16 }}>
         {(() => {
           const hdcps = players.map(p => Math.floor(p.courseHdcp));
@@ -1912,7 +1912,7 @@ function Dashboard({ players, schedule, lockState, clubName, assignments }) {
                 return (
                   <div key={b.label}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-                      <div style={{ fontSize: 12, fontWeight: 600, color: "#0f172a" }}>Hdcp {b.label}</div>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: "#0f172a" }}>Home Course HDCP {b.label}</div>
                       <span style={{ fontSize: 9, padding: "1px 5px", borderRadius: 3, background: ptc.bg, color: ptc.color, fontWeight: 600 }}>T{projIdx+1}</span>
                     </div>
                     <div style={{ display: "flex", flexDirection: "column", height: 80, justifyContent: "flex-end", borderRadius: 5, overflow: "hidden", background: "#f1f5f9", position: "relative" }}>
@@ -1935,7 +1935,7 @@ function Dashboard({ players, schedule, lockState, clubName, assignments }) {
           <span style={{ display: "flex", alignItems: "center", gap: 3 }}><span style={{ width: 8, height: 8, borderRadius: 2, background: "#16a34a" }} /> Confirmed</span>
           <span style={{ display: "flex", alignItems: "center", gap: 3 }}><span style={{ width: 8, height: 8, borderRadius: 2, background: "#8b5cf6" }} /> Maybe</span>
           <span style={{ display: "flex", alignItems: "center", gap: 3 }}><span style={{ width: 8, height: 8, borderRadius: 2, background: "#94a3b8" }} /> Not Yet</span>
-          <span style={{ marginLeft: 12, fontWeight: 600 }}>Avg Hdcp (all rostered): {overallAvgHdcp}</span>
+          <span style={{ marginLeft: 12, fontWeight: 600 }}>Avg Home Course HDCP (all rostered): {overallAvgHdcp}</span>
         </div>
       </div>
 
@@ -2237,7 +2237,7 @@ function Roster({ players, setPlayers, addPlayerWithSync, clubName, userId, sche
           📁 Choose File
           <input type="file" accept=".csv,.xlsx,.xls" onChange={handleFileUpload} style={{ display: "none" }} />
         </label>
-        <span style={{ fontSize: 10, color: "#94a3b8" }}>Columns: First Name, Last Name, GHIN, Handicap, Index, Phone, Email, Member Number</span>
+        <span style={{ fontSize: 10, color: "#94a3b8" }}>Columns: First Name, Last Name, GHIN, Home Course HDCP, Player Low HI, Phone, Email, Member Number</span>
         {uploadMsg && <span style={{ fontSize: 12, fontWeight: 600, color: uploadMsg.includes("Error") || uploadMsg.includes("not") ? "#dc2626" : "#16a34a", background: uploadMsg.includes("Error") || uploadMsg.includes("not") ? "#fee2e2" : "#dcfce7", padding: "4px 10px", borderRadius: 6 }}>{uploadMsg}</span>}
       </div>
 
@@ -2313,8 +2313,8 @@ function Roster({ players, setPlayers, addPlayerWithSync, clubName, userId, sche
               {[
                 { label: "Proj", field: null },
                 { label: "Player", field: "name" },
-                { label: "HDCP", field: "courseHdcp" },
-                { label: "Index", field: "index" },
+                { label: "Home Course HDCP", field: "courseHdcp" },
+                { label: "Player Low HI", field: "index" },
                 { label: "GHIN", field: "ghin" },
                 { label: "Member #", field: null },
                 { label: "Contact", field: null },
