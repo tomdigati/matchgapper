@@ -2432,7 +2432,11 @@ function Roster({ players, setPlayers, addPlayerWithSync, clubName, userId, sche
                   <tr key={p.id} style={{ background: i % 2 === 0 ? "#fff" : "#f5f7fb", borderBottom: "1px solid #e2e8f0" }}>
                     <td style={{ padding: "6px", textAlign: "center" }}><span style={{ fontSize: 10, fontWeight: 600, padding: "2px 6px", borderRadius: 4, background: ptc.bg, color: ptc.color }}>T{projIdx+1}</span></td>
                     <td style={{ padding: "6px 8px", whiteSpace: "nowrap" }}>
-                      {editingId === p.id ? <input value={p.name} onChange={e => updatePlayer(p.id, "name", e.target.value)} style={{ fontSize: 12, padding: "2px 6px", border: "1px solid #38bdf8", borderRadius: 4, width: "100%", background: "#eff6ff", fontWeight: 600 }} />
+                      {editingId === p.id
+                        ? <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                            <input value={p.name} onChange={e => updatePlayer(p.id, "name", e.target.value)} placeholder="Last, First" style={{ fontSize: 12, padding: "2px 6px", border: "1px solid #38bdf8", borderRadius: 4, width: "100%", background: "#eff6ff", fontWeight: 600 }} />
+                            <input value={p.memberNumber || ""} onChange={e => updatePlayer(p.id, "memberNumber", e.target.value)} placeholder="Member #" style={{ fontSize: 11, padding: "2px 6px", border: "1px solid #38bdf8", borderRadius: 4, width: "100%", background: "#eff6ff", color: "#64748b" }} />
+                          </div>
                         : <div onClick={() => setEditingId(p.id)} style={{ cursor: "pointer" }}>
                             <div style={{ fontWeight: 600, color: "#0f172a", fontSize: 13 }}>{p.name}</div>
                             {p.memberNumber && <div style={{ fontSize: 10, color: "#94a3b8", letterSpacing: 0.3 }}>#{p.memberNumber}</div>}
