@@ -251,6 +251,37 @@ async function bulkInsertPlayers(players, club, userId) {
   return data || [];
 }
 
+async function bulkUpsertPlayers(players, club, userId) {
+  // Load existing players for this club to match against
+  const { data: existing } = await supabase.from("players").select("id, ghin, name").eq("club", club);
+  const existingList = existing || [];
+  const updates = [];
+  const inserts = [];
+  for (const p of players) {
+    const row = appPlayerToDb(p, club, userId);
+    delete row.id;
+    // Match by GHIN first, then by name
+    const match = p.ghin
+      ? existingList.find(e => e.ghin && e.ghin === p.ghin)
+      : existingList.find(e => e.name && e.name.trim().toLowerCase() === p.name.trim().toLowerCase());
+    if (match) {
+      updates.push({ id: match.id, ...row });
+    } else {
+      inserts.push(row);
+    }
+  }
+  // Run updates
+  for (const u of updates) {
+    const { id, ...fields } = u;
+    await supabase.from("players").update(fields).eq("id", id);
+  }
+  // Run inserts
+  if (inserts.length > 0) {
+    await supabase.from("players").insert(inserts);
+  }
+  return { updated: updates.length, inserted: inserts.length };
+}
+
 // ═══════════════════════════════════════════════════════════════
 // SUPABASE SCHEDULE & ASSIGNMENTS DATA LAYER
 // ═══════════════════════════════════════════════════════════════
@@ -321,7 +352,18 @@ function OnboardingWizard({ profile, session, onComplete, onSetTeamCount }) {
     const file = e.target.files[0];
     if (!file) return;
     try {
-      const text = await file.text();
+      const ext = file.name.split(".").pop().toLowerCase();
+      let text = "";
+      if (ext === "xlsx" || ext === "xls") {
+        const XLSX = window.XLSX;
+        if (!XLSX) { setUploadMsg({ type: "error", msg: "Excel library not loaded. Please refresh and try again." }); return; }
+        const data = await file.arrayBuffer();
+        const wb = XLSX.read(data, { type: "array" });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        text = XLSX.utils.sheet_to_csv(ws);
+      } else {
+        text = await file.text();
+      }
       if (!text) { setUploadMsg({ type: "error", msg: "Could not read file." }); return; }
       const parseCSVLine = (line) => { const result = []; let current = ""; let inQuotes = false; for (let i = 0; i < line.length; i++) { const ch = line[i]; if (ch === '"') { if (inQuotes && line[i+1] === '"') { current += '"'; i++; } else { inQuotes = !inQuotes; } } else if (ch === ',' && !inQuotes) { result.push(current.trim()); current = ""; } else { current += ch; } } result.push(current.trim()); return result; };
       const lines = text.trim().split("\n").map(l => parseCSVLine(l));
@@ -1160,7 +1202,7 @@ function exportRosterToExcel(players, type, clubName) {
       "Member #": p.memberNumber || "",
       "Phone": p.phone,
       "Email": p.email,
-      "Status": p.status,
+      "Status": STATUS_CONFIG[p.status]?.label || p.status,
       "Wk1 Availability": p.availability[1],
       "Wk2 Availability": p.availability[2],
       "Wk3 Availability": p.availability[3],
@@ -2227,19 +2269,12 @@ function Roster({ players, setPlayers, addPlayerWithSync, clubName, userId, sche
       if (ext === "csv") {
         text = await file.text();
       } else if (ext === "xlsx" || ext === "xls") {
-        setUploadMsg("Reading Excel file...");
-        const Papa = await import("papaparse");
-        // For xlsx we read as text via SheetJS if available, otherwise prompt for csv
-        try {
-          const XLSX = await import("sheetjs");
-          const data = await file.arrayBuffer();
-          const wb = XLSX.read(data);
-          const ws = wb.Sheets[wb.SheetNames[0]];
-          text = XLSX.utils.sheet_to_csv(ws);
-        } catch {
-          setUploadMsg("Excel parsing not available in this environment. Please export as .csv and re-upload.");
-          return;
-        }
+        const XLSX = window.XLSX;
+        if (!XLSX) { setUploadMsg("Excel library not loaded. Please refresh the page and try again."); return; }
+        const data = await file.arrayBuffer();
+        const wb = XLSX.read(data, { type: "array" });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        text = XLSX.utils.sheet_to_csv(ws);
       }
       if (!text) { setUploadMsg("Could not read file."); return; }
       // Parse CSV
@@ -2258,6 +2293,16 @@ function Roster({ players, setPlayers, addPlayerWithSync, clubName, userId, sche
       const emailIdx = header.findIndex(h => h.includes("email") || h.includes("e-mail"));
       const memberNumberIdx = header.findIndex(h => h.includes("member"));
       const notesIdx = header.findIndex(h => h.includes("note"));
+      const statusIdx = header.findIndex(h => h === "status");
+      const wk1Idx = header.findIndex(h => h.includes("wk1") || h.includes("wk 1") || h === "week 1");
+      const wk2Idx = header.findIndex(h => h.includes("wk2") || h.includes("wk 2") || h === "week 2");
+      const wk3Idx = header.findIndex(h => h.includes("wk3") || h.includes("wk 3") || h === "week 3");
+      const parseStatus = (val) => {
+        const v = (val || "").toLowerCase().trim().replace(/\s+/g, "_");
+        const map = { available: "confirmed", confirmed: "confirmed", contacted: "contacted", not_contacted: "not_contacted", "not contacted": "not_contacted", declined: "declined", maybe: "maybe" };
+        return map[v] || map[(val || "").toLowerCase().trim()] || "not_contacted";
+      };
+      const parseAvail = (val) => { const v = (val || "").toLowerCase().trim(); return v === "yes" || v === "y" ? "yes" : v === "maybe" ? "maybe" : "no"; };
       if (!hasSeparateNames && nameIdx === -1) { setUploadMsg("Could not find name columns. Use 'First Name' and 'Last Name', or a single 'Name' column."); return; }
       const getName = (row) => {
         if (hasSeparateNames) {
@@ -2276,19 +2321,21 @@ function Roster({ players, setPlayers, addPlayerWithSync, clubName, userId, sche
         phone: phoneIdx > -1 ? (row[phoneIdx] || "") : "",
         email: emailIdx > -1 ? (row[emailIdx] || "") : "",
         memberNumber: memberNumberIdx > -1 ? (row[memberNumberIdx] || "") : "",
-        status: "not_contacted", contactOwner: "", contactDate: "",
-        availability: { 1: "no", 2: "no", 3: "no" },
+        status: statusIdx > -1 ? parseStatus(row[statusIdx]) : "not_contacted",
+        contactOwner: "", contactDate: "",
+        availability: { 1: wk1Idx > -1 ? parseAvail(row[wk1Idx]) : "no", 2: wk2Idx > -1 ? parseAvail(row[wk2Idx]) : "no", 3: wk3Idx > -1 ? parseAvail(row[wk3Idx]) : "no" },
         locPref: { 1: "", 2: "", 3: "" }, notes: notesIdx > -1 ? (row[notesIdx] || "") : ""
       }));
-      // Bulk insert to Supabase and reload
+      // Upsert to Supabase (update existing by GHIN/name, insert new)
       if (clubName && userId) {
-        const inserted = await bulkInsertPlayers(newPlayers, clubName, userId);
+        const result = await bulkUpsertPlayers(newPlayers, clubName, userId);
         const dbPlayers = await loadPlayersFromDb(clubName);
         setPlayers(prev => dbPlayers);
+        setUploadMsg(`Updated ${result.updated} players, added ${result.inserted} new from ${file.name}`);
       } else {
         setPlayers(prev => [...prev, ...newPlayers.map((p, i) => ({ ...p, id: Math.max(...prev.map(x => x.id), 0) + i + 1 }))]);
+        setUploadMsg(`Imported ${newPlayers.length} players from ${file.name}`);
       }
-      setUploadMsg(`Imported ${newPlayers.length} players from ${file.name}`);
       setTimeout(() => setUploadMsg(null), 5000);
     } catch (err) {
       setUploadMsg("Error reading file: " + err.message);
@@ -2432,7 +2479,11 @@ function Roster({ players, setPlayers, addPlayerWithSync, clubName, userId, sche
                   <tr key={p.id} style={{ background: i % 2 === 0 ? "#fff" : "#f5f7fb", borderBottom: "1px solid #e2e8f0" }}>
                     <td style={{ padding: "6px", textAlign: "center" }}><span style={{ fontSize: 10, fontWeight: 600, padding: "2px 6px", borderRadius: 4, background: ptc.bg, color: ptc.color }}>T{projIdx+1}</span></td>
                     <td style={{ padding: "6px 8px", whiteSpace: "nowrap" }}>
-                      {editingId === p.id ? <input value={p.name} onChange={e => updatePlayer(p.id, "name", e.target.value)} style={{ fontSize: 12, padding: "2px 6px", border: "1px solid #38bdf8", borderRadius: 4, width: "100%", background: "#eff6ff", fontWeight: 600 }} />
+                      {editingId === p.id
+                        ? <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                            <input value={p.name} onChange={e => updatePlayer(p.id, "name", e.target.value)} placeholder="Last, First" style={{ fontSize: 12, padding: "2px 6px", border: "1px solid #38bdf8", borderRadius: 4, width: "100%", background: "#eff6ff", fontWeight: 600 }} />
+                            <input value={p.memberNumber || ""} onChange={e => updatePlayer(p.id, "memberNumber", e.target.value)} placeholder="Member #" style={{ fontSize: 11, padding: "2px 6px", border: "1px solid #38bdf8", borderRadius: 4, width: "100%", background: "#eff6ff", color: "#64748b" }} />
+                          </div>
                         : <div onClick={() => setEditingId(p.id)} style={{ cursor: "pointer" }}>
                             <div style={{ fontWeight: 600, color: "#0f172a", fontSize: 13 }}>{p.name}</div>
                             {p.memberNumber && <div style={{ fontSize: 10, color: "#94a3b8", letterSpacing: 0.3 }}>#{p.memberNumber}</div>}
