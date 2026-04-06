@@ -336,6 +336,7 @@ function OnboardingWizard({ profile, session, onComplete, onSetTeamCount }) {
       const phoneIdx = header.findIndex(h => h.includes("phone") || h.includes("cell") || h.includes("mobile"));
       const emailIdx = header.findIndex(h => h.includes("email") || h.includes("e-mail"));
       const memberNumberIdx = header.findIndex(h => h.includes("member"));
+      const notesIdx = header.findIndex(h => h.includes("note"));
       const hasSeparateNames = firstNameIdx > -1 && lastNameIdx > -1;
       if (!hasSeparateNames && nameIdx === -1) { setUploadMsg({ type: "error", msg: "Could not find name columns. Use 'First Name' and 'Last Name' columns, or a single 'Name' column." }); return; }
       const getName = (row) => {
@@ -358,7 +359,7 @@ function OnboardingWizard({ profile, session, onComplete, onSetTeamCount }) {
         memberNumber: memberNumberIdx > -1 ? (row[memberNumberIdx] || "") : "",
         status: "not_contacted", contactOwner: "", contactDate: "",
         availability: { 1: "no", 2: "no", 3: "no" },
-        locPref: { 1: "", 2: "", 3: "" }, notes: "",
+        locPref: { 1: "", 2: "", 3: "" }, notes: notesIdx > -1 ? (row[notesIdx] || "") : "",
       }));
       setImportedPlayers(players);
       setUploadMsg({ type: "success", msg: `Found ${players.length} players in ${file.name}` });
@@ -490,12 +491,14 @@ function OnboardingWizard({ profile, session, onComplete, onSetTeamCount }) {
 
             {/* Download template */}
             <button onClick={() => {
-              const tpl = "First Name,Last Name,GHIN,Home Course HDCP,Player Low HI,Phone,Email,Member Number\n";
+              const header = "First Name,Last Name,GHIN,Home Course HDCP,Player Low HI,Member Number,Phone,Email,Notes\n";
+              const sample = "John,Smith,1234567,8.4,6.2,M101,6105551234,john.smith@email.com,\n";
+              const tpl = header + sample;
               const blob = new Blob([tpl], { type: "text/csv" });
               const url = URL.createObjectURL(blob);
               const a = document.createElement("a"); a.href = url; a.download = "matchgapper_roster_template.csv"; a.click(); URL.revokeObjectURL(url);
             }} style={{ width: "100%", padding: "10px", borderRadius: 8, border: "1px solid #bae6fd", background: "#f0f9ff", color: "#0369a1", fontWeight: 600, fontSize: 13, cursor: "pointer", marginBottom: 16, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-              Download Blank Template (.csv)
+              📥 Download Blank Template (.csv)
             </button>
 
             {/* Upload area */}
@@ -2254,6 +2257,7 @@ function Roster({ players, setPlayers, addPlayerWithSync, clubName, userId, sche
       const phoneIdx = header.findIndex(h => h.includes("phone") || h.includes("cell") || h.includes("mobile"));
       const emailIdx = header.findIndex(h => h.includes("email") || h.includes("e-mail"));
       const memberNumberIdx = header.findIndex(h => h.includes("member"));
+      const notesIdx = header.findIndex(h => h.includes("note"));
       if (!hasSeparateNames && nameIdx === -1) { setUploadMsg("Could not find name columns. Use 'First Name' and 'Last Name', or a single 'Name' column."); return; }
       const getName = (row) => {
         if (hasSeparateNames) {
@@ -2274,7 +2278,7 @@ function Roster({ players, setPlayers, addPlayerWithSync, clubName, userId, sche
         memberNumber: memberNumberIdx > -1 ? (row[memberNumberIdx] || "") : "",
         status: "not_contacted", contactOwner: "", contactDate: "",
         availability: { 1: "no", 2: "no", 3: "no" },
-        locPref: { 1: "", 2: "", 3: "" }, notes: "Imported"
+        locPref: { 1: "", 2: "", 3: "" }, notes: notesIdx > -1 ? (row[notesIdx] || "") : ""
       }));
       // Bulk insert to Supabase and reload
       if (clubName && userId) {
@@ -2316,7 +2320,7 @@ function Roster({ players, setPlayers, addPlayerWithSync, clubName, userId, sche
           📁 Choose File
           <input type="file" accept=".csv,.xlsx,.xls" onChange={handleFileUpload} style={{ display: "none" }} />
         </label>
-        <span style={{ fontSize: 10, color: "#94a3b8" }}>Columns: First Name, Last Name, GHIN, Home Course HDCP, Player Low HI, Phone, Email, Member Number</span>
+        <span style={{ fontSize: 10, color: "#94a3b8" }}>Columns: First Name, Last Name, GHIN, Home Course HDCP, Player Low HI, Member Number, Phone, Email, Notes</span>
         {uploadMsg && <span style={{ fontSize: 12, fontWeight: 600, color: uploadMsg.includes("Error") || uploadMsg.includes("not") ? "#dc2626" : "#16a34a", background: uploadMsg.includes("Error") || uploadMsg.includes("not") ? "#fee2e2" : "#dcfce7", padding: "4px 10px", borderRadius: 6 }}>{uploadMsg}</span>}
         <div style={{ marginLeft: "auto", display: "flex", gap: 6 }}>
           <button onClick={() => exportRosterToExcel(players, "available", clubName)}
