@@ -251,6 +251,37 @@ async function bulkInsertPlayers(players, club, userId) {
   return data || [];
 }
 
+async function bulkUpsertPlayers(players, club, userId) {
+  // Load existing players for this club to match against
+  const { data: existing } = await supabase.from("players").select("id, ghin, name").eq("club", club);
+  const existingList = existing || [];
+  const updates = [];
+  const inserts = [];
+  for (const p of players) {
+    const row = appPlayerToDb(p, club, userId);
+    delete row.id;
+    // Match by GHIN first, then by name
+    const match = p.ghin
+      ? existingList.find(e => e.ghin && e.ghin === p.ghin)
+      : existingList.find(e => e.name && e.name.trim().toLowerCase() === p.name.trim().toLowerCase());
+    if (match) {
+      updates.push({ id: match.id, ...row });
+    } else {
+      inserts.push(row);
+    }
+  }
+  // Run updates
+  for (const u of updates) {
+    const { id, ...fields } = u;
+    await supabase.from("players").update(fields).eq("id", id);
+  }
+  // Run inserts
+  if (inserts.length > 0) {
+    await supabase.from("players").insert(inserts);
+  }
+  return { updated: updates.length, inserted: inserts.length };
+}
+
 // ═══════════════════════════════════════════════════════════════
 // SUPABASE SCHEDULE & ASSIGNMENTS DATA LAYER
 // ═══════════════════════════════════════════════════════════════
@@ -2295,15 +2326,16 @@ function Roster({ players, setPlayers, addPlayerWithSync, clubName, userId, sche
         availability: { 1: wk1Idx > -1 ? parseAvail(row[wk1Idx]) : "no", 2: wk2Idx > -1 ? parseAvail(row[wk2Idx]) : "no", 3: wk3Idx > -1 ? parseAvail(row[wk3Idx]) : "no" },
         locPref: { 1: "", 2: "", 3: "" }, notes: notesIdx > -1 ? (row[notesIdx] || "") : ""
       }));
-      // Bulk insert to Supabase and reload
+      // Upsert to Supabase (update existing by GHIN/name, insert new)
       if (clubName && userId) {
-        const inserted = await bulkInsertPlayers(newPlayers, clubName, userId);
+        const result = await bulkUpsertPlayers(newPlayers, clubName, userId);
         const dbPlayers = await loadPlayersFromDb(clubName);
         setPlayers(prev => dbPlayers);
+        setUploadMsg(`Updated ${result.updated} players, added ${result.inserted} new from ${file.name}`);
       } else {
         setPlayers(prev => [...prev, ...newPlayers.map((p, i) => ({ ...p, id: Math.max(...prev.map(x => x.id), 0) + i + 1 }))]);
+        setUploadMsg(`Imported ${newPlayers.length} players from ${file.name}`);
       }
-      setUploadMsg(`Imported ${newPlayers.length} players from ${file.name}`);
       setTimeout(() => setUploadMsg(null), 5000);
     } catch (err) {
       setUploadMsg("Error reading file: " + err.message);
