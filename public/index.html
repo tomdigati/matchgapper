@@ -1171,7 +1171,7 @@ function exportRosterToExcel(players, type, clubName) {
       "Member #": p.memberNumber || "",
       "Phone": p.phone,
       "Email": p.email,
-      "Status": p.status,
+      "Status": STATUS_CONFIG[p.status]?.label || p.status,
       "Wk1 Availability": p.availability[1],
       "Wk2 Availability": p.availability[2],
       "Wk3 Availability": p.availability[3],
@@ -2262,6 +2262,16 @@ function Roster({ players, setPlayers, addPlayerWithSync, clubName, userId, sche
       const emailIdx = header.findIndex(h => h.includes("email") || h.includes("e-mail"));
       const memberNumberIdx = header.findIndex(h => h.includes("member"));
       const notesIdx = header.findIndex(h => h.includes("note"));
+      const statusIdx = header.findIndex(h => h === "status");
+      const wk1Idx = header.findIndex(h => h.includes("wk1") || h.includes("wk 1") || h === "week 1");
+      const wk2Idx = header.findIndex(h => h.includes("wk2") || h.includes("wk 2") || h === "week 2");
+      const wk3Idx = header.findIndex(h => h.includes("wk3") || h.includes("wk 3") || h === "week 3");
+      const parseStatus = (val) => {
+        const v = (val || "").toLowerCase().trim().replace(/\s+/g, "_");
+        const map = { available: "confirmed", confirmed: "confirmed", contacted: "contacted", not_contacted: "not_contacted", "not contacted": "not_contacted", declined: "declined", maybe: "maybe" };
+        return map[v] || map[(val || "").toLowerCase().trim()] || "not_contacted";
+      };
+      const parseAvail = (val) => { const v = (val || "").toLowerCase().trim(); return v === "yes" || v === "y" ? "yes" : v === "maybe" ? "maybe" : "no"; };
       if (!hasSeparateNames && nameIdx === -1) { setUploadMsg("Could not find name columns. Use 'First Name' and 'Last Name', or a single 'Name' column."); return; }
       const getName = (row) => {
         if (hasSeparateNames) {
@@ -2280,8 +2290,9 @@ function Roster({ players, setPlayers, addPlayerWithSync, clubName, userId, sche
         phone: phoneIdx > -1 ? (row[phoneIdx] || "") : "",
         email: emailIdx > -1 ? (row[emailIdx] || "") : "",
         memberNumber: memberNumberIdx > -1 ? (row[memberNumberIdx] || "") : "",
-        status: "not_contacted", contactOwner: "", contactDate: "",
-        availability: { 1: "no", 2: "no", 3: "no" },
+        status: statusIdx > -1 ? parseStatus(row[statusIdx]) : "not_contacted",
+        contactOwner: "", contactDate: "",
+        availability: { 1: wk1Idx > -1 ? parseAvail(row[wk1Idx]) : "no", 2: wk2Idx > -1 ? parseAvail(row[wk2Idx]) : "no", 3: wk3Idx > -1 ? parseAvail(row[wk3Idx]) : "no" },
         locPref: { 1: "", 2: "", 3: "" }, notes: notesIdx > -1 ? (row[notesIdx] || "") : ""
       }));
       // Bulk insert to Supabase and reload
