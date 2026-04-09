@@ -1572,8 +1572,9 @@ function detectArchetype(p1, p2) {
 function PairSlot({ pair, pairNum, onDrop, onRemove, players, side, week, threshold, disabled, teeOffset, baseTee }) {
   const [dragOver, setDragOver] = useState(false);
   const [showTip, setShowTip] = useState(false);
-  const p1 = pair[0] ? players.find(p => p.id === pair[0]) : null;
-  const p2 = pair[1] ? players.find(p => p.id === pair[1]) : null;
+  const cleanPair = (pair || []).filter(id => id != null && players.find(p => p.id === id));
+  const p1 = cleanPair[0] ? players.find(p => p.id === cleanPair[0]) : null;
+  const p2 = cleanPair[1] ? players.find(p => p.id === cleanPair[1]) : null;
   const avg = p1 && p2 ? ((p1.courseHdcp + p2.courseHdcp) / 2).toFixed(1) : p1 ? p1.courseHdcp.toFixed(1) : p2 ? p2.courseHdcp.toFixed(1) : "—";
   const archetype = detectArchetype(p1, p2);
   const arch = archetype ? PAIR_ARCHETYPES[archetype] : null;
@@ -1716,6 +1717,8 @@ function TeamBuilder({ players, schedule, lockState, setLockState, userRole, clu
       if (w[teamIdx]) {
         if (!w[teamIdx][side]) w[teamIdx][side] = [[], [], []];
         if (!w[teamIdx][side][pairIdx]) w[teamIdx][side][pairIdx] = [];
+        // Strip nulls/stale ids before checking capacity
+        w[teamIdx][side][pairIdx] = w[teamIdx][side][pairIdx].filter(id => id != null && players.find(p => p.id === id));
         if (w[teamIdx][side][pairIdx].length < 2) w[teamIdx][side][pairIdx].push(playerId);
       }
       next[activeWeek] = w;
