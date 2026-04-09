@@ -1525,7 +1525,7 @@ function PlayerCard({ player, onDragStart, compact, week, threshold }) {
   const pref = week ? player.locPref[week] : null;
   return (
     <>
-      <div draggable onDragStart={(e) => { e.dataTransfer.setData("text/plain", player.id.toString()); onDragStart?.(player); }}
+      <div draggable onDragStart={(e) => { setHover(false); e.dataTransfer.setData("text/plain", player.id.toString()); onDragStart?.(player); }}
         onMouseEnter={(e) => { setHover(true); setTooltipPos({ x: e.clientX, y: e.clientY }); }}
         onMouseMove={(e) => setTooltipPos({ x: e.clientX, y: e.clientY })}
         onMouseLeave={() => setHover(false)}
@@ -1713,7 +1713,11 @@ function TeamBuilder({ players, schedule, lockState, setLockState, userRole, clu
       const next = JSON.parse(JSON.stringify(prev));
       const w = next[activeWeek] || {};
       teamIndices.forEach(t => { const tw = w[t]; if (tw) ["home", "away"].forEach(s => (tw[s] || []).forEach(pair => { const idx = pair.indexOf(playerId); if (idx > -1) pair.splice(idx, 1); })); });
-      if (w[teamIdx] && w[teamIdx][side][pairIdx].length < 2) w[teamIdx][side][pairIdx].push(playerId);
+      if (w[teamIdx]) {
+        if (!w[teamIdx][side]) w[teamIdx][side] = [[], [], []];
+        if (!w[teamIdx][side][pairIdx]) w[teamIdx][side][pairIdx] = [];
+        if (w[teamIdx][side][pairIdx].length < 2) w[teamIdx][side][pairIdx].push(playerId);
+      }
       next[activeWeek] = w;
       setValidationMsg(validate(next)); return next;
     });
