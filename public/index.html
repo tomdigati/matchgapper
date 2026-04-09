@@ -1813,7 +1813,6 @@ function TeamBuilder({ players, schedule, lockState, setLockState, userRole, clu
               <div style={{ fontWeight: 600, display: "flex", alignItems: "center", gap: 6, justifyContent: "center" }}>
                 Week {w} — {fmtDate(schedule[w].date)}
                 {ls.locked && <IconLock />}
-                {ls.modifiedAfterLock && <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#dc2626", display: "inline-block" }} />}
               </div>
               <div style={{ fontSize: 10, fontWeight: 400, opacity: 0.8, marginTop: 2 }}>{tc} team{tc !== 1 ? "s" : ""}</div>
             </button>
