@@ -1795,20 +1795,6 @@ function TeamBuilder({ players, schedule, lockState, setLockState, userRole, clu
 
   return (
     <div>
-      {/* STALE COPY WARNING */}
-      {weekLock.modifiedAfterLock && !dismissedStale && (
-        <div style={{ background: "linear-gradient(90deg, #7f1d1d, #991b1b)", border: "2px solid #dc2626", borderRadius: 10, padding: "12px 18px", marginBottom: 14, display: "flex", alignItems: "center", gap: 12, color: "#fecaca", position: "relative" }}>
-          <span style={{ fontSize: 20 }}>⚠</span>
-          <div>
-            <div style={{ fontWeight: 600, fontSize: 14, color: "#fff" }}>Pairings modified since last send — re-notify opposing club</div>
-            <div style={{ fontSize: 12, opacity: 0.8 }}>Last sent: {weekLock.lastSentAt}. Changes have been made. The opposing club has a stale copy.</div>
-          </div>
-          <div style={{ marginLeft: "auto", display: "flex", gap: 8, alignItems: "center" }}>
-            {isAdmin && <button onClick={handleCopy} style={{ padding: "8px 16px", borderRadius: 6, border: "none", background: "#dc2626", color: "#fff", fontWeight: 600, cursor: "pointer", fontSize: 12, whiteSpace: "nowrap" }}>Re-Copy & Send</button>}
-            <button onClick={() => { setLockState(prev => ({ ...prev, [activeWeek]: { ...prev[activeWeek], modifiedAfterLock: false } })); setDismissedStale(true); }} style={{ padding: "4px 8px", borderRadius: 4, border: "1px solid #fca5a5", background: "transparent", color: "#fca5a5", fontSize: 14, cursor: "pointer", lineHeight: 1 }} title="Dismiss">&#10005;</button>
-          </div>
-        </div>
-      )}
 
       {/* Week Selector */}
       <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
