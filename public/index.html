@@ -3574,6 +3574,7 @@ function GAPManager() {
 
   // Must be declared before any conditional returns (React Rules of Hooks)
   const [clubHasPlayers, setClubHasPlayers] = useState(null);
+  const [godModeExiting, setGodModeExiting] = useState(false);
   useEffect(() => {
     if (profile && !profile.onboarded && profile.club && !PLATFORM_ADMIN_EMAILS.includes(profile?.email?.toLowerCase())) {
       supabase.from("players").select("id", { count: "exact", head: true }).eq("club", profile.club)
@@ -3680,7 +3681,6 @@ function GAPManager() {
     });
   };
 
-  const [godModeExiting, setGodModeExiting] = React.useState(false);
   const handleExitClub = () => {
     setGodModeExiting(true);
     // Small delay to let any in-flight saves complete before clearing state
