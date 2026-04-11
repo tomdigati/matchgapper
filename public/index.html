@@ -251,7 +251,7 @@ async function bulkInsertPlayers(players, club, userId) {
   return data || [];
 }
 
-async function bulkUpsertPlayers(players, club, userId) {
+async function bulkUpsertPlayers(players, club, userId, options = {}) {
   // Load existing players for this club to match against
   const { data: existing } = await supabase.from("players").select("id, ghin, name").eq("club", club);
   const existingList = existing || [];
@@ -273,6 +273,12 @@ async function bulkUpsertPlayers(players, club, userId) {
   // Run updates
   for (const u of updates) {
     const { id, ...fields } = u;
+    // If the uploaded file had no loc pref columns, preserve existing DB values
+    if (!options.hasLocPref) {
+      delete fields.loc_pref_1;
+      delete fields.loc_pref_2;
+      delete fields.loc_pref_3;
+    }
     await supabase.from("players").update(fields).eq("id", id);
   }
   // Run inserts
@@ -2295,7 +2301,8 @@ function Roster({ players, setPlayers, addPlayerWithSync, clubName, userId, sche
       const lp1Idx = header.findIndex(h => (h.includes("wk1") || h.includes("wk 1")) && (h.includes("loc") || h.includes("pref")));
       const lp2Idx = header.findIndex(h => (h.includes("wk2") || h.includes("wk 2")) && (h.includes("loc") || h.includes("pref")));
       const lp3Idx = header.findIndex(h => (h.includes("wk3") || h.includes("wk 3")) && (h.includes("loc") || h.includes("pref")));
-      const parseLocPref = (val) => { const v = (val || "").trim(); return v === "Home" || v === "Away" ? v : ""; };
+      const parseLocPref = (val) => { const v = (val || "").trim().toLowerCase(); return v === "home" ? "Home" : v === "away" ? "Away" : ""; };
+      const hasLocPrefCols = lp1Idx > -1 || lp2Idx > -1 || lp3Idx > -1;
       const parseStatus = (val) => {
         const v = (val || "").toLowerCase().trim().replace(/\s+/g, "_");
         const map = { available: "confirmed", confirmed: "confirmed", contacted: "contacted", not_contacted: "not_contacted", "not contacted": "not_contacted", declined: "declined", maybe: "maybe" };
@@ -2327,7 +2334,7 @@ function Roster({ players, setPlayers, addPlayerWithSync, clubName, userId, sche
       }));
       // Upsert to Supabase (update existing by GHIN/name, insert new)
       if (clubName && userId) {
-        const result = await bulkUpsertPlayers(newPlayers, clubName, userId);
+        const result = await bulkUpsertPlayers(newPlayers, clubName, userId, { hasLocPref: hasLocPrefCols });
         const dbPlayers = await loadPlayersFromDb(clubName);
         setPlayers(prev => dbPlayers);
         setUploadMsg(`Updated ${result.updated} players, added ${result.inserted} new from ${file.name}`);
