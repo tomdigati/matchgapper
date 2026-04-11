@@ -279,11 +279,11 @@ async function bulkUpsertPlayers(players, club, userId, options = {}) {
       : allFields;
     await supabase.from("players").update(fields).eq("id", id);
   }
-  // Run inserts
-  if (inserts.length > 0) {
+  // Run inserts — skip if updateOnly mode (sparse file with no status column)
+  if (inserts.length > 0 && !options.updateOnly) {
     await supabase.from("players").insert(inserts);
   }
-  return { updated: updates.length, inserted: inserts.length };
+  return { updated: updates.length, inserted: options.updateOnly ? 0 : inserts.length };
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -2349,7 +2349,7 @@ function Roster({ players, setPlayers, addPlayerWithSync, clubName, userId, sche
       if (lp3Idx > -1) presentDbFields.add("loc_pref_3");
       // Upsert to Supabase (update existing by GHIN/name, insert new)
       if (clubName && userId) {
-        const result = await bulkUpsertPlayers(newPlayers, clubName, userId, { hasLocPref: hasLocPrefCols, presentDbFields });
+        const result = await bulkUpsertPlayers(newPlayers, clubName, userId, { hasLocPref: hasLocPrefCols, presentDbFields, updateOnly: statusIdx === -1 });
         const dbPlayers = await loadPlayersFromDb(clubName);
         setPlayers(prev => dbPlayers);
         setUploadMsg(`Updated ${result.updated} players, added ${result.inserted} new from ${file.name}`);
