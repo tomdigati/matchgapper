@@ -3680,12 +3680,18 @@ function GAPManager() {
     });
   };
 
+  const [godModeExiting, setGodModeExiting] = React.useState(false);
   const handleExitClub = () => {
-    sessionStorage.removeItem("viewingClub");
-    setViewingClub(null);
-    setActiveTab("platform");
-    setPlayers([]);
-    setPlayersLoaded(false);
+    setGodModeExiting(true);
+    // Small delay to let any in-flight saves complete before clearing state
+    setTimeout(() => {
+      sessionStorage.removeItem("viewingClub");
+      setViewingClub(null);
+      setActiveTab("platform");
+      setPlayers([]);
+      setPlayersLoaded(false);
+      setGodModeExiting(false);
+    }, 800);
   };
 
   const headerAccent = isPlatformAdmin && !viewingClub ? "#f59e0b" : "#7dd3fc";
@@ -3696,12 +3702,12 @@ function GAPManager() {
       <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet" />
 
       {/* God mode banner when viewing a club */}
-      {isViewingClub && (
+      {(isViewingClub || godModeExiting) && (
         <div style={{ background: "#f59e0b", color: "#0f172a", padding: "6px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 12, fontWeight: 600 }}>
-          <span>GOD MODE — Viewing {viewingClub} as Platform Admin</span>
-          <button onClick={handleExitClub}
-            style={{ padding: "4px 16px", borderRadius: 6, border: "none", background: "#0f172a", color: "#f59e0b", fontWeight: 600, fontSize: 11, cursor: "pointer" }}>
-            Back to Platform
+          <span>{godModeExiting ? "Saving changes..." : `GOD MODE — Viewing ${viewingClub} as Platform Admin`}</span>
+          <button onClick={handleExitClub} disabled={godModeExiting}
+            style={{ padding: "4px 16px", borderRadius: 6, border: "none", background: "#0f172a", color: "#f59e0b", fontWeight: 600, fontSize: 11, cursor: godModeExiting ? "default" : "pointer", opacity: godModeExiting ? 0.5 : 1 }}>
+            {godModeExiting ? "Please wait..." : "Back to Platform"}
           </button>
         </div>
       )}
