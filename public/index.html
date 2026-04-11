@@ -3535,11 +3535,12 @@ function GAPManager() {
   const setPlayersWithSync = useCallback((updater) => {
     setPlayers(prev => {
       const next = typeof updater === "function" ? updater(prev) : updater;
+      const saveClub = viewingClub || clubName;
       // Find changed players and sync to DB
       next.forEach(p => {
         const old = prev.find(op => op.id === p.id);
         if (!old || JSON.stringify(old) !== JSON.stringify(p)) {
-          savePlayerToDb(p, clubName, session?.user?.id);
+          savePlayerToDb(p, saveClub, session?.user?.id);
         }
       });
       // Find deleted players
@@ -3550,7 +3551,7 @@ function GAPManager() {
       });
       return next;
     });
-  }, [clubName, session?.user?.id]);
+  }, [clubName, viewingClub, session?.user?.id]);
 
   // Handle new player add (needs to get DB id back)
   const addPlayerWithSync = useCallback(async (newPlayer) => {
