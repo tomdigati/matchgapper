@@ -270,15 +270,13 @@ async function bulkUpsertPlayers(players, club, userId, options = {}) {
       inserts.push(row);
     }
   }
-  // Run updates
+  // Run updates — only write fields that were present in the uploaded file
   for (const u of updates) {
-    const { id, ...fields } = u;
-    // If the uploaded file had no loc pref columns, preserve existing DB values
-    if (!options.hasLocPref) {
-      delete fields.loc_pref_1;
-      delete fields.loc_pref_2;
-      delete fields.loc_pref_3;
-    }
+    const { id, ...allFields } = u;
+    const presentFields = options.presentDbFields;
+    const fields = presentFields
+      ? Object.fromEntries(Object.entries(allFields).filter(([k]) => presentFields.has(k)))
+      : allFields;
     await supabase.from("players").update(fields).eq("id", id);
   }
   // Run inserts
@@ -2332,9 +2330,26 @@ function Roster({ players, setPlayers, addPlayerWithSync, clubName, userId, sche
         availability: { 1: wk1Idx > -1 ? parseAvail(row[wk1Idx]) : "no", 2: wk2Idx > -1 ? parseAvail(row[wk2Idx]) : "no", 3: wk3Idx > -1 ? parseAvail(row[wk3Idx]) : "no" },
         locPref: { 1: lp1Idx > -1 ? parseLocPref(row[lp1Idx]) : "", 2: lp2Idx > -1 ? parseLocPref(row[lp2Idx]) : "", 3: lp3Idx > -1 ? parseLocPref(row[lp3Idx]) : "" }, notes: notesIdx > -1 ? (row[notesIdx] || "") : ""
       }));
+      // Build set of DB field names that were actually present in the uploaded file
+      // Only these fields will be written on UPDATE — everything else is preserved as-is
+      const presentDbFields = new Set(["name"]);
+      if (ghinIdx > -1) presentDbFields.add("ghin");
+      if (hdcpIdx > -1) presentDbFields.add("course_hdcp");
+      if (indexIdx > -1) { presentDbFields.add("index"); } else if (hdcpIdx > -1) { presentDbFields.add("index"); }
+      if (phoneIdx > -1) presentDbFields.add("phone");
+      if (emailIdx > -1) presentDbFields.add("email");
+      if (memberNumberIdx > -1) presentDbFields.add("member_number");
+      if (notesIdx > -1) presentDbFields.add("notes");
+      if (statusIdx > -1) presentDbFields.add("status");
+      if (wk1Idx > -1) presentDbFields.add("availability_1");
+      if (wk2Idx > -1) presentDbFields.add("availability_2");
+      if (wk3Idx > -1) presentDbFields.add("availability_3");
+      if (lp1Idx > -1) presentDbFields.add("loc_pref_1");
+      if (lp2Idx > -1) presentDbFields.add("loc_pref_2");
+      if (lp3Idx > -1) presentDbFields.add("loc_pref_3");
       // Upsert to Supabase (update existing by GHIN/name, insert new)
       if (clubName && userId) {
-        const result = await bulkUpsertPlayers(newPlayers, clubName, userId, { hasLocPref: hasLocPrefCols });
+        const result = await bulkUpsertPlayers(newPlayers, clubName, userId, { hasLocPref: hasLocPrefCols, presentDbFields });
         const dbPlayers = await loadPlayersFromDb(clubName);
         setPlayers(prev => dbPlayers);
         setUploadMsg(`Updated ${result.updated} players, added ${result.inserted} new from ${file.name}`);
