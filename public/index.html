@@ -1206,13 +1206,16 @@ function exportRosterToExcel(players, type, clubName) {
       "Wk1 Availability": p.availability[1],
       "Wk2 Availability": p.availability[2],
       "Wk3 Availability": p.availability[3],
+      "Wk1 Loc Pref": p.locPref[1] || "",
+      "Wk2 Loc Pref": p.locPref[2] || "",
+      "Wk3 Loc Pref": p.locPref[3] || "",
       "Notes": p.notes,
     };
   });
   const wb = XLSX.utils.book_new();
   const ws = XLSX.utils.json_to_sheet(rows);
   // Auto column widths
-  const colWidths = [{ wch: 18 }, { wch: 16 }, { wch: 10 }, { wch: 16 }, { wch: 14 }, { wch: 10 }, { wch: 16 }, { wch: 28 }, { wch: 14 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 24 }];
+  const colWidths = [{ wch: 18 }, { wch: 16 }, { wch: 10 }, { wch: 16 }, { wch: 14 }, { wch: 10 }, { wch: 16 }, { wch: 28 }, { wch: 14 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 24 }];
   ws["!cols"] = colWidths;
   XLSX.utils.book_append_sheet(wb, ws, "Roster");
   XLSX.writeFile(wb, `${clubName.replace(/[^a-z0-9]/gi, "_")}_${type === "available" ? "Available" : "Full_Roster"}.xlsx`);
@@ -1525,7 +1528,7 @@ function PlayerCard({ player, onDragStart, compact, week, threshold }) {
   const pref = week ? player.locPref[week] : null;
   return (
     <>
-      <div draggable onDragStart={(e) => { e.dataTransfer.setData("text/plain", player.id.toString()); onDragStart?.(player); }}
+      <div draggable onDragStart={(e) => { setHover(false); e.dataTransfer.setData("text/plain", player.id.toString()); onDragStart?.(player); }}
         onMouseEnter={(e) => { setHover(true); setTooltipPos({ x: e.clientX, y: e.clientY }); }}
         onMouseMove={(e) => setTooltipPos({ x: e.clientX, y: e.clientY })}
         onMouseLeave={() => setHover(false)}
@@ -1572,8 +1575,9 @@ function detectArchetype(p1, p2) {
 function PairSlot({ pair, pairNum, onDrop, onRemove, players, side, week, threshold, disabled, teeOffset, baseTee }) {
   const [dragOver, setDragOver] = useState(false);
   const [showTip, setShowTip] = useState(false);
-  const p1 = pair[0] ? players.find(p => p.id === pair[0]) : null;
-  const p2 = pair[1] ? players.find(p => p.id === pair[1]) : null;
+  const cleanPair = (pair || []).filter(id => id != null && players.find(p => p.id === id));
+  const p1 = cleanPair[0] ? players.find(p => p.id === cleanPair[0]) : null;
+  const p2 = cleanPair[1] ? players.find(p => p.id === cleanPair[1]) : null;
   const avg = p1 && p2 ? ((p1.courseHdcp + p2.courseHdcp) / 2).toFixed(1) : p1 ? p1.courseHdcp.toFixed(1) : p2 ? p2.courseHdcp.toFixed(1) : "—";
   const archetype = detectArchetype(p1, p2);
   const arch = archetype ? PAIR_ARCHETYPES[archetype] : null;
@@ -1713,7 +1717,13 @@ function TeamBuilder({ players, schedule, lockState, setLockState, userRole, clu
       const next = JSON.parse(JSON.stringify(prev));
       const w = next[activeWeek] || {};
       teamIndices.forEach(t => { const tw = w[t]; if (tw) ["home", "away"].forEach(s => (tw[s] || []).forEach(pair => { const idx = pair.indexOf(playerId); if (idx > -1) pair.splice(idx, 1); })); });
-      if (w[teamIdx] && w[teamIdx][side][pairIdx].length < 2) w[teamIdx][side][pairIdx].push(playerId);
+      if (w[teamIdx]) {
+        if (!w[teamIdx][side]) w[teamIdx][side] = [[], [], []];
+        if (!w[teamIdx][side][pairIdx]) w[teamIdx][side][pairIdx] = [];
+        // Strip nulls/stale ids before checking capacity
+        w[teamIdx][side][pairIdx] = w[teamIdx][side][pairIdx].filter(id => id != null && players.find(p => p.id === id));
+        if (w[teamIdx][side][pairIdx].length < 2) w[teamIdx][side][pairIdx].push(playerId);
+      }
       next[activeWeek] = w;
       setValidationMsg(validate(next)); return next;
     });
@@ -1795,20 +1805,6 @@ function TeamBuilder({ players, schedule, lockState, setLockState, userRole, clu
 
   return (
     <div>
-      {/* STALE COPY WARNING */}
-      {weekLock.modifiedAfterLock && !dismissedStale && (
-        <div style={{ background: "linear-gradient(90deg, #7f1d1d, #991b1b)", border: "2px solid #dc2626", borderRadius: 10, padding: "12px 18px", marginBottom: 14, display: "flex", alignItems: "center", gap: 12, color: "#fecaca", position: "relative" }}>
-          <span style={{ fontSize: 20 }}>⚠</span>
-          <div>
-            <div style={{ fontWeight: 600, fontSize: 14, color: "#fff" }}>Pairings modified since last send — re-notify opposing club</div>
-            <div style={{ fontSize: 12, opacity: 0.8 }}>Last sent: {weekLock.lastSentAt}. Changes have been made. The opposing club has a stale copy.</div>
-          </div>
-          <div style={{ marginLeft: "auto", display: "flex", gap: 8, alignItems: "center" }}>
-            {isAdmin && <button onClick={handleCopy} style={{ padding: "8px 16px", borderRadius: 6, border: "none", background: "#dc2626", color: "#fff", fontWeight: 600, cursor: "pointer", fontSize: 12, whiteSpace: "nowrap" }}>Re-Copy & Send</button>}
-            <button onClick={() => { setLockState(prev => ({ ...prev, [activeWeek]: { ...prev[activeWeek], modifiedAfterLock: false } })); setDismissedStale(true); }} style={{ padding: "4px 8px", borderRadius: 4, border: "1px solid #fca5a5", background: "transparent", color: "#fca5a5", fontSize: 14, cursor: "pointer", lineHeight: 1 }} title="Dismiss">&#10005;</button>
-          </div>
-        </div>
-      )}
 
       {/* Week Selector */}
       <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
@@ -1820,7 +1816,6 @@ function TeamBuilder({ players, schedule, lockState, setLockState, userRole, clu
               <div style={{ fontWeight: 600, display: "flex", alignItems: "center", gap: 6, justifyContent: "center" }}>
                 Week {w} — {fmtDate(schedule[w].date)}
                 {ls.locked && <IconLock />}
-                {ls.modifiedAfterLock && <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#dc2626", display: "inline-block" }} />}
               </div>
               <div style={{ fontSize: 10, fontWeight: 400, opacity: 0.8, marginTop: 2 }}>{tc} team{tc !== 1 ? "s" : ""}</div>
             </button>
@@ -2294,9 +2289,13 @@ function Roster({ players, setPlayers, addPlayerWithSync, clubName, userId, sche
       const memberNumberIdx = header.findIndex(h => h.includes("member"));
       const notesIdx = header.findIndex(h => h.includes("note"));
       const statusIdx = header.findIndex(h => h === "status");
-      const wk1Idx = header.findIndex(h => h.includes("wk1") || h.includes("wk 1") || h === "week 1");
-      const wk2Idx = header.findIndex(h => h.includes("wk2") || h.includes("wk 2") || h === "week 2");
-      const wk3Idx = header.findIndex(h => h.includes("wk3") || h.includes("wk 3") || h === "week 3");
+      const wk1Idx = header.findIndex(h => (h.includes("wk1") || h.includes("wk 1") || h === "week 1") && h.includes("avail"));
+      const wk2Idx = header.findIndex(h => (h.includes("wk2") || h.includes("wk 2") || h === "week 2") && h.includes("avail"));
+      const wk3Idx = header.findIndex(h => (h.includes("wk3") || h.includes("wk 3") || h === "week 3") && h.includes("avail"));
+      const lp1Idx = header.findIndex(h => (h.includes("wk1") || h.includes("wk 1")) && (h.includes("loc") || h.includes("pref")));
+      const lp2Idx = header.findIndex(h => (h.includes("wk2") || h.includes("wk 2")) && (h.includes("loc") || h.includes("pref")));
+      const lp3Idx = header.findIndex(h => (h.includes("wk3") || h.includes("wk 3")) && (h.includes("loc") || h.includes("pref")));
+      const parseLocPref = (val) => { const v = (val || "").trim(); return v === "Home" || v === "Away" ? v : ""; };
       const parseStatus = (val) => {
         const v = (val || "").toLowerCase().trim().replace(/\s+/g, "_");
         const map = { available: "confirmed", confirmed: "confirmed", contacted: "contacted", not_contacted: "not_contacted", "not contacted": "not_contacted", declined: "declined", maybe: "maybe" };
@@ -2324,7 +2323,7 @@ function Roster({ players, setPlayers, addPlayerWithSync, clubName, userId, sche
         status: statusIdx > -1 ? parseStatus(row[statusIdx]) : "not_contacted",
         contactOwner: "", contactDate: "",
         availability: { 1: wk1Idx > -1 ? parseAvail(row[wk1Idx]) : "no", 2: wk2Idx > -1 ? parseAvail(row[wk2Idx]) : "no", 3: wk3Idx > -1 ? parseAvail(row[wk3Idx]) : "no" },
-        locPref: { 1: "", 2: "", 3: "" }, notes: notesIdx > -1 ? (row[notesIdx] || "") : ""
+        locPref: { 1: lp1Idx > -1 ? parseLocPref(row[lp1Idx]) : "", 2: lp2Idx > -1 ? parseLocPref(row[lp2Idx]) : "", 3: lp3Idx > -1 ? parseLocPref(row[lp3Idx]) : "" }, notes: notesIdx > -1 ? (row[notesIdx] || "") : ""
       }));
       // Upsert to Supabase (update existing by GHIN/name, insert new)
       if (clubName && userId) {
