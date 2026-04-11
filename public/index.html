@@ -260,9 +260,9 @@ async function bulkUpsertPlayers(players, club, userId, options = {}) {
   for (const p of players) {
     const row = appPlayerToDb(p, club, userId);
     delete row.id;
-    // Match by GHIN first, then by name
+    // Match by GHIN first (coerce both to string), then by name
     const match = p.ghin
-      ? existingList.find(e => e.ghin && e.ghin === p.ghin)
+      ? existingList.find(e => e.ghin && String(e.ghin) === String(p.ghin))
       : existingList.find(e => e.name && e.name.trim().toLowerCase() === p.name.trim().toLowerCase());
     if (match) {
       updates.push({ id: match.id, ...row });
