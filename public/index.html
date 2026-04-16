@@ -1249,9 +1249,11 @@ function exportPairingsToExcel(activeWeek, assignments, players, schedule, clubN
           "Location": loc,
           "Player 1": p1?.name || "TBD",
           "P1 Home Course HDCP": p1 ? fmtH(p1.courseHdcp) : "",
+          "P1 GHIN": p1?.ghin || "",
           "P1 Member #": p1?.memberNumber || "",
           "Player 2": p2?.name || "TBD",
           "P2 Home Course HDCP": p2 ? fmtH(p2.courseHdcp) : "",
+          "P2 GHIN": p2?.ghin || "",
           "P2 Member #": p2?.memberNumber || "",
         });
       });
@@ -1259,7 +1261,7 @@ function exportPairingsToExcel(activeWeek, assignments, players, schedule, clubN
   });
   const wb = XLSX.utils.book_new();
   const wsSheet = XLSX.utils.json_to_sheet(rows);
-  wsSheet["!cols"] = [{ wch: 10 }, { wch: 24 }, { wch: 22 }, { wch: 8 }, { wch: 10 }, { wch: 24 }, { wch: 22 }, { wch: 18 }, { wch: 12 }, { wch: 22 }, { wch: 18 }, { wch: 12 }];
+  wsSheet["!cols"] = [{ wch: 10 }, { wch: 24 }, { wch: 22 }, { wch: 8 }, { wch: 10 }, { wch: 24 }, { wch: 22 }, { wch: 18 }, { wch: 12 }, { wch: 12 }, { wch: 22 }, { wch: 18 }, { wch: 12 }, { wch: 12 }];
   XLSX.utils.book_append_sheet(wb, wsSheet, `Week ${activeWeek} Pairings`);
   XLSX.writeFile(wb, `${clubName.replace(/[^a-z0-9]/gi, "_")}_Week${activeWeek}_Pairings.xlsx`);
 }
@@ -1770,7 +1772,7 @@ function TeamBuilder({ players, schedule, lockState, setLockState, userRole, clu
           const loc = side === "home" ? clubName : ts.opponent;
           const baseTee = side === "home" ? ts.homeTee : ts.awayTee;
           (tw[side] || []).forEach((pair, i) => {
-            const names = pair.map(id => { const p = players.find(pl => pl.id === id); return p ? `${p.name} (${fmtH(p.courseHdcp)})${p.memberNumber ? ` [${p.memberNumber}]` : ""}` : "TBD"; });
+            const names = pair.map(id => { const p = players.find(pl => pl.id === id); if (!p) return "TBD"; let s = `${p.name} (${fmtH(p.courseHdcp)})`; if (p.memberNumber) s += ` [${p.memberNumber}]`; if (p.ghin) s += ` GHIN: ${p.ghin}`; return s; });
             const sideInterval = side === "home" ? (ts.homeInterval || 10) : (ts.awayInterval || 10);
             const pairTee = addMinutes(baseTee, i * sideInterval);
             if (names.length > 0) text += `  ${side.toUpperCase()} Pair ${i+1} @ ${pairTee} at ${loc}: ${names.join(" & ")}\n`;
@@ -3468,23 +3470,24 @@ function GAPManager() {
   }, []);
 
   // Derive role from profile — default to vice_captain for safety
-  const userRole = profile?.role || "vice_captain";
+  const isPlatformAdmin = !!profile?.platform_admin || PLATFORM_ADMIN_EMAILS.includes(profile?.email?.toLowerCase());
+  const userRole = isPlatformAdmin ? "admin" : (profile?.role || "vice_captain");
   const isAdmin = userRole === "admin";
   const isCaptain = userRole === "captain" || isAdmin;
-  const isPlatformAdmin = !!profile?.platform_admin || PLATFORM_ADMIN_EMAILS.includes(profile?.email?.toLowerCase());
   const rc = ROLE_CONFIG[userRole] || ROLE_CONFIG.vice_captain;
   const clubName = profile?.club || "My Club";
   const clubInitial = clubName.charAt(0).toUpperCase();
 
   // Load players from Supabase when profile is ready
+  // If in god mode (viewingClub set), load that club's players instead of profile.club
   useEffect(() => {
-    if (profile?.club && profile?.onboarded) {
-      loadPlayersFromDb(profile.club).then(dbPlayers => {
-        setPlayers(dbPlayers);
-        setPlayersLoaded(true);
-      });
-    }
-  }, [profile?.club, profile?.onboarded]);
+    const clubToLoad = viewingClub || (profile?.onboarded ? profile?.club : null);
+    if (!clubToLoad) return;
+    loadPlayersFromDb(clubToLoad).then(dbPlayers => {
+      setPlayers(dbPlayers);
+      setPlayersLoaded(true);
+    });
+  }, [profile?.club, profile?.onboarded, viewingClub]);
 
   // Load schedule & assignments from Supabase
   const scheduleLoadedRef = useRef(false);
@@ -3525,11 +3528,18 @@ function GAPManager() {
   }, [profile?.club, profile?.onboarded, viewingClub]);
 
   // Auto-save schedule (debounced)
+  // Guard: only save after load is confirmed AND only if the schedule has actual content
+  // (prevents blank DEFAULT_SCHEDULE from overwriting real data on hard-refresh race conditions)
   const saveScheduleTimer = useRef(null);
   useEffect(() => {
     if (!scheduleLoadedRef.current) return;
     const club = viewingClub || profile?.club;
-    if (!club || isPlatformAdmin && !viewingClub) return;
+    if (!club || (isPlatformAdmin && !viewingClub)) return;
+    // Don't save if all weeks are completely empty (opponents all blank) — likely a race condition
+    const hasAnyContent = [1, 2, 3].some(w =>
+      schedule[w]?.date || schedule[w]?.teams?.some(t => t.opponent)
+    );
+    if (!hasAnyContent) return;
     clearTimeout(saveScheduleTimer.current);
     saveScheduleTimer.current = setTimeout(() => {
       [1, 2, 3].forEach(w => {
