@@ -2226,6 +2226,7 @@ function Roster({ players, setPlayers, addPlayerWithSync, clubName, userId, sche
   const [sortField, setSortField] = useState("courseHdcp");
   const [sortDir, setSortDir] = useState("asc");
   const [editingId, setEditingId] = useState(null);
+  const frozenOrderRef = React.useRef(null);
   const overallTC = (schedule && schedule[1]) ? (schedule[1].teamCount || 2) : 2;
   const overallSplit = computeTeamSplit(players, 1, overallTC);
   const toggleSort = (field) => {
@@ -2244,6 +2245,19 @@ function Roster({ players, setPlayers, addPlayerWithSync, clubName, userId, sche
       const ti = parseInt(filterTeam);
       list = list.filter(p => projectTeam(p, overallSplit.thresholds) === ti);
     }
+    // While a row is being edited, freeze the sort order so the row doesn't
+    // jump off-screen mid-keystroke. We preserve the last known good order and
+    // only update player data in-place, not position.
+    if (editingId !== null && frozenOrderRef.current) {
+      const playerMap = new Map(list.map(p => [p.id, p]));
+      const reordered = frozenOrderRef.current
+        .filter(id => playerMap.has(id))
+        .map(id => playerMap.get(id));
+      // Append any players that weren't in the frozen snapshot (edge case: filter change while editing)
+      const frozenSet = new Set(frozenOrderRef.current);
+      list.filter(p => !frozenSet.has(p.id)).forEach(p => reordered.push(p));
+      return reordered;
+    }
     list.sort((a, b) => {
       let cmp = 0;
       if (sortField === "courseHdcp") cmp = a.courseHdcp - b.courseHdcp;
@@ -2256,8 +2270,9 @@ function Roster({ players, setPlayers, addPlayerWithSync, clubName, userId, sche
       else if (sortField === "wk3") cmp = (a.availability[3] || "").localeCompare(b.availability[3] || "");
       return sortDir === "asc" ? cmp : -cmp;
     });
+    frozenOrderRef.current = list.map(p => p.id);
     return list;
-  }, [players, search, filterStatus, filterWk1, filterWk2, filterWk3, filterTeam, sortField, sortDir, overallSplit.thresholds]);
+  }, [players, search, filterStatus, filterWk1, filterWk2, filterWk3, filterTeam, sortField, sortDir, overallSplit.thresholds, editingId]);
   const updatePlayer = (id, field, value) => setPlayers(prev => prev.map(p => p.id === id ? { ...p, [field]: value } : p));
   const updateAvail = (id, week, value) => setPlayers(prev => prev.map(p => p.id === id ? { ...p, availability: { ...p.availability, [week]: value } } : p));
   const updateLocPref = (id, week, value) => setPlayers(prev => prev.map(p => p.id === id ? { ...p, locPref: { ...p.locPref, [week]: value } } : p));
