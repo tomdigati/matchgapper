@@ -184,13 +184,16 @@ function useAuth() {
   return { session, profile, loading, signIn, signUp, signOut, fetchProfile };
 }
 
+// Safe numeric parser — treats 0 as valid (not falsy-defaulted to 15)
+const parseNum = (val, def = 15) => { const n = parseFloat(val); return isNaN(n) ? def : n; };
+
 // ═══════════════════════════════════════════════════════════════
 // SUPABASE PLAYERS DATA LAYER
 // ═══════════════════════════════════════════════════════════════
 function dbPlayerToApp(p) {
   return {
-    id: p.id, name: p.name, ghin: p.ghin || "", courseHdcp: Number(p.course_hdcp) || 15,
-    index: Number(p.index) || 15, phone: p.phone || "", email: p.email || "",
+    id: p.id, name: p.name, ghin: p.ghin || "", courseHdcp: parseNum(p.course_hdcp),
+    index: parseNum(p.index), phone: p.phone || "", email: p.email || "",
     memberNumber: p.member_number || "",
     status: p.status || "not_contacted", contactOwner: p.contact_owner || "",
     contactDate: p.contact_date || "",
@@ -398,8 +401,8 @@ function OnboardingWizard({ profile, session, onComplete, onSetTeamCount }) {
         id: -(i + 1),
         name: getName(row),
         ghin: ghinIdx > -1 ? (row[ghinIdx] || "") : "",
-        courseHdcp: hdcpIdx > -1 ? (parseFloat(row[hdcpIdx]) || 15) : 15,
-        index: indexIdx > -1 ? (parseFloat(row[indexIdx]) || 15) : (hdcpIdx > -1 ? (parseFloat(row[hdcpIdx]) || 15) : 15),
+        courseHdcp: hdcpIdx > -1 ? parseNum(row[hdcpIdx]) : 15,
+        index: indexIdx > -1 ? parseNum(row[indexIdx]) : (hdcpIdx > -1 ? parseNum(row[hdcpIdx]) : 15),
         phone: phoneIdx > -1 ? (row[phoneIdx] || "") : "",
         email: emailIdx > -1 ? (row[emailIdx] || "") : "",
         memberNumber: memberNumberIdx > -1 ? (row[memberNumberIdx] || "") : "",
@@ -2319,7 +2322,7 @@ function Roster({ players, setPlayers, addPlayerWithSync, clubName, userId, sche
         return (row[nameIdx] || "Unknown").trim();
       };
       const hasData = (row) => hasSeparateNames ? ((row[firstNameIdx] || "").trim() || (row[lastNameIdx] || "").trim()) : (row[nameIdx] || "").trim();
-      const parseNum = (val, def = 15) => { const n = parseFloat(val); return isNaN(n) ? def : n; };
+      // parseNum is defined globally above dbPlayerToApp
       const newPlayers = lines.slice(1).filter(row => hasData(row)).map((row, i) => ({
         name: getName(row),
         ghin: ghinIdx > -1 ? (row[ghinIdx] || "") : "",
