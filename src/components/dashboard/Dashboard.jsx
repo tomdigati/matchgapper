@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { fmtH, fmtDateLong } from "../../utils/format";
 import { STATUS_CONFIG, TEAM_COLORS, AVAIL_COLORS, ACCENT } from "../../utils/constants";
 
@@ -52,26 +52,31 @@ function projectTeam(player, thresholds) {
 }
 
 function Dashboard({ players, schedule, lockState, clubName, assignments }) {
-  const weekAnalysis = [1, 2, 3].map(w => {
+  const weekAnalysis = useMemo(() => [1, 2, 3].map(w => {
     const tc = schedule[w].teamCount || 2;
     const split = computeTeamSplit(players, w, tc);
     const maybe = players.filter(p => p.availability[w] === "maybe");
     return { week: w, ...split, teamCount: tc, maybeAll: maybe, date: schedule[w].date, teams: schedule[w].teams || [], ls: lockState[w] };
-  });
-  const totalPlayers = players.length;
-  const maxTeamCount = Math.max(...[1,2,3].map(w => schedule[w]?.teamCount || 2));
-  const playersNeeded = maxTeamCount * 12;
-  const rosterGap = Math.max(0, playersNeeded - totalPlayers);
-  const confirmed = players.filter(p => p.status === "confirmed").length;
-  const declined = players.filter(p => p.status === "declined").length;
-  const maybeP = players.filter(p => [1,2,3].some(w => p.availability[w] === "maybe")).length;
-  const contacted = players.filter(p => p.status === "contacted").length;
-  const notContacted = players.filter(p => p.status === "not_contacted").length;
-  const overallTC = schedule[1]?.teamCount || 2;
-  const overallSplit = computeTeamSplit(players, 1, overallTC);
+  }), [players, schedule, lockState]);
 
-  const anyYes = players.filter(p => [1,2,3].some(w => p.availability[w] === "yes"));
-  const overallAvgHdcp = anyYes.length > 0 ? (anyYes.reduce((s, p) => s + p.courseHdcp, 0) / anyYes.length).toFixed(1) : "—";
+  const stats = useMemo(() => {
+    const totalPlayers = players.length;
+    const maxTeamCount = Math.max(...[1,2,3].map(w => schedule[w]?.teamCount || 2));
+    const playersNeeded = maxTeamCount * 12;
+    const rosterGap = Math.max(0, playersNeeded - totalPlayers);
+    const confirmed = players.filter(p => p.status === "confirmed").length;
+    const declined = players.filter(p => p.status === "declined").length;
+    const maybeP = players.filter(p => [1,2,3].some(w => p.availability[w] === "maybe")).length;
+    const contacted = players.filter(p => p.status === "contacted").length;
+    const notContacted = players.filter(p => p.status === "not_contacted").length;
+    const overallTC = schedule[1]?.teamCount || 2;
+    const overallSplit = computeTeamSplit(players, 1, overallTC);
+    const anyYes = players.filter(p => [1,2,3].some(w => p.availability[w] === "yes"));
+    const overallAvgHdcp = anyYes.length > 0 ? (anyYes.reduce((s, p) => s + p.courseHdcp, 0) / anyYes.length).toFixed(1) : "—";
+    return { totalPlayers, maxTeamCount, playersNeeded, rosterGap, confirmed, declined, maybeP, contacted, notContacted, overallSplit, overallAvgHdcp };
+  }, [players, schedule]);
+
+  const { totalPlayers, maxTeamCount, playersNeeded, rosterGap, confirmed, declined, maybeP, contacted, notContacted, overallSplit, overallAvgHdcp } = stats;
 
   return (
     <div>

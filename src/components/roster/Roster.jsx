@@ -471,10 +471,10 @@ function Roster({ players, setPlayers, addPlayerWithSync, clubName, userId, sche
                         {editingId === p.id ? (
                           <button onClick={() => setEditingId(null)} style={{ fontSize: 9, padding: "3px 8px", borderRadius: 4, border: "none", background: "#16a34a", color: "#fff", fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}>✓ Done</button>
                         ) : (
-                          <button onClick={() => setEditingId(p.id)} title="Edit player" style={{ fontSize: 11, padding: "3px 6px", borderRadius: 4, border: "1px solid #bae6fd", background: "#f0f9ff", color: "#0369a1", cursor: "pointer", display: "flex", alignItems: "center" }}>✏️</button>
+                          <button onClick={() => setEditingId(p.id)} title="Edit player" aria-label={`Edit ${p.name}`} style={{ fontSize: 11, padding: "3px 6px", borderRadius: 4, border: "1px solid #bae6fd", background: "#f0f9ff", color: "#0369a1", cursor: "pointer", display: "flex", alignItems: "center" }}>✏️</button>
                         )}
                         <button onClick={() => { if (window.confirm(`Delete ${p.name} from the roster? This cannot be undone.`)) { deletePlayerFromDb(p.id); setPlayers(prev => prev.filter(pl => pl.id !== p.id)); } }}
-                          title="Delete player"
+                          title="Delete player" aria-label={`Delete ${p.name}`}
                           onMouseEnter={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.color = '#dc2626'; e.currentTarget.style.background = '#fee2e2'; e.currentTarget.style.borderColor = '#fca5a5'; }}
                           onMouseLeave={e => { e.currentTarget.style.opacity = '0.25'; e.currentTarget.style.color = '#94a3b8'; e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'transparent'; }}
                           style={{ fontSize: 14, padding: "3px 5px", borderRadius: 4, border: "1px solid transparent", background: "transparent", color: "#94a3b8", cursor: "pointer", opacity: 0.25, lineHeight: 1 }}>

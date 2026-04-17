@@ -405,21 +405,25 @@ function GAPManager() {
     return () => clearTimeout(saveAssignmentsTimer.current);
   }, [assignments]);
 
-  // Wrapper to save player changes to Supabase
+  // Wrapper to save player changes to Supabase (O(n) using Map)
   const setPlayersWithSync = useCallback((updater) => {
     setPlayers(prev => {
       const next = typeof updater === "function" ? updater(prev) : updater;
       const saveClub = viewingClub || clubName;
+      const userId = session?.user?.id;
+      // Build Map for O(1) lookups instead of O(n) find()
+      const prevMap = new Map(prev.map(p => [p.id, p]));
+      const nextIds = new Set(next.map(p => p.id));
       // Find changed players and sync to DB
       next.forEach(p => {
-        const old = prev.find(op => op.id === p.id);
-        if (!old || JSON.stringify(old) !== JSON.stringify(p)) {
-          savePlayerToDb(p, saveClub, session?.user?.id);
+        const old = prevMap.get(p.id);
+        if (!old || old !== p) {
+          savePlayerToDb(p, saveClub, userId);
         }
       });
       // Find deleted players
       prev.forEach(p => {
-        if (!next.find(np => np.id === p.id)) {
+        if (!nextIds.has(p.id)) {
           deletePlayerFromDb(p.id);
         }
       });

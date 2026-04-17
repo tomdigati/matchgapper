@@ -240,6 +240,7 @@ function PairSlot({ pair, pairNum, onDrop, onRemove, players, side, week, thresh
               <button
                 onClick={() => disabled ? alert("Pairings are locked. Click 'Unlock to Edit' above to make changes.") : onRemove(player.id)}
                 title={disabled ? "Unlock pairings to remove" : "Remove player"}
+                aria-label={disabled ? "Locked" : `Remove ${player.name}`}
                 style={{ width: 22, height: 22, borderRadius: "50%", border: `1px solid ${disabled ? "#e2e8f0" : "#e5d5d5"}`, background: disabled ? "#f1f5f9" : "#fff5f5", color: disabled ? "#94a3b8" : "#dc2626", cursor: disabled ? "not-allowed" : "pointer", fontSize: 12, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                 {disabled ? "🔒" : "×"}
               </button>
@@ -330,7 +331,7 @@ function TeamBuilder({ players, schedule, lockState, setLockState, userRole, clu
       }
     }
     setAssignments(prev => {
-      const next = JSON.parse(JSON.stringify(prev));
+      const next = structuredClone(prev);
       const w = next[activeWeek] || {};
       teamIndices.forEach(t => { const tw = w[t]; if (tw) ["home", "away"].forEach(s => (tw[s] || []).forEach(pair => { const idx = pair.indexOf(playerId); if (idx > -1) pair.splice(idx, 1); })); });
       if (w[teamIdx]) {
@@ -350,7 +351,7 @@ function TeamBuilder({ players, schedule, lockState, setLockState, userRole, clu
   const handleRemove = (playerId) => {
     if (isLocked) return;
     setAssignments(prev => {
-      const next = JSON.parse(JSON.stringify(prev));
+      const next = structuredClone(prev);
       const w = next[activeWeek] || {};
       teamIndices.forEach(t => { const tw = w[t]; if (tw) ["home", "away"].forEach(s => (tw[s] || []).forEach(pair => { const idx = pair.indexOf(playerId); if (idx > -1) pair.splice(idx, 1); })); });
       next[activeWeek] = w;
