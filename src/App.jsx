@@ -1,16 +1,14 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
-import { createClient } from "@supabase/supabase-js";
 import * as XLSX from "xlsx";
-
-// ═══════════════════════════════════════════════════════════════
-// SUPABASE CONFIG
-// ═══════════════════════════════════════════════════════════════
-const SUPABASE_URL = "https://fckgerhhaesaclattpac.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZja2dlcmhoYWVzYWNsYXR0cGFjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwNTI2MjEsImV4cCI6MjA4OTYyODYyMX0.Aidco8XmsObg9moszM3v700qyA8DJwbY8uudmzD6-GM";
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-// Platform admin emails — bypass invite requirement
-const PLATFORM_ADMIN_EMAILS = ["tom@axiolo.com", "gabriel@axiolo.com"];
+import { supabase } from "./lib/supabase";
+import { parseCSVLine } from "./utils/csv";
+import { parseName } from "./utils/names";
+import { fmtH, fmtDate, fmtDateLong, addMinutes } from "./utils/format";
+import {
+  PLATFORM_ADMIN_EMAILS, WEEKS, ROLE_CONFIG, STATUS_CONFIG, AVAIL_COLORS,
+  ACCENT, TEAM_COLORS, EMPTY_TEAM, DEFAULT_SCHEDULE, DEFAULT_LOCK_STATE,
+  isPlatformAdminEmail,
+} from "./utils/constants";
 
 // Capture invite token immediately before any routing can strip it
 const INITIAL_INVITE_TOKEN = new URLSearchParams(window.location.search).get("invite");
@@ -46,7 +44,7 @@ function useAuth() {
     if (data) {
       // Override platform admin flags in memory for authorized emails
       // (avoids RLS issues with self-referencing update policies)
-      if (PLATFORM_ADMIN_EMAILS.includes(data.email?.toLowerCase())) {
+      if (isPlatformAdminEmail(data.email)) {
         data.platform_admin = true;
         data.onboarded = true;
       }
@@ -69,7 +67,7 @@ function useAuth() {
     if (!error && data?.user) {
       const updates = { role: role, club: club };
       // Auto-set platform admin flags for authorized emails
-      if (PLATFORM_ADMIN_EMAILS.includes(email.toLowerCase().trim())) {
+      if (isPlatformAdminEmail(email)) {
         updates.platform_admin = true;
         updates.onboarded = true;
       }
@@ -258,8 +256,14 @@ function OnboardingWizard({ profile, session, onComplete, onSetTeamCount }) {
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
+    const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+    if (file.size > MAX_FILE_SIZE) { setUploadMsg({ type: "error", msg: "File too large. Maximum size is 5MB." }); return; }
+    const validTypes = ["text/csv", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "application/vnd.ms-excel"];
+    const ext = file.name.split(".").pop().toLowerCase();
+    if (!["csv", "xlsx", "xls"].includes(ext) && !validTypes.includes(file.type)) {
+      setUploadMsg({ type: "error", msg: "Invalid file type. Please upload a CSV or Excel file." }); return;
+    }
     try {
-      const ext = file.name.split(".").pop().toLowerCase();
       let text = "";
       if (ext === "xlsx" || ext === "xls") {
 
@@ -272,7 +276,7 @@ function OnboardingWizard({ profile, session, onComplete, onSetTeamCount }) {
         text = await file.text();
       }
       if (!text) { setUploadMsg({ type: "error", msg: "Could not read file." }); return; }
-      const parseCSVLine = (line) => { const result = []; let current = ""; let inQuotes = false; for (let i = 0; i < line.length; i++) { const ch = line[i]; if (ch === '"') { if (inQuotes && line[i+1] === '"') { current += '"'; i++; } else { inQuotes = !inQuotes; } } else if (ch === ',' && !inQuotes) { result.push(current.trim()); current = ""; } else { current += ch; } } result.push(current.trim()); return result; };
+
       const lines = text.trim().split("\n").map(l => parseCSVLine(l));
       if (lines.length < 2) { setUploadMsg({ type: "error", msg: "File appears empty." }); return; }
       const header = lines[0].map(h => h.toLowerCase().trim());
@@ -786,7 +790,7 @@ function PlatformAdminSignup({ onSignUp, onBack }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
-    if (!PLATFORM_ADMIN_EMAILS.includes(email.toLowerCase().trim())) {
+    if (!isPlatformAdminEmail(email)) {
       setError("This email is not authorized for platform admin access.");
       return;
     }
@@ -940,11 +944,7 @@ function LoginScreen({ onSignIn, onSignUp, onRegisterClub, onPlatformAdmin }) {
   );
 }
 
-const ROLE_CONFIG = {
-  admin: { label: "Admin", color: "#16a34a", bg: "#dcfce7" },
-  captain: { label: "Captain", color: "#1e40af", bg: "#dbeafe" },
-  vice_captain: { label: "Vice Captain", color: "#f59e0b", bg: "#fef3c7" },
-};
+// ROLE_CONFIG, STATUS_CONFIG, TEAM_COLORS, etc. imported from utils/constants
 
 // ═══════════════════════════════════════════════════════════════
 // GAP MEMBER CLUBS — 334 clubs from gapgolf.org/play/club-directory/
@@ -1032,52 +1032,8 @@ const SAMPLE_PLAYERS = [
 ];
 
 // ═══════════════════════════════════════════════════════════════
-// DEFAULTS & CONFIG
-// ═══════════════════════════════════════════════════════════════
-const EMPTY_TEAM = () => ({ opponent: "", teamNum: "#1", homeTee: "", awayTee: "", homeInterval: 10, awayInterval: 10 });
-const DEFAULT_SCHEDULE = {
-  1: { date: "", teamCount: 2, teams: [EMPTY_TEAM(), EMPTY_TEAM()] },
-  2: { date: "", teamCount: 2, teams: [EMPTY_TEAM(), EMPTY_TEAM()] },
-  3: { date: "", teamCount: 2, teams: [EMPTY_TEAM(), EMPTY_TEAM()] },
-};
-
-const DEFAULT_LOCK_STATE = { 1: { locked: false, lockedAt: null, lockedBy: null, modifiedAfterLock: false, lastSentAt: null }, 2: { locked: false, lockedAt: null, lockedBy: null, modifiedAfterLock: false, lastSentAt: null }, 3: { locked: false, lockedAt: null, lockedBy: null, modifiedAfterLock: false, lastSentAt: null } };
-
-const STATUS_CONFIG = {
-  not_contacted: { label: "Not Contacted", short: "NC", color: "#94a3b8", bg: "#f1f5f9" },
-  contacted: { label: "Contacted", short: "CTD", color: "#f59e0b", bg: "#fef3c7" },
-  confirmed: { label: "Available", short: "Yes", color: "#16a34a", bg: "#dcfce7" },
-  declined: { label: "Declined", short: "No", color: "#dc2626", bg: "#fee2e2" },
-  maybe: { label: "Maybe", short: "?", color: "#8b5cf6", bg: "#ede9fe" },
-};
-
-const AVAIL_COLORS = { yes: "#16a34a", no: "#dc2626", maybe: "#8b5cf6" };
-const fmtH = (h) => Number(h).toFixed(1);
-const fmtDate = (d) => { if (!d) return ""; const [y, m, day] = d.split("-"); const dt = new Date(+y, +m - 1, +day); return dt.toLocaleDateString("en-US", { month: "short", day: "numeric" }); };
-const fmtDateLong = (d) => { if (!d) return ""; const [y, m, day] = d.split("-"); const dt = new Date(+y, +m - 1, +day); return dt.toLocaleDateString("en-US", { weekday: "short", month: "long", day: "numeric", year: "numeric" }); };
-const addMinutes = (timeStr, mins) => {
-  if (!timeStr || !mins) return timeStr;
-  const match = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
-  if (!match) return timeStr;
-  let [, h, m, ampm] = match;
-  let hours = parseInt(h); let minutes = parseInt(m);
-  if (ampm.toUpperCase() === "PM" && hours !== 12) hours += 12;
-  if (ampm.toUpperCase() === "AM" && hours === 12) hours = 0;
-  const total = hours * 60 + minutes + mins;
-  const nh = Math.floor(total / 60) % 24; const nm = total % 60;
-  const newAmpm = nh >= 12 ? "PM" : "AM";
-  const displayH = nh > 12 ? nh - 12 : nh === 0 ? 12 : nh;
-  return `${displayH}:${nm.toString().padStart(2, "0")} ${newAmpm}`;
-};
-const ACCENT = "#7dd3fc";
-const TEAM_COLORS = [
-  { label: "TEAM 1", color: "#16a34a", bg: "#dcfce7" },
-  { label: "TEAM 2", color: "#1e40af", bg: "#dbeafe" },
-  { label: "TEAM 3", color: "#9333ea", bg: "#f3e8ff" },
-  { label: "TEAM 4", color: "#ea580c", bg: "#fff7ed" },
-  { label: "TEAM 5", color: "#0891b2", bg: "#ecfeff" },
-  { label: "TEAM 6", color: "#be123c", bg: "#fff1f2" },
-];
+// DEFAULTS & CONFIG — imported from utils/constants
+// SVG ICONS defined below
 
 // ═══════════════════════════════════════════════════════════════
 // SVG ICONS
@@ -1099,10 +1055,10 @@ function exportRosterToExcel(players, type, clubName) {
     ? players.filter(p => [1, 2, 3].some(w => p.availability[w] === "yes"))
     : players;
   const rows = filtered.sort((a, b) => a.name.localeCompare(b.name)).map(p => {
-    const parts = p.name.split(",");
+    const { last, first } = parseName(p.name);
     return {
-      "Last Name": (parts[0] || "").trim(),
-      "First Name": (parts[1] || "").trim(),
+      "Last Name": last,
+      "First Name": first,
       "GHIN": p.ghin,
       "Home Course HDCP": p.courseHdcp,
       "Player Low HI": p.index,
@@ -2167,7 +2123,10 @@ function Roster({ players, setPlayers, addPlayerWithSync, clubName, userId, sche
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
+    const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+    if (file.size > MAX_FILE_SIZE) { setUploadMsg("File too large. Maximum size is 5MB."); return; }
     const ext = file.name.split(".").pop().toLowerCase();
+    if (!["csv", "xlsx", "xls"].includes(ext)) { setUploadMsg("Invalid file type. Please upload a CSV or Excel file."); return; }
     try {
       let text = "";
       if (ext === "csv") {
@@ -2182,7 +2141,7 @@ function Roster({ players, setPlayers, addPlayerWithSync, clubName, userId, sche
       }
       if (!text) { setUploadMsg("Could not read file."); return; }
       // Parse CSV
-      const parseCSVLine = (line) => { const result = []; let current = ""; let inQuotes = false; for (let i = 0; i < line.length; i++) { const ch = line[i]; if (ch === '"') { if (inQuotes && line[i+1] === '"') { current += '"'; i++; } else { inQuotes = !inQuotes; } } else if (ch === ',' && !inQuotes) { result.push(current.trim()); current = ""; } else { current += ch; } } result.push(current.trim()); return result; };
+
       const lines = text.trim().split("\n").map(l => parseCSVLine(l));
       if (lines.length < 2) { setUploadMsg("File appears empty."); return; }
       const header = lines[0].map(h => h.toLowerCase().trim());
@@ -2535,7 +2494,8 @@ function AdminPanel({ currentUserId, clubName }) {
         });
         setFeedback({ type: "success", msg: `Invite emailed to ${newInviteEmail}! Link: ${inviteUrl}` });
       } catch (e) {
-        setFeedback({ type: "success", msg: `Invite created! Share this link: ${inviteUrl}` });
+        console.error("Failed to send invite email:", e);
+        setFeedback({ type: "warning", msg: `Invite created but email failed. Share this link manually: ${inviteUrl}` });
       }
       setNewInviteEmail("");
     }
@@ -2935,7 +2895,8 @@ function PlatformAdmin({ currentUserId, onEnterClub }) {
         });
         setFeedback({ type: "success", msg: `Invite emailed to ${newInviteEmail}! Link: ${url}` });
       } catch (e) {
-        setFeedback({ type: "success", msg: `Invite created (email failed). Link: ${url}` });
+        console.error("Failed to send invite email:", e);
+        setFeedback({ type: "warning", msg: `Invite created but email failed. Share this link manually: ${url}` });
       }
       setNewInviteEmail(""); setNewInviteClub(""); setNewInviteRole("captain");
       loadAll();
@@ -3373,7 +3334,7 @@ function GAPManager() {
   }, []);
 
   // Derive role from profile — default to vice_captain for safety
-  const isPlatformAdmin = !!profile?.platform_admin || PLATFORM_ADMIN_EMAILS.includes(profile?.email?.toLowerCase());
+  const isPlatformAdmin = !!profile?.platform_admin || isPlatformAdminEmail(profile?.email);
   const userRole = isPlatformAdmin ? "admin" : (profile?.role || "vice_captain");
   const isAdmin = userRole === "admin";
   const isCaptain = userRole === "captain" || isAdmin;
@@ -3505,7 +3466,7 @@ function GAPManager() {
   const [clubHasPlayers, setClubHasPlayers] = useState(null);
   const [godModeExiting, setGodModeExiting] = useState(false);
   useEffect(() => {
-    if (profile && !profile.onboarded && profile.club && !PLATFORM_ADMIN_EMAILS.includes(profile?.email?.toLowerCase())) {
+    if (profile && !profile.onboarded && profile.club && !isPlatformAdminEmail(profile?.email)) {
       supabase.from("players").select("id", { count: "exact", head: true }).eq("club", profile.club)
         .then(({ count }) => {
           if (count > 0) {
@@ -3555,7 +3516,7 @@ function GAPManager() {
   }
 
   // Platform admins skip onboarding — check both flag and email as fallback
-  const isPlatformByEmail = PLATFORM_ADMIN_EMAILS.includes(profile?.email?.toLowerCase());
+  const isPlatformByEmail = isPlatformAdminEmail(profile?.email);
 
   if (profile && !profile.onboarded && !isPlatformAdmin && !isPlatformByEmail) {
     // Still checking, or club has players (auto-onboarding in progress)
