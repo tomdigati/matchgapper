@@ -2227,6 +2227,7 @@ function Roster({ players, setPlayers, addPlayerWithSync, clubName, userId, sche
   const [sortDir, setSortDir] = useState("asc");
   const [editingId, setEditingId] = useState(null);
   const frozenOrderRef = React.useRef(null);
+  const [statusOpenId, setStatusOpenId] = useState(null);
   const overallTC = (schedule && schedule[1]) ? (schedule[1].teamCount || 2) : 2;
   const overallSplit = computeTeamSplit(players, 1, overallTC);
   const toggleSort = (field) => {
@@ -2564,6 +2565,8 @@ function Roster({ players, setPlayers, addPlayerWithSync, clubName, userId, sche
           </div>
         </div>
       )}
+      {/* Status popover backdrop */}
+      {statusOpenId !== null && <div onClick={() => setStatusOpenId(null)} style={{ position: "fixed", inset: 0, zIndex: 199 }} />}
       {/* ROSTER UPLOAD */}
       <div style={{ background: "#fff", borderRadius: 10, border: "1px solid #d1d9e6", padding: "10px 18px", marginBottom: 14, display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
         <span style={{ fontSize: 13, fontWeight: 700, color: "#0f172a", whiteSpace: "nowrap" }}>Update Roster</span>
@@ -2723,7 +2726,25 @@ function Roster({ players, setPlayers, addPlayerWithSync, clubName, userId, sche
                         </div>
                       )}
                     </td>
-                    <td style={{ padding: "6px" }}><select value={p.status} onChange={e => updatePlayer(p.id, "status", e.target.value)} style={{ fontSize: 10, padding: "2px 4px", borderRadius: 4, border: `1px solid ${s.color}44`, background: s.bg, color: s.color, fontWeight: 600, cursor: "pointer" }}>{Object.entries(STATUS_CONFIG).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}</select></td>
+                    <td style={{ padding: "6px", position: "relative" }}>
+                      <button
+                        onClick={e => { e.stopPropagation(); setStatusOpenId(statusOpenId === p.id ? null : p.id); }}
+                        style={{ fontSize: 10, padding: "3px 9px", borderRadius: 12, border: `1.5px solid ${s.color}55`, background: s.bg, color: s.color, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap", display: "flex", alignItems: "center", gap: 4, lineHeight: 1.4 }}
+                      >
+                        {s.label} <span style={{ fontSize: 8, opacity: 0.7 }}>▾</span>
+                      </button>
+                      {statusOpenId === p.id && (
+                        <div onClick={e => e.stopPropagation()} style={{ position: "absolute", zIndex: 200, top: "calc(100% + 4px)", left: 0, background: "#fff", border: "1px solid #d1d9e6", borderRadius: 10, boxShadow: "0 6px 24px rgba(0,0,0,0.13)", padding: 6, display: "flex", flexDirection: "column", gap: 3, minWidth: 148 }}>
+                          {Object.entries(STATUS_CONFIG).map(([k, v]) => (
+                            <button key={k} onClick={() => { updatePlayer(p.id, "status", k); setStatusOpenId(null); }}
+                              style={{ fontSize: 11, padding: "6px 10px", borderRadius: 7, border: k === p.status ? `2px solid ${v.color}` : "1.5px solid transparent", background: k === p.status ? v.bg : "#f8fafc", color: v.color, fontWeight: k === p.status ? 700 : 500, cursor: "pointer", textAlign: "left", transition: "background 0.1s" }}
+                              onMouseEnter={e => { if (k !== p.status) e.currentTarget.style.background = v.bg; }}
+                              onMouseLeave={e => { if (k !== p.status) e.currentTarget.style.background = "#f8fafc"; }}
+                            >{v.label}</button>
+                          ))}
+                        </div>
+                      )}
+                    </td>
                     {[1, 2, 3].map(w => (
                       <td key={`w${w}`} style={{ padding: "3px 4px", textAlign: "center" }}>
                         <select value={p.availability[w]} onChange={e => updateAvail(p.id, w, e.target.value)} style={{ fontSize: 10, padding: "2px 2px", borderRadius: 4, border: `1px solid ${(AVAIL_COLORS[p.availability[w]] || "#ccc")}44`, background: p.availability[w] === "yes" ? "#dcfce7" : p.availability[w] === "maybe" ? "#ede9fe" : "#fee2e2", color: AVAIL_COLORS[p.availability[w]] || "#666", fontWeight: 600, cursor: "pointer", width: 52, display: "block", marginBottom: 2 }}><option value="no">No</option><option value="yes">Yes</option><option value="maybe">Maybe</option></select>
