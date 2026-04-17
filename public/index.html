@@ -1529,7 +1529,7 @@ function Tooltip({ player, position, threshold }) {
   return ReactDOM.createPortal(el, document.body);
 }
 
-function PlayerCard({ player, onDragStart, compact, week, threshold }) {
+function PlayerCard({ player, onDragStart, compact, week, threshold, showTooltip = true }) {
   const [hover, setHover] = useState(false);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
   const s = STATUS_CONFIG[player.status];
@@ -1553,7 +1553,7 @@ function PlayerCard({ player, onDragStart, compact, week, threshold }) {
           <span style={{ fontSize: 9, padding: "2px 5px", borderRadius: 4, background: s.bg, color: s.color, fontWeight: 600 }}>{s.short}</span>
         </div>
       </div>
-      {hover && <Tooltip player={player} position={tooltipPos} threshold={threshold} />}
+      {hover && showTooltip && <Tooltip player={player} position={tooltipPos} threshold={threshold} />}
     </>
   );
 }
@@ -1627,7 +1627,7 @@ function PairSlot({ pair, pairNum, onDrop, onRemove, players, side, week, thresh
           const player = slot === 0 ? p1 : p2;
           return player ? (
             <div key={slot} style={{ display: "flex", alignItems: "center", gap: 4 }}>
-              <div style={{ flex: 1 }}><PlayerCard player={player} compact week={week} threshold={threshold} /></div>
+              <div style={{ flex: 1 }}><PlayerCard player={player} compact week={week} threshold={threshold} showTooltip={false} /></div>
               <button
                 onClick={() => disabled ? alert("Pairings are locked. Click 'Unlock to Edit' above to make changes.") : onRemove(player.id)}
                 title={disabled ? "Unlock pairings to remove" : "Remove player"}
