@@ -1712,13 +1712,12 @@ function TeamBuilder({ players, schedule, lockState, setLockState, userRole, clu
     if (isLocked) return;
     const player = players.find(p => p.id === playerId);
     if (!player) return;
-    // Validate team band
-    if (split.thresholds.length > 0) {
-      const projIdx = projectTeam(player, split.thresholds);
-      if (projIdx !== teamIdx) {
-        const lo = teamIdx === 0 ? null : split.thresholds[teamIdx - 1];
-        const hi = teamIdx < split.thresholds.length ? split.thresholds[teamIdx] : null;
-        setValidationMsg(`BLOCKED: ${player.name} (hdcp ${fmtH(player.courseHdcp)}) projects to Team ${projIdx+1}, not Team ${teamIdx+1}.`);
+    // Validate team band — only block if player hdcp is STRICTLY below this team's floor.
+    // Players at exactly the threshold boundary may play on either adjacent team (GAP rules allow shared handicaps).
+    if (split.thresholds.length > 0 && teamIdx > 0) {
+      const teamFloor = split.thresholds[teamIdx - 1];
+      if (player.courseHdcp < teamFloor) {
+        setValidationMsg(`BLOCKED: ${player.name} (hdcp ${fmtH(player.courseHdcp)}) cannot play on Team ${teamIdx+1} — their handicap is below this team's floor of ${fmtH(teamFloor)}. Players at hdcp ${fmtH(teamFloor)} or higher may play on Team ${teamIdx+1}.`);
         return;
       }
     }
