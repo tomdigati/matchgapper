@@ -1,0 +1,81 @@
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', -apple-system, sans-serif; }
+
+    /* Mobile responsive */
+    @media (max-width: 768px) {
+      /* Header */
+      .mg-header { padding: 0 10px !important; }
+      .mg-header-inner { flex-direction: column !important; gap: 4px !important; padding: 8px 0 !important; }
+      .mg-nav { display: flex !important; overflow-x: auto !important; -webkit-overflow-scrolling: touch; gap: 0 !important; width: 100% !important; }
+      .mg-nav button, .mg-nav a { padding: 8px 12px !important; font-size: 11px !important; white-space: nowrap !important; }
+      .mg-user-info { display: none !important; }
+      .mg-signout { font-size: 11px !important; padding: 4px 8px !important; }
+      .mg-branding { gap: 8px !important; }
+      .mg-branding-text h1 { font-size: 16px !important; }
+      .mg-branding-text p { font-size: 9px !important; }
+      .mg-logo { width: 32px !important; height: 32px !important; font-size: 14px !important; }
+
+      /* Main content */
+      .mg-main { padding: 12px !important; }
+
+      /* Stat grids (recruitment, team pools) */
+      .mg-stat-grid { grid-template-columns: repeat(3, 1fr) !important; gap: 6px !important; }
+      .mg-stat-card { padding: 10px 6px !important; }
+      .mg-stat-card .stat-num { font-size: 20px !important; }
+      .mg-stat-card .stat-label { font-size: 9px !important; }
+      .mg-stat-card .stat-sub { font-size: 8px !important; }
+
+      /* Handicap distribution */
+      .mg-hdcp-grid { grid-template-columns: repeat(3, 1fr) !important; gap: 6px !important; }
+
+      /* Weekly coverage */
+      .mg-pool-grid { grid-template-columns: 1fr !important; gap: 8px !important; }
+
+      /* Follow-up targets */
+      .mg-followup-grid { grid-template-columns: 1fr 1fr !important; gap: 8px !important; }
+
+      /* Week team cards */
+      .mg-week-teams { grid-template-columns: 1fr !important; gap: 8px !important; }
+
+      /* Team builder */
+      .mg-builder-grid { grid-template-columns: 1fr !important; gap: 12px !important; }
+      .mg-builder-sidebar { max-height: 300px !important; position: static !important; }
+
+      /* Tables → horizontal scroll */
+      .mg-table-wrap { overflow-x: auto !important; -webkit-overflow-scrolling: touch; }
+      .mg-table-wrap table { min-width: 600px; }
+
+      /* Season setup */
+      .mg-team-config { flex-direction: column !important; gap: 8px !important; }
+      .mg-team-config > * { width: 100% !important; }
+      .mg-tee-row { flex-wrap: wrap !important; gap: 6px !important; }
+
+      /* Filter bar */
+      .mg-filter-bar { flex-direction: column !important; gap: 6px !important; }
+      .mg-filter-bar > * { width: 100% !important; flex: none !important; }
+
+      /* Modals */
+      .mg-modal { width: 92vw !important; max-width: 92vw !important; margin: 16px auto !important; }
+
+      /* Platform admin */
+      .mg-pa-create { flex-direction: column !important; gap: 8px !important; }
+      .mg-pa-create > * { width: 100% !important; }
+      .mg-pa-create input, .mg-pa-create select { width: 100% !important; }
+
+      /* Onboarding */
+      .mg-onboard-card { padding: 16px !important; margin: 8px !important; }
+
+      /* Week headers */
+      .mg-week-header { flex-direction: column !important; gap: 4px !important; padding: 10px 14px !important; }
+      .mg-week-header .threshold { font-size: 11px !important; }
+
+      /* Login */
+      .mg-login-card { width: 92vw !important; padding: 20px !important; }
+    }
+
+    @media (max-width: 480px) {
+      .mg-stat-grid { grid-template-columns: repeat(2, 1fr) !important; }
+      .mg-hdcp-grid { grid-template-columns: repeat(2, 1fr) !important; }
+      .mg-pool-grid { grid-template-columns: 1fr !important; }
+      .mg-followup-grid { grid-template-columns: 1fr !important; }
+    }
