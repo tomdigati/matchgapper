@@ -1,3 +1,5 @@
+export const parseNum = (val, def = 15) => { const n = parseFloat(val); return isNaN(n) ? def : n; };
+
 export const fmtH = (h) => Number(h).toFixed(1);
 
 export const fmtDate = (d) => {

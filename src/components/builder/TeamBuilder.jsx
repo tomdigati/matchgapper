@@ -138,7 +138,7 @@ function Tooltip({ player, position, threshold }) {
   return ReactDOM.createPortal(el, document.body);
 }
 
-function PlayerCard({ player, onDragStart, compact, week, threshold }) {
+function PlayerCard({ player, onDragStart, compact, week, threshold, showTooltip = true }) {
   const [hover, setHover] = useState(false);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
   const s = STATUS_CONFIG[player.status];
@@ -162,7 +162,7 @@ function PlayerCard({ player, onDragStart, compact, week, threshold }) {
           <span style={{ fontSize: 9, padding: "2px 5px", borderRadius: 4, background: s.bg, color: s.color, fontWeight: 600 }}>{s.short}</span>
         </div>
       </div>
-      {hover && <Tooltip player={player} position={tooltipPos} threshold={threshold} />}
+      {hover && showTooltip && <Tooltip player={player} position={tooltipPos} threshold={threshold} />}
     </>
   );
 }
@@ -236,7 +236,7 @@ function PairSlot({ pair, pairNum, onDrop, onRemove, players, side, week, thresh
           const player = slot === 0 ? p1 : p2;
           return player ? (
             <div key={slot} style={{ display: "flex", alignItems: "center", gap: 4 }}>
-              <div style={{ flex: 1 }}><PlayerCard player={player} compact week={week} threshold={threshold} /></div>
+              <div style={{ flex: 1 }}><PlayerCard player={player} compact week={week} threshold={threshold} showTooltip={false} /></div>
               <button
                 onClick={() => disabled ? alert("Pairings are locked. Click 'Unlock to Edit' above to make changes.") : onRemove(player.id)}
                 title={disabled ? "Unlock pairings to remove" : "Remove player"}
@@ -268,6 +268,7 @@ function TeamBuilder({ players, schedule, lockState, setLockState, userRole, clu
     return w;
   };
   const [validationMsg, setValidationMsg] = useState(null);
+  const [blockedModal, setBlockedModal] = useState(null);
   const [copyFeedback, setCopyFeedback] = useState(null);
   const [dismissedStale, setDismissedStale] = useState(false);
   const weekSched = schedule[activeWeek];
@@ -326,7 +327,7 @@ function TeamBuilder({ players, schedule, lockState, setLockState, userRole, clu
       if (projIdx !== teamIdx) {
         const lo = teamIdx === 0 ? null : split.thresholds[teamIdx - 1];
         const hi = teamIdx < split.thresholds.length ? split.thresholds[teamIdx] : null;
-        setValidationMsg(`BLOCKED: ${player.name} (hdcp ${fmtH(player.courseHdcp)}) projects to Team ${projIdx+1}, not Team ${teamIdx+1}.`);
+        setBlockedModal({ message: `${player.name} (hdcp ${fmtH(player.courseHdcp)}) projects to Team ${projIdx+1}, not Team ${teamIdx+1}.` });
         return;
       }
     }
@@ -390,6 +391,7 @@ function TeamBuilder({ players, schedule, lockState, setLockState, userRole, clu
         });
       }
     });
+    text += `\n${"═".repeat(50)}\nThis roster was built in one click with MatchGapper.\nClick here to see how → https://matchgapper.pages.dev/landing.html\n`;
     return text;
   };
 
@@ -458,8 +460,8 @@ function TeamBuilder({ players, schedule, lockState, setLockState, userRole, clu
       {validationMsg && <div style={{ background: "#fef2f2", border: "2px solid #dc2626", borderRadius: 8, padding: "10px 14px", marginBottom: 12, color: "#991b1b", fontSize: 13, fontWeight: 600 }}>{validationMsg}</div>}
 
       {/* Main Grid */}
-      <div className="mg-builder-grid" style={{ display: "grid", gridTemplateColumns: "300px 1fr", gap: 16, minHeight: 500 }}>
-        <div style={{ background: "#f5f7fb", borderRadius: 12, padding: 14, border: "1px solid #d1d9e6", maxHeight: 750, overflowY: "auto" }}>
+      <div className="mg-builder-grid" style={{ display: "grid", gridTemplateColumns: "300px 1fr", gap: 16, minHeight: 500, alignItems: "start" }}>
+        <div className="mg-builder-sidebar" style={{ background: "#f5f7fb", borderRadius: 12, padding: 14, border: "1px solid #d1d9e6", position: "sticky", top: 16, maxHeight: "calc(100vh - 80px)", overflowY: "auto" }}>
           {teamIndices.map((idx) => {
             const tc = TEAM_COLORS[idx] || TEAM_COLORS[0];
             const pool = teamPools[idx] || [];
@@ -565,6 +567,29 @@ function TeamBuilder({ players, schedule, lockState, setLockState, userRole, clu
           })}
         </div>
       </div>
+
+      {/* BLOCKED Modal */}
+      {blockedModal && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div onClick={() => setBlockedModal(null)} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.45)" }} />
+          <div style={{ position: "relative", background: "#fff", borderRadius: 16, width: "100%", maxWidth: 420, boxShadow: "0 8px 32px rgba(0,0,0,0.2)", overflow: "hidden" }}>
+            <div style={{ background: "linear-gradient(135deg, #7f1d1d, #991b1b)", padding: "16px 24px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <div>
+                <div style={{ color: "#fff", fontSize: 16, fontWeight: 600, display: "flex", alignItems: "center", gap: 8 }}>Player Blocked</div>
+                <div style={{ color: "#fca5a5", fontSize: 11, marginTop: 2 }}>Handicap mismatch</div>
+              </div>
+              <button onClick={() => setBlockedModal(null)} style={{ background: "none", border: "none", color: "#fca5a5", fontSize: 20, cursor: "pointer", lineHeight: 1 }}>&times;</button>
+            </div>
+            <div style={{ padding: "20px 24px" }}>
+              <div style={{ fontSize: 14, color: "#0f172a", fontWeight: 500, marginBottom: 12 }}>{blockedModal.message}</div>
+              <div style={{ fontSize: 12, color: "#64748b" }}>Drag the player to their correct team pool, or adjust their handicap in the Roster.</div>
+            </div>
+            <div style={{ padding: "12px 24px", borderTop: "1px solid #e2e8f0", display: "flex", justifyContent: "flex-end" }}>
+              <button onClick={() => setBlockedModal(null)} style={{ padding: "8px 24px", borderRadius: 8, border: "none", background: "linear-gradient(135deg, #991b1b, #dc2626)", color: "#fff", fontWeight: 600, fontSize: 13, cursor: "pointer" }}>Got it</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -39,7 +39,7 @@
 
       /* Team builder */
       .mg-builder-grid { grid-template-columns: 1fr !important; gap: 12px !important; }
-      .mg-builder-sidebar { max-height: 300px !important; }
+      .mg-builder-sidebar { max-height: 300px !important; position: static !important; }
 
       /* Tables → horizontal scroll */
       .mg-table-wrap { overflow-x: auto !important; -webkit-overflow-scrolling: touch; }

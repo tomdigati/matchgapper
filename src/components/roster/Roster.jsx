@@ -1,9 +1,9 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import * as XLSX from "xlsx";
 import { supabase } from "../../lib/supabase";
 import { parseCSVLine } from "../../utils/csv";
 import { parseName } from "../../utils/names";
-import { fmtH } from "../../utils/format";
+import { fmtH, parseNum } from "../../utils/format";
 import { STATUS_CONFIG, AVAIL_COLORS, TEAM_COLORS, ACCENT } from "../../utils/constants";
 import { deletePlayerFromDb, bulkUpsertPlayers, loadPlayersFromDb } from "../../lib/players";
 
@@ -174,6 +174,56 @@ function Roster({ players, setPlayers, addPlayerWithSync, clubName, userId, sche
     });
     return list;
   }, [players, search, filterStatus, filterWk1, filterWk2, filterWk3, filterTeam, sortField, sortDir, overallSplit.thresholds]);
+  // Freeze sort order while editing to prevent row jumping
+  const frozenOrderRef = useRef(null);
+  useEffect(() => {
+    if (editingId !== null && frozenOrderRef.current === null) {
+      frozenOrderRef.current = filtered.map(p => p.id);
+    } else if (editingId === null) {
+      frozenOrderRef.current = null;
+    }
+  }, [editingId]);
+  const displayRows = useMemo(() => {
+    if (editingId !== null && frozenOrderRef.current) {
+      return frozenOrderRef.current.map(id => filtered.find(p => p.id === id)).filter(Boolean);
+    }
+    return filtered;
+  }, [filtered, editingId]);
+
+  const [statusOpenId, setStatusOpenId] = useState(null);
+  const [addPlayerModal, setAddPlayerModal] = useState(false);
+  const BLANK_DRAFT = { lastName: "", firstName: "", courseHdcp: "", index: "", ghin: "", phone: "", email: "" };
+  const [newPlayerDraft, setNewPlayerDraft] = useState(BLANK_DRAFT);
+  const [addPlayerSaving, setAddPlayerSaving] = useState(false);
+  const [addPlayerError, setAddPlayerError] = useState(null);
+
+  const saveNewPlayer = async () => {
+    if (!newPlayerDraft.lastName.trim()) { setAddPlayerError("Last name is required"); return; }
+    setAddPlayerSaving(true);
+    setAddPlayerError(null);
+    const name = newPlayerDraft.firstName.trim()
+      ? `${newPlayerDraft.lastName.trim()}, ${newPlayerDraft.firstName.trim()}`
+      : newPlayerDraft.lastName.trim();
+    const newPlayer = {
+      name, ghin: newPlayerDraft.ghin, courseHdcp: parseNum(newPlayerDraft.courseHdcp),
+      index: parseNum(newPlayerDraft.index || newPlayerDraft.courseHdcp),
+      phone: newPlayerDraft.phone, email: newPlayerDraft.email, memberNumber: "",
+      status: "not_contacted", contactOwner: "", contactDate: "",
+      availability: { 1: "no", 2: "no", 3: "no" }, locPref: { 1: "", 2: "", 3: "" }, notes: "",
+    };
+    if (addPlayerWithSync) {
+      const newId = await addPlayerWithSync(newPlayer);
+      if (newId) setEditingId(newId);
+    } else {
+      const newId = Math.max(...players.map(p => p.id), 0) + 1;
+      setPlayers(prev => [...prev, { ...newPlayer, id: newId }]);
+      setEditingId(newId);
+    }
+    setAddPlayerSaving(false);
+    setAddPlayerModal(false);
+    setNewPlayerDraft(BLANK_DRAFT);
+  };
+
   const updatePlayer = (id, field, value) => setPlayers(prev => prev.map(p => p.id === id ? { ...p, [field]: value } : p));
   const updateAvail = (id, week, value) => setPlayers(prev => prev.map(p => p.id === id ? { ...p, availability: { ...p.availability, [week]: value } } : p));
   const updateLocPref = (id, week, value) => setPlayers(prev => prev.map(p => p.id === id ? { ...p, locPref: { ...p.locPref, [week]: value } } : p));
@@ -238,7 +288,6 @@ function Roster({ players, setPlayers, addPlayerWithSync, clubName, userId, sche
         return (row[nameIdx] || "Unknown").trim();
       };
       const hasData = (row) => hasSeparateNames ? ((row[firstNameIdx] || "").trim() || (row[lastNameIdx] || "").trim()) : (row[nameIdx] || "").trim();
-      const parseNum = (val, def = 15) => { const n = parseFloat(val); return isNaN(n) ? def : n; };
       const newPlayers = lines.slice(1).filter(row => hasData(row)).map((row, i) => ({
         name: getName(row),
         ghin: ghinIdx > -1 ? (row[ghinIdx] || "") : "",
@@ -351,7 +400,7 @@ function Roster({ players, setPlayers, addPlayerWithSync, clubName, userId, sche
             </select>
           ))}
         </div>
-        <button onClick={addPlayer} style={{ padding: "8px 16px", borderRadius: 8, border: "none", background: "linear-gradient(135deg, #0f172a, #1e3a5f)", color: ACCENT, fontWeight: 600, cursor: "pointer", fontSize: 13, whiteSpace: "nowrap" }}>+ Add Player</button>
+        <button onClick={() => setAddPlayerModal(true)} style={{ padding: "8px 16px", borderRadius: 8, border: "none", background: "linear-gradient(135deg, #0f172a, #1e3a5f)", color: ACCENT, fontWeight: 600, cursor: "pointer", fontSize: 13, whiteSpace: "nowrap" }}>+ Add Player</button>
         <div style={{ fontSize: 13, color: "#64748b", display: "flex", alignItems: "center", fontWeight: 600 }}>{filtered.length} of {players.length}</div>
       </div>
       {/* Summary bar */}
@@ -409,7 +458,7 @@ function Roster({ players, setPlayers, addPlayerWithSync, clubName, userId, sche
               ))}
             </tr></thead>
             <tbody>
-              {filtered.map((p, i) => {
+              {displayRows.map((p, i) => {
                 const s = STATUS_CONFIG[p.status];
                 const projIdx = projectTeam(p, overallSplit.thresholds);
                 const ptc = TEAM_COLORS[projIdx] || TEAM_COLORS[0];
@@ -454,7 +503,24 @@ function Roster({ players, setPlayers, addPlayerWithSync, clubName, userId, sche
                         </div>
                       )}
                     </td>
-                    <td style={{ padding: "6px" }}><select value={p.status} onChange={e => updatePlayer(p.id, "status", e.target.value)} style={{ fontSize: 10, padding: "2px 4px", borderRadius: 4, border: `1px solid ${s.color}44`, background: s.bg, color: s.color, fontWeight: 600, cursor: "pointer" }}>{Object.entries(STATUS_CONFIG).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}</select></td>
+                    <td style={{ padding: "6px", position: "relative" }}>
+                      <button onClick={() => setStatusOpenId(statusOpenId === p.id ? null : p.id)} style={{ fontSize: 10, padding: "3px 8px", borderRadius: 12, border: `1px solid ${s.color}44`, background: s.bg, color: s.color, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 3 }}>
+                        {s.label} <span style={{ fontSize: 8 }}>▼</span>
+                      </button>
+                      {statusOpenId === p.id && (
+                        <>
+                          <div onClick={() => setStatusOpenId(null)} style={{ position: "fixed", inset: 0, zIndex: 199 }} />
+                          <div style={{ position: "absolute", top: "100%", left: 6, zIndex: 200, background: "#fff", borderRadius: 8, boxShadow: "0 4px 16px rgba(0,0,0,0.15)", border: "1px solid #e2e8f0", padding: 4, minWidth: 120 }}>
+                            {Object.entries(STATUS_CONFIG).map(([k, v]) => (
+                              <button key={k} onClick={() => { updatePlayer(p.id, "status", k); setStatusOpenId(null); }}
+                                style={{ display: "block", width: "100%", padding: "5px 10px", borderRadius: 6, border: p.status === k ? `2px solid ${v.color}` : "2px solid transparent", background: p.status === k ? v.bg : "#fff", color: v.color, fontWeight: p.status === k ? 700 : 500, fontSize: 11, cursor: "pointer", textAlign: "left", marginBottom: 2 }}>
+                                {v.label}
+                              </button>
+                            ))}
+                          </div>
+                        </>
+                      )}
+                    </td>
                     {[1, 2, 3].map(w => (
                       <td key={`w${w}`} style={{ padding: "3px 4px", textAlign: "center" }}>
                         <select value={p.availability[w]} onChange={e => updateAvail(p.id, w, e.target.value)} style={{ fontSize: 10, padding: "2px 2px", borderRadius: 4, border: `1px solid ${(AVAIL_COLORS[p.availability[w]] || "#ccc")}44`, background: p.availability[w] === "yes" ? "#dcfce7" : p.availability[w] === "maybe" ? "#ede9fe" : "#fee2e2", color: AVAIL_COLORS[p.availability[w]] || "#666", fontWeight: 600, cursor: "pointer", width: 52, display: "block", marginBottom: 2 }}><option value="no">No</option><option value="yes">Yes</option><option value="maybe">Maybe</option></select>
@@ -489,6 +555,57 @@ function Roster({ players, setPlayers, addPlayerWithSync, clubName, userId, sche
           </table>
         </div>
       </div>
+
+      {/* Add Player Modal */}
+      {addPlayerModal && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div onClick={() => { setAddPlayerModal(false); setNewPlayerDraft(BLANK_DRAFT); setAddPlayerError(null); }} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.45)" }} />
+          <div style={{ position: "relative", background: "#fff", borderRadius: 16, width: "100%", maxWidth: 420, boxShadow: "0 8px 32px rgba(0,0,0,0.2)", overflow: "hidden" }}>
+            <div style={{ background: "linear-gradient(135deg, #0f172a, #1e3a5f)", padding: "16px 24px", color: "#7dd3fc", fontSize: 16, fontWeight: 600 }}>Add Player</div>
+            <div style={{ padding: "20px 24px", display: "flex", flexDirection: "column", gap: 12 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                <div>
+                  <label style={{ fontSize: 11, fontWeight: 600, color: "#64748b" }}>Last Name *</label>
+                  <input autoFocus value={newPlayerDraft.lastName} onChange={e => setNewPlayerDraft(d => ({ ...d, lastName: e.target.value }))} onKeyDown={e => e.key === "Enter" && saveNewPlayer()} style={{ width: "100%", padding: "8px 10px", borderRadius: 6, border: "1px solid #c1cad8", fontSize: 13 }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: 11, fontWeight: 600, color: "#64748b" }}>First Name</label>
+                  <input value={newPlayerDraft.firstName} onChange={e => setNewPlayerDraft(d => ({ ...d, firstName: e.target.value }))} onKeyDown={e => e.key === "Enter" && saveNewPlayer()} style={{ width: "100%", padding: "8px 10px", borderRadius: 6, border: "1px solid #c1cad8", fontSize: 13 }} />
+                </div>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                <div>
+                  <label style={{ fontSize: 11, fontWeight: 600, color: "#64748b" }}>Course Handicap</label>
+                  <input type="number" step="0.1" value={newPlayerDraft.courseHdcp} onChange={e => setNewPlayerDraft(d => ({ ...d, courseHdcp: e.target.value }))} onKeyDown={e => e.key === "Enter" && saveNewPlayer()} style={{ width: "100%", padding: "8px 10px", borderRadius: 6, border: "1px solid #c1cad8", fontSize: 13 }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: 11, fontWeight: 600, color: "#64748b" }}>Low Handicap Index</label>
+                  <input type="number" step="0.1" value={newPlayerDraft.index} onChange={e => setNewPlayerDraft(d => ({ ...d, index: e.target.value }))} onKeyDown={e => e.key === "Enter" && saveNewPlayer()} style={{ width: "100%", padding: "8px 10px", borderRadius: 6, border: "1px solid #c1cad8", fontSize: 13 }} />
+                </div>
+              </div>
+              <div>
+                <label style={{ fontSize: 11, fontWeight: 600, color: "#64748b" }}>GHIN</label>
+                <input value={newPlayerDraft.ghin} onChange={e => setNewPlayerDraft(d => ({ ...d, ghin: e.target.value }))} onKeyDown={e => e.key === "Enter" && saveNewPlayer()} style={{ width: "100%", padding: "8px 10px", borderRadius: 6, border: "1px solid #c1cad8", fontSize: 13 }} />
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                <div>
+                  <label style={{ fontSize: 11, fontWeight: 600, color: "#64748b" }}>Phone</label>
+                  <input value={newPlayerDraft.phone} onChange={e => setNewPlayerDraft(d => ({ ...d, phone: e.target.value }))} onKeyDown={e => e.key === "Enter" && saveNewPlayer()} style={{ width: "100%", padding: "8px 10px", borderRadius: 6, border: "1px solid #c1cad8", fontSize: 13 }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: 11, fontWeight: 600, color: "#64748b" }}>Email</label>
+                  <input value={newPlayerDraft.email} onChange={e => setNewPlayerDraft(d => ({ ...d, email: e.target.value }))} onKeyDown={e => e.key === "Enter" && saveNewPlayer()} style={{ width: "100%", padding: "8px 10px", borderRadius: 6, border: "1px solid #c1cad8", fontSize: 13 }} />
+                </div>
+              </div>
+              {addPlayerError && <div style={{ fontSize: 12, color: "#dc2626", fontWeight: 600 }}>{addPlayerError}</div>}
+            </div>
+            <div style={{ padding: "12px 24px", borderTop: "1px solid #e2e8f0", display: "flex", justifyContent: "flex-end", gap: 10 }}>
+              <button onClick={() => { setAddPlayerModal(false); setNewPlayerDraft(BLANK_DRAFT); setAddPlayerError(null); }} style={{ padding: "8px 18px", borderRadius: 8, border: "1px solid #c1cad8", background: "#fff", color: "#64748b", fontWeight: 600, fontSize: 13, cursor: "pointer" }}>Cancel</button>
+              <button onClick={saveNewPlayer} disabled={addPlayerSaving} style={{ padding: "8px 18px", borderRadius: 8, border: "none", background: "linear-gradient(135deg, #0f172a, #1e3a5f)", color: "#7dd3fc", fontWeight: 600, fontSize: 13, cursor: addPlayerSaving ? "wait" : "pointer", opacity: addPlayerSaving ? 0.7 : 1 }}>{addPlayerSaving ? "Saving..." : "Save Player"}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

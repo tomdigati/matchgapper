@@ -1,9 +1,10 @@
 import { supabase } from "./supabase";
+import { parseNum } from "../utils/format";
 
 export function dbPlayerToApp(p) {
   return {
-    id: p.id, name: p.name, ghin: p.ghin || "", courseHdcp: Number(p.course_hdcp) || 15,
-    index: Number(p.index) || 15, phone: p.phone || "", email: p.email || "",
+    id: p.id, name: p.name, ghin: p.ghin || "", courseHdcp: parseNum(p.course_hdcp),
+    index: parseNum(p.index), phone: p.phone || "", email: p.email || "",
     memberNumber: p.member_number || "",
     status: p.status || "not_contacted", contactOwner: p.contact_owner || "",
     contactDate: p.contact_date || "",

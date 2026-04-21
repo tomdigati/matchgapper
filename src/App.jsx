@@ -348,22 +348,20 @@ function GAPManager() {
       } else {
         setSchedule(JSON.parse(JSON.stringify(DEFAULT_SCHEDULE)));
       }
+      const mergedLocks = { ...DEFAULT_LOCK_STATE };
       if (dbLocks) {
-        const mergedLocks = { ...DEFAULT_LOCK_STATE };
         [1, 2, 3].forEach(w => { if (dbLocks[w]) mergedLocks[w] = dbLocks[w]; });
-        setLockState(mergedLocks);
       }
+      setLockState(mergedLocks);
       // Small delay to let state settle before enabling auto-save
       setTimeout(() => { scheduleLoadedRef.current = true; }, 500);
     });
     loadAssignmentsFromDb(club).then(dbAsgn => {
-      if (dbAsgn) {
-        const merged = {};
-        [1, 2, 3].forEach(w => {
-          merged[w] = dbAsgn[w] || emptyWeek(schedule[w]?.teamCount || 2);
-        });
-        setAssignments(merged);
-      }
+      const merged = {};
+      [1, 2, 3].forEach(w => {
+        merged[w] = (dbAsgn && dbAsgn[w]) ? dbAsgn[w] : emptyWeek(DEFAULT_SCHEDULE[w]?.teamCount || 2);
+      });
+      setAssignments(merged);
       setTimeout(() => { assignmentsLoadedRef.current = true; }, 500);
     });
   }, [profile?.club, profile?.onboarded, viewingClub]);

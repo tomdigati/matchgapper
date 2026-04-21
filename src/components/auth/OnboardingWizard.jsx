@@ -1,6 +1,8 @@
 import { useState } from "react";
 import * as XLSX from "xlsx";
+import { supabase } from "../../lib/supabase";
 import { parseCSVLine } from "../../utils/csv";
+import { parseNum } from "../../utils/format";
 import { ROLE_CONFIG } from "../../utils/constants";
 import { bulkInsertPlayers } from "../../lib/players";
 import { GAP_CLUBS, SAMPLE_PLAYERS } from "../../utils/data";
@@ -66,8 +68,8 @@ function OnboardingWizard({ profile, session, onComplete, onSetTeamCount }) {
         id: -(i + 1),
         name: getName(row),
         ghin: ghinIdx > -1 ? (row[ghinIdx] || "") : "",
-        courseHdcp: hdcpIdx > -1 ? (parseFloat(row[hdcpIdx]) || 15) : 15,
-        index: indexIdx > -1 ? (parseFloat(row[indexIdx]) || 15) : (hdcpIdx > -1 ? (parseFloat(row[hdcpIdx]) || 15) : 15),
+        courseHdcp: parseNum(hdcpIdx > -1 ? row[hdcpIdx] : null),
+        index: parseNum(indexIdx > -1 ? row[indexIdx] : (hdcpIdx > -1 ? row[hdcpIdx] : null)),
         phone: phoneIdx > -1 ? (row[phoneIdx] || "") : "",
         email: emailIdx > -1 ? (row[emailIdx] || "") : "",
         memberNumber: memberNumberIdx > -1 ? (row[memberNumberIdx] || "") : "",
