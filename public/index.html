@@ -1378,17 +1378,13 @@ function SeasonSetup({ schedule, setSchedule, lockState, userRole, clubName }) {
   const updateTeamCount = (week, newCount) => {
     if (!isAdmin) return;
     setSchedule(prev => {
-      const next = { ...prev };
-      [1, 2, 3].forEach(w => {
-        const ws = next[w];
-        const oldTeams = ws.teams || [];
-        const teams = [];
-        for (let i = 0; i < newCount; i++) {
-          teams.push(oldTeams[i] || EMPTY_TEAM());
-        }
-        next[w] = { ...ws, teamCount: newCount, teams };
-      });
-      return next;
+      const ws = prev[week];
+      const oldTeams = ws.teams || [];
+      const teams = [];
+      for (let i = 0; i < newCount; i++) {
+        teams.push(oldTeams[i] || EMPTY_TEAM());
+      }
+      return { ...prev, [week]: { ...ws, teamCount: newCount, teams } };
     });
   };
   return (
@@ -1454,7 +1450,7 @@ function SeasonSetup({ schedule, setSchedule, lockState, userRole, clubName }) {
                       </div>
                       <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                         <span style={{ fontSize: 11, fontWeight: 600, color: "#64748b" }}>Home Tee</span>
-                        <input value={team.homeTee || ""} onChange={e => updateTeam(week, idx, "homeTee", e.target.value)} disabled={!isAdmin || locked} placeholder="8:00 AM"
+                        <input value={team.homeTee || ""} onChange={e => updateTeam(week, idx, "homeTee", e.target.value)} disabled={!isAdmin || locked} placeholder="e.g. 9:00 AM"
                           style={{ padding: "6px 12px", borderRadius: 6, border: "1px solid #c1cad8", fontSize: 13, width: 90, background: isAdmin && !locked ? "#fff" : "#f1f5f9" }} />
                         <select value={team.homeInterval || 10} onChange={e => updateTeam(week, idx, "homeInterval", parseInt(e.target.value))} disabled={!isAdmin || locked}
                           style={{ padding: "6px 8px", borderRadius: 6, border: "1px solid #c1cad8", fontSize: 11, background: isAdmin && !locked ? "#fff" : "#f1f5f9", cursor: "pointer" }}>
@@ -1463,7 +1459,7 @@ function SeasonSetup({ schedule, setSchedule, lockState, userRole, clubName }) {
                       </div>
                       <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                         <span style={{ fontSize: 11, fontWeight: 600, color: "#64748b" }}>Away Tee</span>
-                        <input value={team.awayTee || ""} onChange={e => updateTeam(week, idx, "awayTee", e.target.value)} disabled={!isAdmin || locked} placeholder="8:30 AM"
+                        <input value={team.awayTee || ""} onChange={e => updateTeam(week, idx, "awayTee", e.target.value)} disabled={!isAdmin || locked} placeholder="e.g. 9:30 AM"
                           style={{ padding: "6px 12px", borderRadius: 6, border: "1px solid #c1cad8", fontSize: 13, width: 90, background: isAdmin && !locked ? "#fff" : "#f1f5f9" }} />
                         <select value={team.awayInterval || 10} onChange={e => updateTeam(week, idx, "awayInterval", parseInt(e.target.value))} disabled={!isAdmin || locked}
                           style={{ padding: "6px 8px", borderRadius: 6, border: "1px solid #c1cad8", fontSize: 11, background: isAdmin && !locked ? "#fff" : "#f1f5f9", cursor: "pointer" }}>
