@@ -1645,7 +1645,24 @@ function PairSlot({ pair, pairNum, onDrop, onRemove, players, side, week, thresh
 // ═══════════════════════════════════════════════════════════════
 function TeamBuilder({ players, schedule, lockState, setLockState, userRole, clubName, assignments, setAssignments }) {
   const isAdmin = userRole === "admin" || userRole === "captain";
-  const [activeWeek, setActiveWeek] = useState(1);
+  const [activeWeek, setActiveWeek] = useState(() => {
+    // Default to the first upcoming match week based on date; fall back to week 3 if all past, week 1 if no dates set
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    for (let w = 1; w <= 3; w++) {
+      const d = schedule[w]?.date;
+      if (d) {
+        const [y, m, day] = d.split("-");
+        const matchDate = new Date(+y, +m - 1, +day);
+        if (matchDate >= today) return w;
+      }
+    }
+    // All dates in the past (or none set) — show the last week that has a date, else week 1
+    for (let w = 3; w >= 1; w--) {
+      if (schedule[w]?.date) return w;
+    }
+    return 1;
+  });
   const emptyWeek = (teamCount) => {
     const w = {};
     for (let i = 0; i < teamCount; i++) {
