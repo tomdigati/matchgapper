@@ -3717,6 +3717,7 @@ function GAPManager() {
   const rc = ROLE_CONFIG[userRole] || ROLE_CONFIG.vice_captain;
   const clubName = profile?.club || "My Club";
   const clubInitial = clubName.charAt(0).toUpperCase();
+  const effectiveClubName = viewingClub || clubName;
 
   // Load players from Supabase when profile is ready
   // If in god mode (viewingClub set), load that club's players instead of profile.club
@@ -3918,7 +3919,6 @@ function GAPManager() {
   // Platform admins who aren't viewing a specific club see only the Platform tab
   // When viewing a club, they see all tabs + a "Back to Platform" button
   const isViewingClub = isPlatformAdmin && viewingClub;
-  const effectiveClubName = viewingClub || clubName;
   const effectiveClubInitial = effectiveClubName.charAt(0).toUpperCase();
 
   const tabs = isPlatformAdmin && !viewingClub
