@@ -2454,10 +2454,10 @@ function Roster({ players, setPlayers, addPlayerWithSync, clubName, userId, sche
     };
     setAddPlayerSaving(true);
     if (addPlayerWithSync) {
-      const newId = await addPlayerWithSync(newPlayer);
+      const result = await addPlayerWithSync(newPlayer);
       setAddPlayerSaving(false);
-      if (newId) { closeAddModal(); }
-      else { setAddPlayerError("Failed to save. Please try again."); }
+      if (typeof result === "number") { closeAddModal(); }
+      else { setAddPlayerError(typeof result === "string" ? `Save failed: ${result}` : "Failed to save. Please try again."); }
     } else {
       const newId = Math.max(...players.map(p => p.id), 0) + 1;
       setPlayers(prev => [...prev, { ...newPlayer, id: newId }]);
@@ -3829,11 +3829,12 @@ function GAPManager() {
     const row = appPlayerToDb(newPlayer, effectiveClubName, session?.user?.id);
     delete row.id;
     const { data, error } = await supabase.from("players").insert(row).select("*").single();
+    if (error) { console.error("Add player error:", error); }
     if (data) {
       setPlayers(prev => [...prev, dbPlayerToApp(data)]);
       return data.id;
     }
-    return null;
+    return error?.message || null;
   }, [effectiveClubName, session?.user?.id]);
 
   // Must be declared before any conditional returns (React Rules of Hooks)
