@@ -1,7 +1,34 @@
+function escapeHtml(str) {
+  if (!str) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+const ALLOWED_ORIGINS = [
+  "https://matchgapper.com",
+  "https://www.matchgapper.com",
+];
+
+function getCorsHeaders(request) {
+  const origin = request.headers.get("Origin") || "";
+  const allowed = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  return {
+    "Access-Control-Allow-Origin": allowed,
+    "Access-Control-Allow-Methods": "POST",
+    "Access-Control-Allow-Headers": "Content-Type",
+  };
+}
+
 export default {
   async fetch(request, env) {
+    const corsHeaders = getCorsHeaders(request);
+
     if (request.method === "OPTIONS") {
-      return new Response(null, { status: 204, headers: { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Methods": "POST", "Access-Control-Allow-Headers": "Content-Type" } });
+      return new Response(null, { status: 204, headers: corsHeaders });
     }
 
     if (request.method !== "POST") {
@@ -11,25 +38,28 @@ export default {
     try {
       const payload = await request.json();
 
-      // Route: /approve — sends invite email to the pro
       const url = new URL(request.url);
       if (url.pathname === "/approve") {
-        return await handleApproval(payload, env);
+        return await handleApproval(payload, env, corsHeaders);
       }
 
-      // Default: new club registration notification to admin
-      return await handleRegistration(payload, env);
+      return await handleRegistration(payload, env, corsHeaders);
     } catch (err) {
-      return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: { "Access-Control-Allow-Origin": "*" } });
+      return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: corsHeaders });
     }
   },
 };
 
-async function handleRegistration(payload, env) {
+async function handleRegistration(payload, env, corsHeaders) {
   const record = payload.record;
   if (!record || !record.name) {
     return new Response("No club data", { status: 400 });
   }
+
+  const safeName = escapeHtml(record.name);
+  const safeProName = escapeHtml(record.pro_name) || "—";
+  const safeProEmail = escapeHtml(record.pro_email) || "—";
+  const adminEmail = env.ADMIN_EMAIL || "tom@axiolo.com";
 
   const emailHtml = `
     <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -42,15 +72,15 @@ async function handleRegistration(payload, env) {
         <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
           <tr>
             <td style="padding: 8px 0; color: #64748b; width: 120px;">Club</td>
-            <td style="padding: 8px 0; color: #0f172a; font-weight: 600;">${record.name}</td>
+            <td style="padding: 8px 0; color: #0f172a; font-weight: 600;">${safeName}</td>
           </tr>
           <tr>
             <td style="padding: 8px 0; color: #64748b;">PGA Pro</td>
-            <td style="padding: 8px 0; color: #0f172a; font-weight: 600;">${record.pro_name || '—'}</td>
+            <td style="padding: 8px 0; color: #0f172a; font-weight: 600;">${safeProName}</td>
           </tr>
           <tr>
             <td style="padding: 8px 0; color: #64748b;">Email</td>
-            <td style="padding: 8px 0; color: #0f172a;">${record.pro_email || '—'}</td>
+            <td style="padding: 8px 0; color: #0f172a;">${safeProEmail}</td>
           </tr>
           <tr>
             <td style="padding: 8px 0; color: #64748b;">Status</td>
@@ -76,27 +106,30 @@ async function handleRegistration(payload, env) {
     },
     body: JSON.stringify({
       from: "MatchGapper <noreply@matchgapper.com>",
-      to: ["tom@axiolo.com"],
-      subject: `New Club Registration: ${record.name}`,
+      to: [adminEmail],
+      subject: `New Club Registration: ${safeName}`,
       html: emailHtml,
     }),
   });
 
   const result = await res.json();
   if (!res.ok) {
-    return new Response(JSON.stringify({ error: result }), { status: 500 });
+    return new Response(JSON.stringify({ error: result }), { status: 500, headers: corsHeaders });
   }
-  return new Response(JSON.stringify({ success: true, emailId: result.id }), { status: 200 });
+  return new Response(JSON.stringify({ success: true, emailId: result.id }), { status: 200, headers: corsHeaders });
 }
 
-async function handleApproval(payload, env) {
+async function handleApproval(payload, env, corsHeaders) {
   const { clubName, proName, proEmail, inviteToken } = payload;
 
   if (!proEmail || !inviteToken) {
-    return new Response(JSON.stringify({ error: "Missing proEmail or inviteToken" }), { status: 400, headers: { "Access-Control-Allow-Origin": "*" } });
+    return new Response(JSON.stringify({ error: "Missing proEmail or inviteToken" }), { status: 400, headers: corsHeaders });
   }
 
-  const inviteUrl = `https://matchgapper.com?invite=${inviteToken}`;
+  const safeClubName = escapeHtml(clubName);
+  const safeProName = escapeHtml(proName);
+  const safeInviteToken = encodeURIComponent(inviteToken);
+  const inviteUrl = `https://matchgapper.com?invite=${safeInviteToken}`;
 
   const emailHtml = `
     <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -112,7 +145,7 @@ async function handleApproval(payload, env) {
           <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
             <tr>
               <td style="padding: 6px 0; color: #64748b; width: 80px;">Club</td>
-              <td style="padding: 6px 0; color: #0f172a; font-weight: 600;">${clubName}</td>
+              <td style="padding: 6px 0; color: #0f172a; font-weight: 600;">${safeClubName}</td>
             </tr>
             <tr>
               <td style="padding: 6px 0; color: #64748b;">Role</td>
@@ -145,14 +178,14 @@ async function handleApproval(payload, env) {
     body: JSON.stringify({
       from: "MatchGapper <noreply@matchgapper.com>",
       to: [proEmail],
-      subject: `${clubName} has been approved on MatchGapper — create your account`,
+      subject: `${safeClubName} has been approved on MatchGapper — create your account`,
       html: emailHtml,
     }),
   });
 
   const result = await res.json();
   if (!res.ok) {
-    return new Response(JSON.stringify({ error: result }), { status: 500, headers: { "Access-Control-Allow-Origin": "*" } });
+    return new Response(JSON.stringify({ error: result }), { status: 500, headers: corsHeaders });
   }
-  return new Response(JSON.stringify({ success: true, emailId: result.id }), { status: 200, headers: { "Access-Control-Allow-Origin": "*" } });
+  return new Response(JSON.stringify({ success: true, emailId: result.id }), { status: 200, headers: corsHeaders });
 }
